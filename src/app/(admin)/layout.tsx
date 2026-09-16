@@ -1,6 +1,7 @@
 "use client";
 
 import "flatpickr/dist/flatpickr.css";
+import "../admin.css";
 import { SidebarProvider, useSidebar } from "@/context/SidebarContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import AppHeader from "@/layout/AppHeader";
