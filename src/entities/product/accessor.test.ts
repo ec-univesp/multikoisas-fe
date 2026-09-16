@@ -33,6 +33,58 @@ describe('parseProducts', () => {
   it('rejeita produto sem imagem', () => {
     expect(() => parseProducts([{ ...validProduct, images: [] }])).toThrow(/garrafa-termica-1l/);
   });
+
+  it('rejeita quando o conteúdo não é uma lista', () => {
+    expect(() => parseProducts({ slug: 'x' })).toThrow(/lista/i);
+  });
+
+  it.each([
+    ['slug', 'slug ausente'],
+    ['name', 'name ausente'],
+    ['category', 'category ausente'],
+    ['shortDescription', 'shortDescription ausente'],
+    ['longDescription', 'longDescription ausente'],
+  ])('rejeita produto sem %s', (missingField, expectedReason) => {
+    expect(() => parseProducts([{ ...validProduct, [missingField]: '   ' }])).toThrow(
+      expectedReason,
+    );
+  });
+
+  it('identifica pela posição o produto cujo slug está ausente', () => {
+    expect(() => parseProducts([{ ...validProduct, slug: undefined }])).toThrow(/posição 0/);
+  });
+
+  it('rejeita produto nulo', () => {
+    expect(() => parseProducts([null])).toThrow(/posição 0/);
+  });
+
+  it('rejeita images que não é lista', () => {
+    expect(() => parseProducts([{ ...validProduct, images: '/products/x.svg' }])).toThrow(/images/);
+  });
+
+  it('rejeita caminho de imagem vazio', () => {
+    expect(() => parseProducts([{ ...validProduct, images: [''] }])).toThrow(/images/);
+  });
+
+  it('rejeita storeLinks que não é lista', () => {
+    expect(() => parseProducts([{ ...validProduct, storeLinks: 'shopee' }])).toThrow(/storeLinks/);
+  });
+
+  it('rejeita link de loja sem url', () => {
+    expect(() =>
+      parseProducts([{ ...validProduct, storeLinks: [{ store: 'shopee', url: '' }] }]),
+    ).toThrow(/storeLinks/);
+  });
+
+  it('rejeita link de loja que não é objeto', () => {
+    expect(() =>
+      parseProducts([{ ...validProduct, storeLinks: ['https://shopee.com.br/'] }]),
+    ).toThrow(/storeLinks/);
+  });
+
+  it('rejeita link de loja nulo', () => {
+    expect(() => parseProducts([{ ...validProduct, storeLinks: [null] }])).toThrow(/storeLinks/);
+  });
 });
 
 describe('accessors sobre o JSON real', () => {

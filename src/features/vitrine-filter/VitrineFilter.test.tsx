@@ -58,6 +58,15 @@ describe('VitrineFilter', () => {
     expect(screen.getByText('Garrafa Térmica')).toBeInTheDocument();
   });
 
+  it('volta a mostrar tudo ao clicar no chip Todas', async () => {
+    render(<VitrineFilter products={catalog} categories={['casa', 'cozinha', 'limpeza']} />);
+    await userEvent.click(screen.getByRole('button', { name: 'limpeza' }));
+    expect(screen.queryByText('Garrafa Térmica')).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Todas' }));
+    expect(screen.getByText('Garrafa Térmica')).toBeInTheDocument();
+    expect(screen.getByText('Balde 12L')).toBeInTheDocument();
+  });
+
   it('limpar filtros também reseta o chip de categoria ativo', async () => {
     render(<VitrineFilter products={catalog} categories={['casa', 'cozinha', 'limpeza']} />);
     await userEvent.click(screen.getByRole('button', { name: 'limpeza' }));
