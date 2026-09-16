@@ -1,0 +1,116 @@
+[
+  {
+    "slug": "garrafa-termica-1l",
+    "name": "Garrafa Térmica 1L",
+    "category": "cozinha",
+    "shortDescription": "Mantém a temperatura por até 12 horas.",
+    "longDescription": "Garrafa térmica de 1 litro com ampola de vidro, ideal para café e chá. Alça para transporte e tampa que serve de xícara.",
+    "images": ["/products/garrafa-termica-1l.svg"],
+    "storeLinks": [
+      { "store": "mercado-livre", "url": "https://www.mercadolivre.com.br/" },
+      { "store": "shopee", "url": "https://shopee.com.br/" }
+    ]
+  },
+  {
+    "slug": "balde-multiuso-12l",
+    "name": "Balde Multiuso 12L",
+    "category": "limpeza",
+    "shortDescription": "Resistente, com alça reforçada para transporte.",
+    "longDescription": "Balde plástico de 12 litros para limpeza doméstica, resistente a impactos e com alça reforçada que suporta o peso cheio de água.",
+    "images": ["/products/balde-multiuso-12l.svg"],
+    "storeLinks": [
+      { "store": "mercado-livre", "url": "https://www.mercadolivre.com.br/" }
+    ]
+  },
+  {
+    "slug": "escorredor-de-louca-inox",
+    "name": "Escorredor de Louça Inox",
+    "category": "cozinha",
+    "shortDescription": "Estrutura em aço inox com bandeja coletora.",
+    "longDescription": "Escorredor de louça em aço inox com dois níveis, porta-talheres removível e bandeja coletora de água antiferrugem.",
+    "images": ["/products/escorredor-de-louca-inox.svg"],
+    "storeLinks": [
+      { "store": "shopee", "url": "https://shopee.com.br/" },
+      { "store": "mercado-livre", "url": "https://www.mercadolivre.com.br/" }
+    ]
+  },
+  {
+    "slug": "kit-potes-hermeticos-5-pecas",
+    "name": "Kit Potes Herméticos 5 Peças",
+    "category": "cozinha",
+    "shortDescription": "Conjunto empilhável que mantém alimentos frescos.",
+    "longDescription": "Kit com 5 potes herméticos de tamanhos variados, tampa com trava e vedação de silicone, ideal para organizar mantimentos na despensa.",
+    "images": ["/products/kit-potes-hermeticos-5-pecas.svg"],
+    "storeLinks": [
+      { "store": "mercado-livre", "url": "https://www.mercadolivre.com.br/" }
+    ]
+  },
+  {
+    "slug": "vassoura-limpa-tudo",
+    "name": "Vassoura Limpa-Tudo",
+    "category": "limpeza",
+    "shortDescription": "Cerdas macias que capturam poeira fina.",
+    "longDescription": "Vassoura com cerdas macias e cabo longo, própria para pisos frios e laminados, captura poeira fina sem espalhar.",
+    "images": ["/products/vassoura-limpa-tudo.svg"],
+    "storeLinks": [
+      { "store": "shopee", "url": "https://shopee.com.br/" }
+    ]
+  },
+  {
+    "slug": "caixa-organizadora-30l",
+    "name": "Caixa Organizadora 30L",
+    "category": "organizacao",
+    "shortDescription": "Empilhável, com tampa e travas laterais.",
+    "longDescription": "Caixa organizadora de 30 litros em plástico transparente, empilhável, com tampa e travas laterais que garantem fechamento seguro.",
+    "images": ["/products/caixa-organizadora-30l.svg"],
+    "storeLinks": [
+      { "store": "mercado-livre", "url": "https://www.mercadolivre.com.br/" },
+      { "store": "shopee", "url": "https://shopee.com.br/" }
+    ]
+  },
+  {
+    "slug": "varal-sanfonado-de-parede",
+    "name": "Varal Sanfonado de Parede",
+    "category": "casa",
+    "shortDescription": "Retrátil, economiza espaço em áreas pequenas.",
+    "longDescription": "Varal sanfonado para fixação na parede, com hastes retráteis em alumínio, ideal para lavanderias e áreas de serviço pequenas.",
+    "images": ["/products/varal-sanfonado-de-parede.svg"],
+    "storeLinks": [
+      { "store": "mercado-livre", "url": "https://www.mercadolivre.com.br/" }
+    ]
+  },
+  {
+    "slug": "luminaria-led-recarregavel",
+    "name": "Luminária LED Recarregável",
+    "category": "casa",
+    "shortDescription": "Bateria de longa duração e três níveis de luz.",
+    "longDescription": "Luminária de mesa com LED recarregável via USB, três níveis de intensidade de luz e até 8 horas de autonomia por carga.",
+    "images": ["/products/luminaria-led-recarregavel.svg"],
+    "storeLinks": [
+      { "store": "shopee", "url": "https://shopee.com.br/" }
+    ]
+  },
+  {
+    "slug": "jogo-panos-de-prato-3-pecas",
+    "name": "Jogo Panos de Prato 3 Peças",
+    "category": "cozinha",
+    "shortDescription": "Tecido absorvente de secagem rápida.",
+    "longDescription": "Conjunto com 3 panos de prato em tecido 100% algodão, alta absorção e secagem rápida, estampas variadas.",
+    "images": ["/products/jogo-panos-de-prato-3-pecas.svg"],
+    "storeLinks": [
+      { "store": "mercado-livre", "url": "https://www.mercadolivre.com.br/" }
+    ]
+  },
+  {
+    "slug": "organizador-de-gavetas",
+    "name": "Organizador de Gavetas",
+    "category": "organizacao",
+    "shortDescription": "Divisórias ajustáveis para talheres e utensílios.",
+    "longDescription": "Organizador de gavetas com divisórias ajustáveis, ideal para talheres, utensílios de cozinha e itens de escritório.",
+    "images": ["/products/organizador-de-gavetas.svg"],
+    "storeLinks": [
+      { "store": "shopee", "url": "https://shopee.com.br/" },
+      { "store": "mercado-livre", "url": "https://www.mercadolivre.com.br/" }
+    ]
+  }
+]
