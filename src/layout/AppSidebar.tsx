@@ -224,43 +224,44 @@ const AppSidebar: React.FC = () => {
     </ul>
   );
 
-  const [openSubmenu, setOpenSubmenu] = useState<{
-    type: "main" | "others";
-    index: number;
-  } | null>(null);
   const [subMenuHeight, setSubMenuHeight] = useState<Record<string, number>>(
     {}
   );
   const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  // const isActive = (path: string) => path === pathname;
-   const isActive = useCallback((path: string) => path === pathname, [pathname]);
+  const isActive = useCallback((path: string) => path === pathname, [pathname]);
 
-  useEffect(() => {
-    // Check if the current path matches any submenu item
-    let submenuMatched = false;
-    ["main", "others"].forEach((menuType) => {
-      const items = menuType === "main" ? navItems : othersItems;
-      items.forEach((nav, index) => {
-        if (nav.subItems) {
-          nav.subItems.forEach((subItem) => {
-            if (isActive(subItem.path)) {
-              setOpenSubmenu({
-                type: menuType as "main" | "others",
-                index,
-              });
-              submenuMatched = true;
-            }
-          });
-        }
-      });
-    });
-
-    // If no submenu item matches, close the open submenu
-    if (!submenuMatched) {
-      setOpenSubmenu(null);
+  const findSubmenuMatchingPathname = (
+    currentPathname: string
+  ): { type: "main" | "others"; index: number } | null => {
+    const menusByType: [
+      "main" | "others",
+      NavItem[]
+    ][] = [
+      ["main", navItems],
+      ["others", othersItems],
+    ];
+    for (const [menuType, items] of menusByType) {
+      const index = items.findIndex((nav) =>
+        nav.subItems?.some((subItem) => subItem.path === currentPathname)
+      );
+      if (index !== -1) {
+        return { type: menuType, index };
+      }
     }
-  }, [pathname,isActive]);
+    return null;
+  };
+
+  const [openSubmenu, setOpenSubmenu] = useState<{
+    type: "main" | "others";
+    index: number;
+  } | null>(() => findSubmenuMatchingPathname(pathname));
+  const [submenuPathname, setSubmenuPathname] = useState(pathname);
+
+  if (pathname !== submenuPathname) {
+    setSubmenuPathname(pathname);
+    setOpenSubmenu(findSubmenuMatchingPathname(pathname));
+  }
 
   useEffect(() => {
     // Set the height of the submenu items when the submenu is opened
