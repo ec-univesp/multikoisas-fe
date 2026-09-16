@@ -1,12 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { STORE_LABELS } from './types';
-import type { Product, StoreSlug } from './types';
-
-const PURCHASE_CTA_LABEL_BY_STORE: Record<StoreSlug, string> = {
-  'mercado-livre': `Comprar no ${STORE_LABELS['mercado-livre']}`,
-  shopee: `Comprar na ${STORE_LABELS.shopee}`,
-};
+import { PURCHASE_CTA_LABEL_BY_STORE } from './types';
+import type { Product } from './types';
 
 export const ProductCard = ({ product }: { product: Product }) => {
   const [primaryStoreLink] = product.storeLinks;
