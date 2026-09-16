@@ -1,7 +1,13 @@
+import { ThemeProvider } from "@/context/ThemeContext";
+
 export default function FullWidthPageLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <div>{children}</div>;
+  return (
+    <ThemeProvider>
+      <div>{children}</div>
+    </ThemeProvider>
+  );
 }
