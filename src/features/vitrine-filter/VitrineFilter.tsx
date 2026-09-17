@@ -5,16 +5,18 @@ import { ProductCard } from '@/entities/product';
 import type { Product } from '@/entities/product';
 import { filterProducts } from './filterProducts';
 
+const PRIORITY_IMAGE_COUNT = 4;
+
 type VitrineFilterProps = {
   products: readonly Product[];
   categories: readonly string[];
 };
 
 const chipClassName = (isActive: boolean): string =>
-  `flex h-11 items-center rounded-full px-4 text-sm font-medium ${
+  `flex h-11 items-center rounded-full border px-4 text-sm font-medium ${
     isActive
-      ? 'bg-brand-blue text-white'
-      : 'bg-neutral-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+      ? 'border-brand-500 bg-brand-500 text-white'
+      : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
   }`;
 
 export const VitrineFilter = ({ products, categories }: VitrineFilterProps) => {
@@ -62,26 +64,26 @@ export const VitrineFilter = ({ products, categories }: VitrineFilterProps) => {
           value={searchTerm}
           onChange={(event) => setSearchTerm(event.target.value)}
           placeholder="Buscar produto"
-          className="h-11 w-full rounded-lg border border-gray-200 px-4 text-base text-gray-900 dark:border-gray-700 dark:bg-white/[0.03] dark:text-white"
+          className="h-11 w-full rounded-lg border border-gray-200 px-4 text-base text-gray-800"
         />
       </div>
 
       {visibleProducts.length === 0 ? (
         <div className="mt-8 flex flex-col items-center gap-4 text-center">
-          <p className="text-gray-600 dark:text-gray-400">Nenhum produto encontrado.</p>
+          <p className="text-gray-500">Nenhum produto encontrado.</p>
           <button
             type="button"
             onClick={clearFilters}
-            className="flex h-11 items-center justify-center rounded-lg bg-brand-yellow px-4 text-sm font-semibold text-brand-blue"
+            className="flex h-11 items-center justify-center rounded-lg border border-gray-200 px-4 text-sm font-medium text-gray-700 hover:bg-gray-50"
           >
             Limpar filtros
           </button>
         </div>
       ) : (
         <ul className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
-          {visibleProducts.map((product) => (
+          {visibleProducts.map((product, position) => (
             <li key={product.slug}>
-              <ProductCard product={product} />
+              <ProductCard product={product} hasPriorityImage={position < PRIORITY_IMAGE_COUNT} />
             </li>
           ))}
         </ul>
