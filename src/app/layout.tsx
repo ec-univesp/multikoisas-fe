@@ -10,7 +10,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body className={`${outfit.className} bg-neutral-50 dark:bg-gray-900`}>{children}</body>
+      <body className={`${outfit.className} bg-neutral-50`}>{children}</body>
     </html>
   );
 }

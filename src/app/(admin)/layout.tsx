@@ -3,7 +3,6 @@
 import "flatpickr/dist/flatpickr.css";
 import "../admin.css";
 import { SidebarProvider, useSidebar } from "@/context/SidebarContext";
-import { ThemeProvider } from "@/context/ThemeContext";
 import AppHeader from "@/layout/AppHeader";
 import AppSidebar from "@/layout/AppSidebar";
 import Backdrop from "@/layout/Backdrop";
@@ -35,10 +34,8 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ThemeProvider>
-      <SidebarProvider>
-        <AdminShell>{children}</AdminShell>
-      </SidebarProvider>
-    </ThemeProvider>
+    <SidebarProvider>
+      <AdminShell>{children}</AdminShell>
+    </SidebarProvider>
   );
 }
