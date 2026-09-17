@@ -17,7 +17,7 @@
   @apply pl-5! !text-gray-700 dark:!text-gray-400;
 }
 .apexcharts-tooltip-series-group {
-  @apply !p-0;
+  @apply !px-1 !py-0.5;
 }
 .apexcharts-tooltip-y-group {
   @apply !p-0;
@@ -26,7 +26,11 @@
   @apply !mb-0 !border-b-0 !bg-transparent !p-0 !text-[10px] !leading-4 !text-gray-800 dark:!text-white/90;
 }
 .apexcharts-tooltip-text {
-  @apply !text-theme-xs !text-gray-700 dark:!text-white/90;
+  @apply !text-theme-xs !text-gray-700;
+}
+
+.apexcharts-tooltip-text-y-label {
+  @apply !mr-1.5;
 }
 .apexcharts-tooltip-text-y-value {
   @apply !font-medium;
