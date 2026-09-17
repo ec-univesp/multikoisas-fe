@@ -1,208 +1,162 @@
-# TailAdmin Next.js - Free Next.js Tailwind Admin Dashboard Template
+<div align="center">
 
-TailAdmin is a free and open-source admin dashboard template built on **Next.js and Tailwind CSS** providing developers with everything they need to create a feature-rich and data-driven: back-end, dashboard, or admin panel solution for any sort of web project.
+# MultiKoisas
 
-![TailAdmin - Next.js Dashboard Preview](./banner.png)
+**Tudo em um só lugar.**
 
-With TailAdmin Next.js, you get access to all the necessary dashboard UI components, elements, and pages required to build a high-quality and complete dashboard or admin panel. Whether you're building a dashboard or admin panel for a complex web application or a simple website.
+Vitrine de afiliados da MultiKoisas, loja física de utilidades para casa, cozinha, limpeza e organização.
+O site mostra os produtos e leva o visitante para comprar nas lojas parceiras — a venda acontece lá, não aqui.
 
-TailAdmin utilizes the powerful features of **Next.js 16** and common features of Next.js such as server-side rendering (SSR), static site generation (SSG), and seamless API route integration. Combined with the advancements of **React 19** and the robustness of **TypeScript**, TailAdmin is the perfect solution to help get your project up and running quickly.
+![Next.js](https://img.shields.io/badge/Next.js-16-000000?style=flat-square&logo=nextdotjs&logoColor=white)
+![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-estrito-3178C6?style=flat-square&logo=typescript&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)
+![pnpm](https://img.shields.io/badge/pnpm-11-F69220?style=flat-square&logo=pnpm&logoColor=white)
 
-## Overview
+![Testes](https://img.shields.io/badge/testes-53-6E9F18?style=flat-square&logo=vitest&logoColor=white)
+![Cobertura](https://img.shields.io/badge/cobertura-100%25-22C55E?style=flat-square)
+![Lighthouse](https://img.shields.io/badge/Lighthouse-99_·_100_·_100_·_100-0CCE6B?style=flat-square&logo=lighthouse&logoColor=white)
+![Arquitetura](https://img.shields.io/badge/arquitetura-Feature--Sliced_Design-4F46E5?style=flat-square)
 
-TailAdmin provides essential UI components and layouts for building feature-rich, data-driven admin dashboards and control panels. It's built on:
+![Mercado Livre](https://img.shields.io/badge/Mercado_Livre-FFE600?style=flat-square&logo=mercadopago&logoColor=2D3277)
+![Shopee](https://img.shields.io/badge/Shopee-D0401C?style=flat-square&logo=shopee&logoColor=white)
+![AliExpress](https://img.shields.io/badge/AliExpress-C92704?style=flat-square&logo=alibabadotcom&logoColor=white)
 
-* Next.js 16.x
-* React 19
-* TypeScript
-* Tailwind CSS V4
+Projeto integrador da UNIVESP · time Squad PI2
 
-### Quick Links
+</div>
 
-* [✨ Visit Website](https://tailadmin.com)
-* [📄 Documentation](https://tailadmin.com/docs)
-* [⬇️ Download](https://tailadmin.com/download)
-* [🖌️ Figma Design File (Community Edition)](https://www.figma.com/community/file/1463141366275764364)
-* [⚡ Get PRO Version](https://tailadmin.com/pricing)
+---
 
-### Demos
+## Duas superfícies, um projeto
 
-* [Free Version](https://nextjs-free-demo.tailadmin.com)
-* [Pro Version](https://nextjs-demo.tailadmin.com)
+| Endereço | O que é |
+| --- | --- |
+| `/` | Vitrine pública: produtos com filtro por categoria e busca |
+| `/produto/<slug>` | Página do produto: fotos, descrição e um botão por loja parceira |
+| `/admin` | Painel administrativo |
+| `/admin/produtos` | Lista dos produtos publicados |
 
-### Other Versions
+## Como rodar na sua máquina
 
-- [Next.js Version](https://github.com/TailAdmin/free-nextjs-admin-dashboard)
-- [React.js Version](https://github.com/TailAdmin/free-react-tailwind-admin-dashboard)
-- [Vue.js Version](https://github.com/TailAdmin/vue-tailwind-admin-dashboard)
-- [Angular Version](https://github.com/TailAdmin/free-angular-tailwind-dashboard)
-- [Laravel Version](https://github.com/TailAdmin/tailadmin-laravel)
-
-## Installation
-
-### Prerequisites
-
-To get started with TailAdmin, ensure you have the following prerequisites installed and set up:
-
-* Node.js 18.x or later (recommended to use Node.js 20.x or later)
-
-### Cloning the Repository
-
-Clone the repository using the following command:
+Você precisa de **Node.js 20 ou mais novo** e **pnpm**. Para conferir o que já tem instalado:
 
 ```bash
-git clone https://github.com/TailAdmin/free-nextjs-admin-dashboard.git
+node --version
+pnpm --version
 ```
 
-> Windows Users: place the repository near the root of your drive if you face issues while cloning.
+Se o `pnpm` não estiver instalado, a forma mais simples é pelo próprio Node:
 
-1. Install dependencies:
+```bash
+corepack enable pnpm
+```
 
-   ```bash
-   npm install
-   # or
-   yarn install
-   ```
+Com isso resolvido, são três passos:
 
-   > Use `--legacy-peer-deps` flag if you face peer-dependency error during installation.
+```bash
+git clone https://github.com/ec-univesp/multikoisas-fe.git
+cd multikoisas-fe
+pnpm install
+pnpm dev
+```
 
-2. Start the development server:
+Abra <http://localhost:3000> e a vitrine aparece. O painel fica em <http://localhost:3000/admin>.
 
-   ```bash
-   npm run dev
-   # or
-   yarn dev
-   ```
+O servidor recarrega sozinho a cada arquivo salvo — não precisa reiniciar nada enquanto desenvolve.
 
-## Components
+### Se algo der errado
 
-TailAdmin is a pre-designed starting point for building a web-based dashboard using Next.js and Tailwind CSS. The template includes:
+**`pnpm: command not found`** — o corepack não foi habilitado. Rode `corepack enable pnpm` e abra um terminal novo.
 
-* Sophisticated and accessible sidebar
-* Data visualization components
-* Profile management and custom 404 page
-* Tables and Charts(Line and Bar)
-* Authentication forms and input elements
-* Alerts, Dropdowns, Modals, Buttons and more
-* Can't forget Dark Mode 🕶️
+**A porta 3000 já está em uso** — outro projeto está rodando nela. Suba em outra porta com `pnpm dev --port 3001`.
 
-All components are built with React and styled using Tailwind CSS for easy customization.
+**As fotos dos produtos não carregam** — elas vêm do Pexels por URL, então a primeira carga precisa de internet. Depois ficam em cache.
 
-## Feature Comparison
+**No macOS, o git reclama da licença do Xcode** — aponte as ferramentas de linha de comando para a instalação leve:
+`sudo xcode-select --switch /Library/Developer/CommandLineTools`
 
-### Free Version
+## Comandos disponíveis
 
-* 1 Unique Dashboard
-* 30+ dashboard components
-* 50+ UI elements
-* Basic Figma design files
-* Community support
+```bash
+pnpm dev             # servidor de desenvolvimento
+pnpm build           # compila para produção
+pnpm start           # roda o que foi compilado (use depois do build)
+pnpm lint            # procura problemas de código
+pnpm typecheck       # confere os tipos do TypeScript
+pnpm test            # roda os testes uma vez
+pnpm test:watch      # roda os testes e fica observando os arquivos
+pnpm test:coverage   # roda os testes e mede a cobertura (mínimo de 90%)
+```
 
-### Pro Version
+Antes de pedir revisão de um Pull Request, os quatro precisam passar: `pnpm lint`, `pnpm typecheck`, `pnpm test` e `pnpm build`.
 
-* 7 Unique Dashboards: Analytics, Ecommerce, Marketing, CRM, SaaS, Stocks, Logistics (more coming soon)
-* 500+ dashboard components and UI elements
-* Complete Figma design file
-* Email support
+## Onde fica cada coisa
 
-To learn more about pro version features and pricing, visit our [pricing page](https://tailadmin.com/pricing).
+```
+src/
+  app/
+    (site)/        páginas públicas: vitrine e detalhe do produto
+    (admin)/       páginas do painel
+  widgets/         blocos de página: hero, vitrine, rodapé, detalhe
+  features/        interações: filtro e busca da vitrine
+  entities/        o produto: tipo, catálogo, validação e card
+  components/      componentes do template TailAdmin (botão, tabela, modal...)
+  data/            products.json — o catálogo
+```
 
-## Changelog
+A regra de dependência é de cima para baixo: `app` usa `widgets`, que usa `features`, que usa `entities`. Nunca o contrário.
 
-### Version 2.3.0 - [April 28, 2026]
+**Reuse o que já existe.** Antes de criar um componente, procure em `src/components/` — o template traz botão, tabela, modal, formulário, badge e mais. Escrever de novo o que já está pronto gera inconsistência visual e manutenção em dobro.
 
-- **New Feature**: Added **AI Dashboard** with token usage and revenue tracking.
-- **New Feature**: Added **Sales Dashboard** with retention and multi-channel analytics.
-- **New Feature**: Added **Finance Dashboard** with cashflow and balance management.
-- **New Feature**: Introduced **6 New Layout variations** for improved UI flexibility.
-- **Enhancement**: Integrated **Advanced Data Visualization** with 7+ new chart types.
+## Como os produtos são cadastrados hoje
 
-### Version 2.2.3 - [March 15, 2026]
+Ainda não existe banco de dados. O catálogo é o arquivo `src/data/products.json`, e cada produto tem esta forma:
 
-* update ESLint configuration and dependencies; upgrade Next.js to version 16.1.6
+```json
+{
+  "slug": "garrafa-termica-1l",
+  "name": "Garrafa Térmica 1L",
+  "category": "Cozinha",
+  "shortDescription": "Aparece no card da vitrine.",
+  "longDescription": "Aparece na página do produto.",
+  "images": ["https://images.pexels.com/photos/..."],
+  "storeLinks": [
+    { "store": "mercado-livre", "url": "https://..." },
+    { "store": "shopee", "url": "https://..." }
+  ]
+}
+```
 
-### Version 2.2.2 - [December 30, 2025]
+A primeira loja da lista é a principal: é o botão que aparece no card da vitrine.
 
-* Fixed date picker positioning and functionality in Statistics Chart.
+O arquivo é validado quando o projeto compila. Produto sem link de compra, sem imagem, com campo vazio ou com `slug` repetido **derruba o build** em vez de chegar quebrado no site. Se o build falhar reclamando de um produto, a mensagem diz qual e o que está faltando.
 
+Para acrescentar uma loja nova (Amazon, por exemplo), basta uma entrada em `STORE_PRESENTATION`, em `src/entities/product/types.ts`, com o nome, o texto do botão e as cores dela. Todos os botões do site passam a reconhecê-la.
 
-### Version 2.1.0 - [November 15, 2025]
+## Regras que o projeto não quebra
 
-* Updated to Next.js 16.x
-* Fixed all reported minor bugs
+- **Nenhum preço na vitrine.** Quem vende é a loja parceira.
+- **O botão de compra sempre diz o nome da loja** ("Comprar na Shopee"), nunca um "Comprar" genérico: o visitante precisa saber para onde está indo.
+- **Mobile primeiro.** Projete em 375px de largura antes de pensar no desktop, com alvos de toque de pelo menos 44 pixels.
+- **Tema claro.** Não há modo escuro em nenhuma das duas superfícies.
+- **Textos em português**, sempre.
+- **Testes junto com o código**, com cobertura mínima de 90%.
 
-### Version 2.0.2 - [March 25, 2025]
+## Como contribuir
 
-* Upgraded to Next.js 16.x for [CVE-2025-29927](https://nextjs.org/blog/cve-2025-29927) concerns
-* Included overrides vectormap for packages to prevent peer dependency errors during installation.
-* Migrated from react-flatpickr to flatpickr package for React 19 support
+Toda branch nasce da `developer` e volta para ela por Pull Request. A `main` só recebe versões prontas para publicação.
 
-### Version 2.0.1 - [February 27, 2025]
+```bash
+git checkout developer
+git pull
+git checkout -b feat/nome-do-que-voce-vai-fazer
+```
 
-#### Update Overview
+Mensagens de commit em inglês, no padrão Conventional Commits: `feat:` para funcionalidade nova, `fix:` para correção, `docs:` para documentação, `test:` para teste, `refactor:` quando o comportamento não muda. Um assunto por commit.
 
-* Upgraded to Tailwind CSS v4 for better performance and efficiency.
-* Updated class usage to match the latest syntax and features.
-* Replaced deprecated class and optimized styles.
+## Stack
 
-#### Next Steps
+Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · Vitest com Testing Library · pnpm
 
-* Run npm install or yarn install to update dependencies.
-* Check for any style changes or compatibility issues.
-* Refer to the Tailwind CSS v4 [Migration Guide](https://tailwindcss.com/docs/upgrade-guide) on this release. if needed.
-* This update keeps the project up to date with the latest Tailwind improvements. 🚀
-
-### v2.0.0 (February 2025)
-
-A major update focused on Next.js 16 implementation and comprehensive redesign.
-
-#### Major Improvements
-
-* Complete redesign using Next.js 16 App Router and React Server Components
-* Enhanced user interface with Next.js-optimized components
-* Improved responsiveness and accessibility
-* New features including collapsible sidebar, chat screens, and calendar
-* Redesigned authentication using Next.js App Router and server actions
-* Updated data visualization using ApexCharts for React
-
-#### Breaking Changes
-
-* Migrated from Next.js 14 to Next.js 16
-* Chart components now use ApexCharts for React
-* Authentication flow updated to use Server Actions and middleware
-
-[Read more](https://tailadmin.com/docs/update-logs/nextjs) on this release.
-
-### v1.3.4 (July 01, 2024)
-
-* Fixed JSvectormap rendering issues
-
-### v1.3.3 (June 20, 2024)
-
-* Fixed build error related to Loader component
-
-### v1.3.2 (June 19, 2024)
-
-* Added ClickOutside component for dropdown menus
-* Refactored sidebar components
-* Updated Jsvectormap package
-
-### v1.3.1 (Feb 12, 2024)
-
-* Fixed layout naming consistency
-* Updated styles
-
-### v1.3.0 (Feb 05, 2024)
-
-* Upgraded to Next.js 14
-* Added Flatpickr integration
-* Improved form elements
-* Enhanced multiselect functionality
-* Added default layout component
-
-## License
-
-TailAdmin Next.js Free Version is released under the MIT License.
-
-## Support
-If you find this project helpful, please consider giving it a star on GitHub. Your support helps us continue developing and maintaining this template.
+A base visual é o template [TailAdmin](https://tailadmin.com), usado no painel e na vitrine para as duas superfícies falarem a mesma língua.
