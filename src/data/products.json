@@ -5,10 +5,18 @@
     "category": "Cozinha",
     "shortDescription": "Mantém a temperatura por até 12 horas.",
     "longDescription": "Garrafa térmica de 1 litro com ampola de vidro, ideal para café e chá. Alça para transporte e tampa que serve de xícara.",
-    "images": ["/products/garrafa-termica-1l.svg"],
+    "images": [
+      "https://images.pexels.com/photos/29307238/pexels-photo-29307238.jpeg?auto=compress&cs=tinysrgb&w=800"
+    ],
     "storeLinks": [
-      { "store": "mercado-livre", "url": "https://www.mercadolivre.com.br/" },
-      { "store": "shopee", "url": "https://shopee.com.br/" }
+      {
+        "store": "mercado-livre",
+        "url": "https://www.mercadolivre.com.br/"
+      },
+      {
+        "store": "shopee",
+        "url": "https://shopee.com.br/"
+      }
     ]
   },
   {
@@ -17,9 +25,14 @@
     "category": "Limpeza",
     "shortDescription": "Resistente, com alça reforçada para transporte.",
     "longDescription": "Balde plástico de 12 litros para limpeza doméstica, resistente a impactos e com alça reforçada que suporta o peso cheio de água.",
-    "images": ["/products/balde-multiuso-12l.svg"],
+    "images": [
+      "https://images.pexels.com/photos/15336632/pexels-photo-15336632.jpeg?auto=compress&cs=tinysrgb&w=800"
+    ],
     "storeLinks": [
-      { "store": "mercado-livre", "url": "https://www.mercadolivre.com.br/" }
+      {
+        "store": "mercado-livre",
+        "url": "https://www.mercadolivre.com.br/"
+      }
     ]
   },
   {
@@ -28,10 +41,18 @@
     "category": "Cozinha",
     "shortDescription": "Estrutura em aço inox com bandeja coletora.",
     "longDescription": "Escorredor de louça em aço inox com dois níveis, porta-talheres removível e bandeja coletora de água antiferrugem.",
-    "images": ["/products/escorredor-de-louca-inox.svg"],
+    "images": [
+      "https://images.pexels.com/photos/3869662/pexels-photo-3869662.jpeg?auto=compress&cs=tinysrgb&w=800"
+    ],
     "storeLinks": [
-      { "store": "shopee", "url": "https://shopee.com.br/" },
-      { "store": "mercado-livre", "url": "https://www.mercadolivre.com.br/" }
+      {
+        "store": "shopee",
+        "url": "https://shopee.com.br/"
+      },
+      {
+        "store": "mercado-livre",
+        "url": "https://www.mercadolivre.com.br/"
+      }
     ]
   },
   {
@@ -40,9 +61,14 @@
     "category": "Cozinha",
     "shortDescription": "Conjunto empilhável que mantém alimentos frescos.",
     "longDescription": "Kit com 5 potes herméticos de tamanhos variados, tampa com trava e vedação de silicone, ideal para organizar mantimentos na despensa.",
-    "images": ["/products/kit-potes-hermeticos-5-pecas.svg"],
+    "images": [
+      "https://images.pexels.com/photos/4096909/pexels-photo-4096909.jpeg?auto=compress&cs=tinysrgb&w=800"
+    ],
     "storeLinks": [
-      { "store": "mercado-livre", "url": "https://www.mercadolivre.com.br/" }
+      {
+        "store": "mercado-livre",
+        "url": "https://www.mercadolivre.com.br/"
+      }
     ]
   },
   {
@@ -51,9 +77,14 @@
     "category": "Limpeza",
     "shortDescription": "Cerdas macias que capturam poeira fina.",
     "longDescription": "Vassoura com cerdas macias e cabo longo, própria para pisos frios e laminados, captura poeira fina sem espalhar.",
-    "images": ["/products/vassoura-limpa-tudo.svg"],
+    "images": [
+      "https://images.pexels.com/photos/4992076/pexels-photo-4992076.jpeg?auto=compress&cs=tinysrgb&w=800"
+    ],
     "storeLinks": [
-      { "store": "shopee", "url": "https://shopee.com.br/" }
+      {
+        "store": "shopee",
+        "url": "https://shopee.com.br/"
+      }
     ]
   },
   {
@@ -62,10 +93,18 @@
     "category": "Organização",
     "shortDescription": "Empilhável, com tampa e travas laterais.",
     "longDescription": "Caixa organizadora de 30 litros em plástico transparente, empilhável, com tampa e travas laterais que garantem fechamento seguro.",
-    "images": ["/products/caixa-organizadora-30l.svg"],
+    "images": [
+      "https://images.pexels.com/photos/13968282/pexels-photo-13968282.jpeg?auto=compress&cs=tinysrgb&w=800"
+    ],
     "storeLinks": [
-      { "store": "mercado-livre", "url": "https://www.mercadolivre.com.br/" },
-      { "store": "shopee", "url": "https://shopee.com.br/" }
+      {
+        "store": "mercado-livre",
+        "url": "https://www.mercadolivre.com.br/"
+      },
+      {
+        "store": "shopee",
+        "url": "https://shopee.com.br/"
+      }
     ]
   },
   {
@@ -74,9 +113,14 @@
     "category": "Casa",
     "shortDescription": "Retrátil, economiza espaço em áreas pequenas.",
     "longDescription": "Varal sanfonado para fixação na parede, com hastes retráteis em alumínio, ideal para lavanderias e áreas de serviço pequenas.",
-    "images": ["/products/varal-sanfonado-de-parede.svg"],
+    "images": [
+      "https://images.pexels.com/photos/4495934/pexels-photo-4495934.jpeg?auto=compress&cs=tinysrgb&w=800"
+    ],
     "storeLinks": [
-      { "store": "mercado-livre", "url": "https://www.mercadolivre.com.br/" }
+      {
+        "store": "mercado-livre",
+        "url": "https://www.mercadolivre.com.br/"
+      }
     ]
   },
   {
@@ -85,9 +129,14 @@
     "category": "Casa",
     "shortDescription": "Bateria de longa duração e três níveis de luz.",
     "longDescription": "Luminária de mesa com LED recarregável via USB, três níveis de intensidade de luz e até 8 horas de autonomia por carga.",
-    "images": ["/products/luminaria-led-recarregavel.svg"],
+    "images": [
+      "https://images.pexels.com/photos/33181511/pexels-photo-33181511.jpeg?auto=compress&cs=tinysrgb&w=800"
+    ],
     "storeLinks": [
-      { "store": "shopee", "url": "https://shopee.com.br/" }
+      {
+        "store": "shopee",
+        "url": "https://shopee.com.br/"
+      }
     ]
   },
   {
@@ -96,9 +145,14 @@
     "category": "Cozinha",
     "shortDescription": "Tecido absorvente de secagem rápida.",
     "longDescription": "Conjunto com 3 panos de prato em tecido 100% algodão, alta absorção e secagem rápida, estampas variadas.",
-    "images": ["/products/jogo-panos-de-prato-3-pecas.svg"],
+    "images": [
+      "https://images.pexels.com/photos/8896869/pexels-photo-8896869.jpeg?auto=compress&cs=tinysrgb&w=800"
+    ],
     "storeLinks": [
-      { "store": "mercado-livre", "url": "https://www.mercadolivre.com.br/" }
+      {
+        "store": "mercado-livre",
+        "url": "https://www.mercadolivre.com.br/"
+      }
     ]
   },
   {
@@ -107,10 +161,18 @@
     "category": "Organização",
     "shortDescription": "Divisórias ajustáveis para talheres e utensílios.",
     "longDescription": "Organizador de gavetas com divisórias ajustáveis, ideal para talheres, utensílios de cozinha e itens de escritório.",
-    "images": ["/products/organizador-de-gavetas.svg"],
+    "images": [
+      "https://images.pexels.com/photos/38310810/pexels-photo-38310810.jpeg?auto=compress&cs=tinysrgb&w=800"
+    ],
     "storeLinks": [
-      { "store": "shopee", "url": "https://shopee.com.br/" },
-      { "store": "mercado-livre", "url": "https://www.mercadolivre.com.br/" }
+      {
+        "store": "shopee",
+        "url": "https://shopee.com.br/"
+      },
+      {
+        "store": "mercado-livre",
+        "url": "https://www.mercadolivre.com.br/"
+      }
     ]
   }
 ]
