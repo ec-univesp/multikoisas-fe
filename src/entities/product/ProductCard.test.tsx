@@ -18,7 +18,7 @@ const product: Product = {
 };
 
 describe('ProductCard', () => {
-  it('CTA nomeia a loja principal (primeiro storeLink)', () => {
+  it('names the primary store in the buy button', () => {
     render(<ProductCard product={product} />);
     const buyLink = screen.getByRole('link', { name: /comprar no mercado livre/i });
     expect(buyLink).toHaveAttribute('href', 'https://www.mercadolivre.com.br/');
@@ -27,7 +27,7 @@ describe('ProductCard', () => {
     expect(buyLink).toHaveAttribute('rel', expect.stringContaining('sponsored'));
   });
 
-  it('link de detalhe aponta para a rota do produto', () => {
+  it('links to the product route', () => {
     render(<ProductCard product={product} />);
     expect(screen.getByRole('link', { name: /ver detalhes/i })).toHaveAttribute(
       'href',
@@ -35,7 +35,7 @@ describe('ProductCard', () => {
     );
   });
 
-  it('a foto leva para a página do produto', () => {
+  it('opens the product page from the photo', () => {
     render(<ProductCard product={product} />);
     expect(screen.getByAltText('Garrafa Térmica 1L').closest('a')).toHaveAttribute(
       'href',
@@ -43,7 +43,7 @@ describe('ProductCard', () => {
     );
   });
 
-  it('o nome do produto leva para a página do produto', () => {
+  it('opens the product page from the name', () => {
     render(<ProductCard product={product} />);
     expect(screen.getByRole('link', { name: 'Garrafa Térmica 1L' })).toHaveAttribute(
       'href',
@@ -51,7 +51,7 @@ describe('ProductCard', () => {
     );
   });
 
-  it('o botão de compra usa a cor da loja de destino', () => {
+  it('paints the buy button with the destination store colors', () => {
     const { rerender } = render(<ProductCard product={product} />);
     const mercadoLivreButton = screen.getByRole('link', { name: /mercado livre/i });
     expect(mercadoLivreButton.className).toContain(
@@ -68,7 +68,7 @@ describe('ProductCard', () => {
     );
   });
 
-  it('mostra nome, categoria e descrição curta — e nenhum preço', () => {
+  it('shows name, category and short description, never a price', () => {
     render(<ProductCard product={product} />);
     expect(screen.getByText('Garrafa Térmica 1L')).toBeInTheDocument();
     expect(screen.getByText('cozinha')).toBeInTheDocument();

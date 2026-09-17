@@ -6,12 +6,20 @@ export const SiteHeader = () => (
       <Link href="/" className="flex h-11 items-center text-lg font-semibold text-gray-800">
         multikoisas
       </Link>
-      <Link
-        href="#sobre"
-        className="flex h-11 items-center px-2 text-sm font-medium text-gray-500 hover:text-brand-500"
-      >
-        Sobre
-      </Link>
+      <nav className="flex items-center gap-2">
+        <Link
+          href="#sobre"
+          className="flex h-11 items-center px-2 text-sm font-medium text-gray-500 hover:text-brand-500"
+        >
+          Sobre
+        </Link>
+        <Link
+          href="/admin"
+          className="flex h-11 items-center rounded-lg border border-gray-200 px-4 text-sm font-medium text-gray-700 hover:bg-gray-50"
+        >
+          Painel
+        </Link>
+      </nav>
     </div>
   </header>
 );

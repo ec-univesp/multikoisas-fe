@@ -10,7 +10,6 @@ import {
   HorizontaLDots,
   TableIcon,
 } from "../icons/index";
-import SidebarWidget from "./SidebarWidget";
 
 type NavItem = {
   name: string;
@@ -251,26 +250,16 @@ const AppSidebar: React.FC = () => {
       >
         <Link href="/admin">
           {isExpanded || isHovered || isMobileOpen ? (
-            <>
-              <Image
-                className="dark:hidden"
-                src="/images/logo/logo.svg"
-                alt="Logo"
-                width={150}
-                height={40}
-              />
-              <Image
-                className="hidden dark:block"
-                src="/images/logo/logo-dark.svg"
-                alt="Logo"
-                width={150}
-                height={40}
-              />
-            </>
+            <Image
+              src="/images/logo/logo.svg"
+              alt="MultiKoisas"
+              width={180}
+              height={40}
+            />
           ) : (
             <Image
               src="/images/logo/logo-icon.svg"
-              alt="Logo"
+              alt="MultiKoisas"
               width={32}
               height={32}
             />
@@ -317,7 +306,6 @@ const AppSidebar: React.FC = () => {
             ) : null}
           </div>
         </nav>
-        {isExpanded || isHovered || isMobileOpen ? <SidebarWidget /> : null}
       </div>
     </aside>
   );
