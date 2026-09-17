@@ -18,6 +18,8 @@ O site mostra os produtos e leva o visitante para comprar nas lojas parceiras �
 ![Lighthouse](https://img.shields.io/badge/Lighthouse-99_·_100_·_100_·_100-0CCE6B?style=flat-square&logo=lighthouse&logoColor=white)
 ![Arquitetura](https://img.shields.io/badge/arquitetura-Feature--Sliced_Design-4F46E5?style=flat-square)
 
+[![Site no ar](https://img.shields.io/badge/site-multikoisas.netlify.app-0CCE6B?style=flat-square&logo=netlify&logoColor=white)](https://multikoisas.netlify.app)
+
 ![Mercado Livre](https://img.shields.io/badge/Mercado_Livre-FFE600?style=flat-square&logo=mercadopago&logoColor=2D3277)
 ![Shopee](https://img.shields.io/badge/Shopee-D0401C?style=flat-square&logo=shopee&logoColor=white)
 ![AliExpress](https://img.shields.io/badge/AliExpress-C92704?style=flat-square&logo=alibabadotcom&logoColor=white)
@@ -145,7 +147,7 @@ Para acrescentar uma loja nova (Amazon, por exemplo), basta uma entrada em `STOR
 
 ## Publicação
 
-O site é publicado no Netlify. A configuração está em `netlify.toml`: comando de build, versão do Node e o plugin do Next.js, que é quem faz as rotas estáticas e a otimização de imagem funcionarem lá.
+O site está no ar em <https://multikoisas.netlify.app>, publicado pelo Netlify. A configuração está em `netlify.toml`: comando de build, versão do Node e o plugin do Next.js, que é quem faz as rotas estáticas e a otimização de imagem funcionarem lá.
 
 Para conectar pela primeira vez: no Netlify, **Add new site → Import an existing project**, escolha este repositório e confirme. As configurações de build vêm do `netlify.toml`, não precisa preencher nada na tela.
 
