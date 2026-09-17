@@ -101,7 +101,7 @@ src/
   widgets/         blocos de página: hero, vitrine, rodapé, detalhe
   features/        interações: filtro e busca da vitrine
   entities/        o produto: tipo, catálogo, validação e card
-  components/      componentes do template TailAdmin (botão, tabela, modal...)
+  components/      biblioteca de componentes do projeto (botão, tabela, modal...)
   data/            products.json — o catálogo
 ```
 
@@ -159,4 +159,4 @@ Mensagens de commit em inglês, no padrão Conventional Commits: `feat:` para fu
 
 Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · Vitest com Testing Library · pnpm
 
-A base visual é o template [TailAdmin](https://tailadmin.com), usado no painel e na vitrine para as duas superfícies falarem a mesma língua.
+Vitrine e painel compartilham a mesma biblioteca de componentes, para as duas superfícies falarem a mesma língua.
