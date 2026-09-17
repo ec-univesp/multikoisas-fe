@@ -1,0 +1,1 @@
+export { ProductAdminPanel } from './ProductAdminPanel';
