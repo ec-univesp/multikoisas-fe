@@ -18,17 +18,17 @@ const product: Product = {
 };
 
 describe('ProductDetail', () => {
-  it('mostra o nome do produto como heading principal', () => {
+  it('shows the product name as the main heading', () => {
     render(<ProductDetail product={product} />);
     expect(screen.getByRole('heading', { level: 1, name: product.name })).toBeInTheDocument();
   });
 
-  it('mostra a descrição longa', () => {
+  it('shows the full description', () => {
     render(<ProductDetail product={product} />);
     expect(screen.getByText(product.longDescription)).toBeInTheDocument();
   });
 
-  it('mostra um link de compra por loja, nomeando cada loja com rel e target corretos', () => {
+  it('renders one buy link per store, naming the store and marking it as external', () => {
     render(<ProductDetail product={product} />);
 
     const mercadoLivreLink = screen.getByRole('link', { name: /comprar no mercado livre/i });
@@ -44,12 +44,12 @@ describe('ProductDetail', () => {
     expect(shopeeLink).toHaveAttribute('rel', expect.stringContaining('sponsored'));
   });
 
-  it('mostra um link para voltar para a vitrine', () => {
+  it('links back to the storefront', () => {
     render(<ProductDetail product={product} />);
     expect(screen.getByRole('link', { name: /voltar para a vitrine/i })).toHaveAttribute('href', '/');
   });
 
-  it('nunca mostra preço', () => {
+  it('never shows a price', () => {
     render(<ProductDetail product={product} />);
     expect(screen.queryByText(/R\$/)).not.toBeInTheDocument();
   });

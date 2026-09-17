@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { SiteFooter } from './SiteFooter';
 
 describe('SiteFooter', () => {
-  it('mostra o nome da loja e o ano atual', () => {
+  it('shows the store name and the current year', () => {
     render(<SiteFooter />);
     const currentYear = new Date().getFullYear().toString();
     expect(screen.getByText(/multikoisas/i)).toBeInTheDocument();

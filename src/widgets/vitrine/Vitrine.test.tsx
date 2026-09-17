@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { Vitrine } from './Vitrine';
 
 describe('Vitrine', () => {
-  it('mostra o título Produtos e produtos reais do catálogo', () => {
+  it('renders the section heading and products from the catalog', () => {
     render(<Vitrine />);
     expect(screen.getByRole('heading', { name: 'Produtos' })).toBeInTheDocument();
     expect(screen.getByText('Garrafa Térmica 1L')).toBeInTheDocument();

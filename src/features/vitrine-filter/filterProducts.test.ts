@@ -21,27 +21,27 @@ const catalog = [
 ];
 
 describe('filterProducts', () => {
-  it('sem filtros retorna tudo', () => {
+  it('returns every product when no filter is set', () => {
     expect(filterProducts(catalog, { category: null, searchTerm: '' })).toHaveLength(4);
   });
 
-  it('filtra por categoria', () => {
+  it('filters by category', () => {
     expect(filterProducts(catalog, { category: 'limpeza', searchTerm: '' })).toEqual([catalog[1]]);
   });
 
-  it('busca por nome sem diferenciar acento/caixa', () => {
+  it('searches by name ignoring accents and case', () => {
     expect(filterProducts(catalog, { category: null, searchTerm: 'termica' })).toEqual([catalog[0]]);
   });
 
-  it('combina categoria e busca', () => {
+  it('combines category and search', () => {
     expect(filterProducts(catalog, { category: 'casa', searchTerm: 'garrafa' })).toHaveLength(0);
   });
 
-  it('encontra "Garrafa Térmica" buscando por "termica" sem acento', () => {
+  it('finds an accented name when the search term has no accent', () => {
     expect(filterProducts(catalog, { category: null, searchTerm: 'termica' })).toEqual([catalog[0]]);
   });
 
-  it('encontra "Caixa de Organização" buscando por "ORGANIZAÇÃO" com acento e caixa alta', () => {
+  it('finds a product when the search term is accented and uppercase', () => {
     expect(filterProducts(catalog, { category: null, searchTerm: 'ORGANIZAÇÃO' })).toEqual([catalog[3]]);
   });
 });

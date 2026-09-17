@@ -22,7 +22,7 @@ const catalog = [
 ];
 
 describe('VitrineFilter', () => {
-  it('renderiza um chip "todas" e um por categoria', () => {
+  it('renders an all chip plus one chip per category', () => {
     render(<VitrineFilter products={catalog} categories={['casa', 'cozinha', 'limpeza']} />);
     expect(screen.getByRole('button', { name: 'Todas' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'casa' })).toBeInTheDocument();
@@ -30,12 +30,12 @@ describe('VitrineFilter', () => {
     expect(screen.getByRole('button', { name: 'limpeza' })).toBeInTheDocument();
   });
 
-  it('chip "todas" começa ativo com aria-pressed true', () => {
+  it('starts with the all chip selected', () => {
     render(<VitrineFilter products={catalog} categories={['casa', 'cozinha', 'limpeza']} />);
     expect(screen.getByRole('button', { name: 'Todas' })).toHaveAttribute('aria-pressed', 'true');
   });
 
-  it('filtra por categoria ao clicar no chip', async () => {
+  it('filters the grid when a category chip is clicked', async () => {
     render(<VitrineFilter products={catalog} categories={['casa', 'cozinha', 'limpeza']} />);
     await userEvent.click(screen.getByRole('button', { name: 'limpeza' }));
     expect(screen.getByRole('button', { name: 'limpeza' })).toHaveAttribute('aria-pressed', 'true');
@@ -43,14 +43,14 @@ describe('VitrineFilter', () => {
     expect(screen.queryByText('Garrafa Térmica')).not.toBeInTheDocument();
   });
 
-  it('filtra pela busca digitada', async () => {
+  it('filters the grid as the visitor types', async () => {
     render(<VitrineFilter products={catalog} categories={['casa', 'cozinha', 'limpeza']} />);
     await userEvent.type(screen.getByRole('searchbox', { name: /buscar produto/i }), 'termica');
     expect(screen.getByText('Garrafa Térmica')).toBeInTheDocument();
     expect(screen.queryByText('Balde 12L')).not.toBeInTheDocument();
   });
 
-  it('estado vazio oferece limpar filtros', async () => {
+  it('offers to clear filters when nothing matches', async () => {
     render(<VitrineFilter products={catalog} categories={['casa', 'cozinha', 'limpeza']} />);
     await userEvent.type(screen.getByRole('searchbox', { name: /buscar produto/i }), 'inexistente');
     expect(screen.getByText(/nenhum produto encontrado/i)).toBeInTheDocument();
@@ -58,7 +58,7 @@ describe('VitrineFilter', () => {
     expect(screen.getByText('Garrafa Térmica')).toBeInTheDocument();
   });
 
-  it('volta a mostrar tudo ao clicar no chip Todas', async () => {
+  it('shows every product again when the all chip is clicked', async () => {
     render(<VitrineFilter products={catalog} categories={['casa', 'cozinha', 'limpeza']} />);
     await userEvent.click(screen.getByRole('button', { name: 'limpeza' }));
     expect(screen.queryByText('Garrafa Térmica')).not.toBeInTheDocument();
@@ -67,7 +67,7 @@ describe('VitrineFilter', () => {
     expect(screen.getByText('Balde 12L')).toBeInTheDocument();
   });
 
-  it('limpar filtros também reseta o chip de categoria ativo', async () => {
+  it('clearing filters also resets the selected category', async () => {
     render(<VitrineFilter products={catalog} categories={['casa', 'cozinha', 'limpeza']} />);
     await userEvent.click(screen.getByRole('button', { name: 'limpeza' }));
     await userEvent.type(screen.getByRole('searchbox', { name: /buscar produto/i }), 'inexistente');
