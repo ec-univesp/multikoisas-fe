@@ -5,17 +5,10 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
 import {
-  BoxCubeIcon,
-  CalenderIcon,
   ChevronDownIcon,
   GridIcon,
   HorizontaLDots,
-  ListIcon,
-  PageIcon,
-  PieChartIcon,
-  PlugInIcon,
   TableIcon,
-  UserCircleIcon,
 } from "../icons/index";
 import SidebarWidget from "./SidebarWidget";
 
@@ -29,70 +22,17 @@ type NavItem = {
 const navItems: NavItem[] = [
   {
     icon: <GridIcon />,
-    name: "Dashboard",
-    subItems: [{ name: "Ecommerce", path: "/", pro: false }],
+    name: "Painel",
+    path: "/admin",
   },
   {
-    icon: <CalenderIcon />,
-    name: "Calendar",
-    path: "/calendar",
-  },
-  {
-    icon: <UserCircleIcon />,
-    name: "User Profile",
-    path: "/profile",
-  },
-
-  {
-    name: "Forms",
-    icon: <ListIcon />,
-    subItems: [{ name: "Form Elements", path: "/form-elements", pro: false }],
-  },
-  {
-    name: "Tables",
     icon: <TableIcon />,
-    subItems: [{ name: "Basic Tables", path: "/basic-tables", pro: false }],
-  },
-  {
-    name: "Pages",
-    icon: <PageIcon />,
-    subItems: [
-      { name: "Blank Page", path: "/blank", pro: false },
-      { name: "404 Error", path: "/error-404", pro: false },
-    ],
+    name: "Produtos",
+    path: "/admin/produtos",
   },
 ];
 
-const othersItems: NavItem[] = [
-  {
-    icon: <PieChartIcon />,
-    name: "Charts",
-    subItems: [
-      { name: "Line Chart", path: "/line-chart", pro: false },
-      { name: "Bar Chart", path: "/bar-chart", pro: false },
-    ],
-  },
-  {
-    icon: <BoxCubeIcon />,
-    name: "UI Elements",
-    subItems: [
-      { name: "Alerts", path: "/alerts", pro: false },
-      { name: "Avatar", path: "/avatars", pro: false },
-      { name: "Badge", path: "/badge", pro: false },
-      { name: "Buttons", path: "/buttons", pro: false },
-      { name: "Images", path: "/images", pro: false },
-      { name: "Videos", path: "/videos", pro: false },
-    ],
-  },
-  {
-    icon: <PlugInIcon />,
-    name: "Authentication",
-    subItems: [
-      { name: "Sign In", path: "/signin", pro: false },
-      { name: "Sign Up", path: "/signup", pro: false },
-    ],
-  },
-];
+const othersItems: NavItem[] = [];
 
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
@@ -224,43 +164,44 @@ const AppSidebar: React.FC = () => {
     </ul>
   );
 
-  const [openSubmenu, setOpenSubmenu] = useState<{
-    type: "main" | "others";
-    index: number;
-  } | null>(null);
   const [subMenuHeight, setSubMenuHeight] = useState<Record<string, number>>(
     {}
   );
   const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  // const isActive = (path: string) => path === pathname;
-   const isActive = useCallback((path: string) => path === pathname, [pathname]);
+  const isActive = useCallback((path: string) => path === pathname, [pathname]);
 
-  useEffect(() => {
-    // Check if the current path matches any submenu item
-    let submenuMatched = false;
-    ["main", "others"].forEach((menuType) => {
-      const items = menuType === "main" ? navItems : othersItems;
-      items.forEach((nav, index) => {
-        if (nav.subItems) {
-          nav.subItems.forEach((subItem) => {
-            if (isActive(subItem.path)) {
-              setOpenSubmenu({
-                type: menuType as "main" | "others",
-                index,
-              });
-              submenuMatched = true;
-            }
-          });
-        }
-      });
-    });
-
-    // If no submenu item matches, close the open submenu
-    if (!submenuMatched) {
-      setOpenSubmenu(null);
+  const findSubmenuMatchingPathname = (
+    currentPathname: string
+  ): { type: "main" | "others"; index: number } | null => {
+    const menusByType: [
+      "main" | "others",
+      NavItem[]
+    ][] = [
+      ["main", navItems],
+      ["others", othersItems],
+    ];
+    for (const [menuType, items] of menusByType) {
+      const index = items.findIndex((nav) =>
+        nav.subItems?.some((subItem) => subItem.path === currentPathname)
+      );
+      if (index !== -1) {
+        return { type: menuType, index };
+      }
     }
-  }, [pathname,isActive]);
+    return null;
+  };
+
+  const [openSubmenu, setOpenSubmenu] = useState<{
+    type: "main" | "others";
+    index: number;
+  } | null>(() => findSubmenuMatchingPathname(pathname));
+  const [submenuPathname, setSubmenuPathname] = useState(pathname);
+
+  if (pathname !== submenuPathname) {
+    setSubmenuPathname(pathname);
+    setOpenSubmenu(findSubmenuMatchingPathname(pathname));
+  }
 
   useEffect(() => {
     // Set the height of the submenu items when the submenu is opened
@@ -308,7 +249,7 @@ const AppSidebar: React.FC = () => {
           !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
         }`}
       >
-        <Link href="/">
+        <Link href="/admin">
           {isExpanded || isHovered || isMobileOpen ? (
             <>
               <Image
@@ -356,22 +297,24 @@ const AppSidebar: React.FC = () => {
               {renderMenuItems(navItems, "main")}
             </div>
 
-            <div className="">
-              <h2
-                className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
-                  !isExpanded && !isHovered
-                    ? "lg:justify-center"
-                    : "justify-start"
-                }`}
-              >
-                {isExpanded || isHovered || isMobileOpen ? (
-                  "Others"
-                ) : (
-                  <HorizontaLDots />
-                )}
-              </h2>
-              {renderMenuItems(othersItems, "others")}
-            </div>
+            {othersItems.length > 0 ? (
+              <div className="">
+                <h2
+                  className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
+                    !isExpanded && !isHovered
+                      ? "lg:justify-center"
+                      : "justify-start"
+                  }`}
+                >
+                  {isExpanded || isHovered || isMobileOpen ? (
+                    "Outros"
+                  ) : (
+                    <HorizontaLDots />
+                  )}
+                </h2>
+                {renderMenuItems(othersItems, "others")}
+              </div>
+            ) : null}
           </div>
         </nav>
         {isExpanded || isHovered || isMobileOpen ? <SidebarWidget /> : null}

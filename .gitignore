@@ -38,3 +38,8 @@ next-env.d.ts
 
 # local agent permissions
 .claude/settings.local.json
+
+# local only (nao versionado)
+.claude/
+.idea/
+docs/

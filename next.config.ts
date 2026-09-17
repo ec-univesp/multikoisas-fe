@@ -2,6 +2,14 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "images.pexels.com",
+      },
+    ],
+  },
   webpack(config) {
     config.module.rules.push({
       test: /\.svg$/,
