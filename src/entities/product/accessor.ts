@@ -1,6 +1,6 @@
 import rawProducts from '@/data/products.json';
 import type { Product, StoreLink } from './types';
-import { STORE_LABELS } from './types';
+import { STORE_PRESENTATION } from './types';
 
 const isNonEmptyString = (value: unknown): value is string =>
   typeof value === 'string' && value.trim().length > 0;
@@ -11,7 +11,7 @@ const isStoreLink = (value: unknown): value is StoreLink => {
   return (
     isNonEmptyString(candidate.url) &&
     typeof candidate.store === 'string' &&
-    candidate.store in STORE_LABELS
+    candidate.store in STORE_PRESENTATION
   );
 };
 

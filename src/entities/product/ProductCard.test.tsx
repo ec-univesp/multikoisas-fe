@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { ProductCard } from './ProductCard';
+import { STORE_PRESENTATION } from './types';
 import type { Product } from './types';
 
 const product: Product = {
@@ -31,6 +32,39 @@ describe('ProductCard', () => {
     expect(screen.getByRole('link', { name: /ver detalhes/i })).toHaveAttribute(
       'href',
       '/produto/garrafa-termica-1l',
+    );
+  });
+
+  it('a foto leva para a página do produto', () => {
+    render(<ProductCard product={product} />);
+    expect(screen.getByAltText('Garrafa Térmica 1L').closest('a')).toHaveAttribute(
+      'href',
+      '/produto/garrafa-termica-1l',
+    );
+  });
+
+  it('o nome do produto leva para a página do produto', () => {
+    render(<ProductCard product={product} />);
+    expect(screen.getByRole('link', { name: 'Garrafa Térmica 1L' })).toHaveAttribute(
+      'href',
+      '/produto/garrafa-termica-1l',
+    );
+  });
+
+  it('o botão de compra usa a cor da loja de destino', () => {
+    const { rerender } = render(<ProductCard product={product} />);
+    const mercadoLivreButton = screen.getByRole('link', { name: /mercado livre/i });
+    expect(mercadoLivreButton.className).toContain(
+      STORE_PRESENTATION['mercado-livre'].purchaseButtonClassName,
+    );
+
+    const shopeeFirstProduct: Product = {
+      ...product,
+      storeLinks: [{ store: 'shopee', url: 'https://shopee.com.br/' }],
+    };
+    rerender(<ProductCard product={shopeeFirstProduct} />);
+    expect(screen.getByRole('link', { name: /shopee/i }).className).toContain(
+      STORE_PRESENTATION.shopee.purchaseButtonClassName,
     );
   });
 

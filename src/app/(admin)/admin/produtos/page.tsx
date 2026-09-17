@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getProducts, STORE_LABELS } from "@/entities/product";
+import { getProducts, STORE_PRESENTATION } from "@/entities/product";
 
 export const metadata: Metadata = {
   title: "Produtos | MultiKoisas",
@@ -65,7 +65,7 @@ const ProdutosPage = () => {
                       <div>
                         <Link
                           href={`/produto/${product.slug}`}
-                          className="block text-theme-sm font-medium text-gray-800 hover:text-brand-blue dark:text-white/90"
+                          className="block text-theme-sm font-medium text-gray-800 hover:text-brand-500 dark:text-white/90"
                         >
                           {product.name}
                         </Link>
@@ -82,7 +82,7 @@ const ProdutosPage = () => {
                     <div className="flex flex-wrap gap-1.5">
                       {product.storeLinks.map((storeLink) => (
                         <Badge key={storeLink.store} size="sm" color="light">
-                          {STORE_LABELS[storeLink.store]}
+                          {STORE_PRESENTATION[storeLink.store].name}
                         </Badge>
                       ))}
                     </div>
