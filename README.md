@@ -143,6 +143,16 @@ Para acrescentar uma loja nova (Amazon, por exemplo), basta uma entrada em `STOR
 - **Textos em português**, sempre.
 - **Testes junto com o código**, com cobertura mínima de 90%.
 
+## Publicação
+
+O site é publicado no Netlify. A configuração está em `netlify.toml`: comando de build, versão do Node e o plugin do Next.js, que é quem faz as rotas estáticas e a otimização de imagem funcionarem lá.
+
+Para conectar pela primeira vez: no Netlify, **Add new site → Import an existing project**, escolha este repositório e confirme. As configurações de build vêm do `netlify.toml`, não precisa preencher nada na tela.
+
+Depois de conectar, confira em **Site configuration → Build & deploy** qual branch está marcada como produção. Apontar para a branch errada faz o site servir uma versão antiga indefinidamente, sem nenhum erro aparecer.
+
+Cada Pull Request ganha um endereço de prévia automático, para o time revisar antes de aprovar.
+
 ## Como contribuir
 
 Toda branch nasce da `developer` e volta para ela por Pull Request. A `main` só recebe versões prontas para publicação.

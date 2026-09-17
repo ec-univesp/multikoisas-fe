@@ -1,0 +1,19 @@
+[build]
+  command = "pnpm build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# Branch de produção é a main; developer e feature branches saem como preview.
+[context.production]
+  command = "pnpm build"
+
+[context.deploy-preview]
+  command = "pnpm build"
+
+[context.branch-deploy]
+  command = "pnpm build"
