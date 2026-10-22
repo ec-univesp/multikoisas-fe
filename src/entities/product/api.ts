@@ -5,7 +5,7 @@ type ProdutoResponse = { id: number; nome: string; descricaoProduto: string };
 type CategoriaResponse = { id: number; nome: string };
 type CategoriaProdutoResponse = { produtoId: number; categoriaId: number };
 
-const API_URL = process.env.MULTIKOISAS_API_URL ?? 'https://multikoisas-univesp.onrender.com';
+export const API_URL = process.env.MULTIKOISAS_API_URL ?? 'https://multikoisas-univesp.onrender.com';
 const REVALIDATE_SECONDS = 300;
 const UNCATEGORIZED = 'Sem categoria';
 
