@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
+import { API_URL } from "./src/entities/product/api";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // A multikoisas-api não envia cabeçalhos CORS: o navegador fala com a mesma origem.
+  rewrites: async () => [{ source: "/api/:path*", destination: `${API_URL}/:path*` }],
   images: {
     remotePatterns: [
       {
