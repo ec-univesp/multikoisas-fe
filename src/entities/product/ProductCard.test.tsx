@@ -5,6 +5,7 @@ import { STORE_PRESENTATION } from './types';
 import type { Product } from './types';
 
 const product: Product = {
+  id: 1,
   slug: 'garrafa-termica-1l',
   name: 'Garrafa Térmica 1L',
   category: 'cozinha',

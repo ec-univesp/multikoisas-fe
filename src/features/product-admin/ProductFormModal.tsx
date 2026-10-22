@@ -6,9 +6,8 @@ import Button from '@/components/ui/button/Button';
 import Label from '@/components/form/Label';
 import Input from '@/components/form/input/InputField';
 import TextArea from '@/components/form/input/TextArea';
-import type { Product } from '@/entities/product';
+import { createSlugFromName, type Product } from '@/entities/product';
 import { StoreLinksField, createEmptyStoreLink } from './StoreLinksField';
-import { createSlugFromName } from './createSlugFromName';
 import { hasProductFormErrors, validateProductForm } from './validateProductForm';
 import type { ProductFormErrors, ProductFormValues } from './types';
 
@@ -28,6 +27,8 @@ const buildProductFromFormValues = (
   existingProduct: Product | undefined,
   existingSlugs: readonly string[],
 ): Product => ({
+  // ponytail: id provisório até o MK-4, quando a API passa a gerar o id
+  id: existingProduct?.id ?? 0,
   slug: existingProduct?.slug ?? createSlugFromName(values.name, existingSlugs),
   name: values.name.trim(),
   category: values.category.trim(),

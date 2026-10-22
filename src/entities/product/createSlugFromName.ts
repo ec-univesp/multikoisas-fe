@@ -1,6 +1,6 @@
 const DIACRITICS_PATTERN = /[̀-ͯ]/g;
 
-const toBaseSlug = (name: string): string => {
+export const toBaseSlug = (name: string): string => {
   const slug = name
     .normalize('NFD')
     .replace(DIACRITICS_PATTERN, '')
