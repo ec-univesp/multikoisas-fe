@@ -17,7 +17,7 @@ O site mostra os produtos e leva o visitante para comprar nas lojas parceiras �
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)
 ![pnpm](https://img.shields.io/badge/pnpm-11-F69220?style=flat-square&logo=pnpm&logoColor=white)
 
-![Testes](https://img.shields.io/badge/testes-89-6E9F18?style=flat-square&logo=vitest&logoColor=white)
+![Testes](https://img.shields.io/badge/testes-99-6E9F18?style=flat-square&logo=vitest&logoColor=white)
 ![Cobertura](https://img.shields.io/badge/cobertura-97%25-22C55E?style=flat-square)
 ![Lighthouse desktop](https://img.shields.io/badge/Lighthouse_desktop-100_·_96_·_100_·_100-0CCE6B?style=flat-square&logo=lighthouse&logoColor=white)
 ![Arquitetura](https://img.shields.io/badge/arquitetura-Feature--Sliced_Design-4F46E5?style=flat-square)
@@ -80,9 +80,9 @@ Tarefas no santi, projeto `UNIV`.
 - Vitrine, página do produto e painel lendo produtos e categorias da API.
 - Cadastro de produtos no painel (criar, editar, apagar e escolher categoria).
 - Cadastro de categorias no painel.
+- Testes de integração que simulam a API com MSW, reproduzindo o contrato real dela.
 
 **Em andamento**
-- Testes de integração simulando a API com MSW.
 - Redes sociais da loja no rodapé da vitrine.
 - Cadastro de canais de venda e de redes sociais no painel.
 
@@ -147,7 +147,7 @@ pnpm test:coverage   # roda os testes e mede a cobertura (mínimo de 90%)
 
 Antes de pedir revisão de um Pull Request, os quatro precisam passar: `pnpm lint`, `pnpm typecheck`, `pnpm test` e `pnpm build`.
 
-Os testes nunca chamam a API de verdade: as respostas são simuladas, para nada ser gravado no banco do time.
+Os testes nunca chamam a API de verdade. O MSW simula a API (em `src/test/msw/`) com as mesmas respostas, códigos de erro e comportamentos dela, sobre um banco em memória. Qualquer chamada sem simulação faz o teste falhar, então nada chega ao banco do time.
 
 ## Onde fica cada coisa
 
