@@ -7,7 +7,13 @@ import Label from '@/components/form/Label';
 import Input from '@/components/form/input/InputField';
 import type { Category } from '@/entities/product';
 
-const normalizeName = (name: string): string => name.trim().toLocaleLowerCase('pt-BR');
+const collapseSpaces = (name: string): string => name.trim().replace(/\s+/g, ' ');
+
+const normalizeName = (name: string): string =>
+  collapseSpaces(name)
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLocaleLowerCase('pt-BR');
 
 const validateCategoryName = (
   name: string,
@@ -54,7 +60,7 @@ export const CategoryFormModal = ({
     setIsSaving(true);
     setSaveError(null);
     try {
-      await onSave(name.trim());
+      await onSave(collapseSpaces(name));
       onClose();
     } catch {
       setSaveError('Não foi possível salvar a categoria. Tente de novo.');
@@ -79,9 +85,13 @@ export const CategoryFormModal = ({
               defaultValue={name}
               onChange={(event) => setName(event.target.value)}
               error={Boolean(nameError)}
-              hint={nameError ?? undefined}
               className="text-base"
             />
+            {nameError && (
+              <p role="alert" className="mt-1.5 text-xs text-error-500">
+                {nameError}
+              </p>
+            )}
           </div>
 
           {saveError && (

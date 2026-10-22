@@ -8,7 +8,13 @@ import type { Category } from '@/entities/product';
 import { CategoryFormModal } from './CategoryFormModal';
 import { DeleteCategoryModal } from './DeleteCategoryModal';
 import { CategoryTable } from './CategoryTable';
-import { CategoryInUseError, createCategory, deleteCategory, renameCategory } from './categoryApi';
+import {
+  CategoryInUseError,
+  CategoryNotFoundError,
+  createCategory,
+  deleteCategory,
+  renameCategory,
+} from './categoryApi';
 
 type CategoryAdminPanelProps = {
   initialCategories: readonly Category[];
@@ -42,17 +48,25 @@ export const CategoryAdminPanel = ({ initialCategories }: CategoryAdminPanelProp
 
   const saveCategory = async (name: string) => {
     setFeedbackMessage(null);
-    if (editingCategory) {
+    if (!editingCategory) {
+      const createdCategory = await createCategory(name);
+      setCategories((currentCategories) => [...currentCategories, createdCategory]);
+      return;
+    }
+    try {
       const renamedCategory = await renameCategory(editingCategory, name);
       setCategories((currentCategories) =>
         currentCategories.map((candidate) =>
           candidate.id === renamedCategory.id ? renamedCategory : candidate,
         ),
       );
-      return;
+    } catch (error) {
+      if (!(error instanceof CategoryNotFoundError)) throw error;
+      setCategories((currentCategories) =>
+        currentCategories.filter((candidate) => candidate.id !== editingCategory.id),
+      );
+      setFeedbackMessage('Essa categoria já tinha sido apagada. A lista foi atualizada.');
     }
-    const createdCategory = await createCategory(name);
-    setCategories((currentCategories) => [...currentCategories, createdCategory]);
   };
 
   const confirmDeleteCategory = async () => {
@@ -108,7 +122,7 @@ export const CategoryAdminPanel = ({ initialCategories }: CategoryAdminPanelProp
 
       <DeleteCategoryModal
         isOpen={deleteModal.isOpen}
-        onClose={deleteModal.closeModal}
+        onClose={isDeleting ? () => undefined : deleteModal.closeModal}
         category={deletingCategory}
         onConfirm={confirmDeleteCategory}
         isDeleting={isDeleting}

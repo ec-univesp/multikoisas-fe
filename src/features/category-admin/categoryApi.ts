@@ -2,9 +2,12 @@ import type { Category } from '@/entities/product';
 
 type CategoriaResponse = { id: number; nome: string };
 
+const HTTP_NOT_FOUND = 404;
 const HTTP_CONFLICT = 409;
 
 export class CategoryInUseError extends Error {}
+
+export class CategoryNotFoundError extends Error {}
 
 const callApi = async (method: string, path: string, body?: unknown): Promise<Response> => {
   const response = await fetch(`/api${path}`, {
@@ -12,6 +15,7 @@ const callApi = async (method: string, path: string, body?: unknown): Promise<Re
     headers: body ? { 'Content-Type': 'application/json' } : undefined,
     body: body ? JSON.stringify(body) : undefined,
   });
+  if (response.status === HTTP_NOT_FOUND) throw new CategoryNotFoundError(`${method} ${path} respondeu 404`);
   if (response.status === HTTP_CONFLICT) throw new CategoryInUseError(`${method} ${path} respondeu 409`);
   if (!response.ok) throw new Error(`${method} ${path} respondeu ${response.status}`);
   return response;
@@ -28,5 +32,9 @@ export const renameCategory = async (category: Category, name: string): Promise<
 };
 
 export const deleteCategory = async (category: Category): Promise<void> => {
-  await callApi('DELETE', `/categoria/${category.id}`);
+  try {
+    await callApi('DELETE', `/categoria/${category.id}`);
+  } catch (error) {
+    if (!(error instanceof CategoryNotFoundError)) throw error;
+  }
 };

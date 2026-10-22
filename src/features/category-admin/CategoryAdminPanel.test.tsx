@@ -76,11 +76,11 @@ describe('CategoryAdminPanel', () => {
     const user = userEvent.setup();
     renderPanel();
 
-    await submitNewCategory(user, '  Lavanderia  ');
+    await submitNewCategory(user, '  Casa  e   Banho  ');
 
-    expect(await screen.findByText('Lavanderia')).toBeInTheDocument();
+    expect(await screen.findByText('Casa e Banho')).toBeInTheDocument();
     expect(screen.getByText('3 categorias cadastradas')).toBeInTheDocument();
-    expect(apiCalls).toEqual([{ method: 'POST', path: '/api/categoria', body: { nome: 'Lavanderia' } }]);
+    expect(apiCalls).toEqual([{ method: 'POST', path: '/api/categoria', body: { nome: 'Casa e Banho' } }]);
   });
 
   it('renames the category in the api and shows the saved name when reopened', async () => {
@@ -117,8 +117,60 @@ describe('CategoryAdminPanel', () => {
 
     await submitNewCategory(user, ' banheiros ');
 
+    expect(screen.getByText('Já existe uma categoria com esse nome.')).toHaveAttribute('role', 'alert');
+    expect(apiCalls).toEqual([]);
+  });
+
+  it('rejects a repeated name that differs only in accents or spacing', async () => {
+    const user = userEvent.setup();
+    renderPanel();
+
+    await submitNewCategory(user, 'Utensilios  de cozinha');
+
     expect(screen.getByText('Já existe uma categoria com esse nome.')).toBeInTheDocument();
     expect(apiCalls).toEqual([]);
+  });
+
+  it('drops a category that no longer exists when renaming it', async () => {
+    failingRequest = 'PUT /api/categoria/3';
+    failingStatus = 404;
+    const user = userEvent.setup();
+    renderPanel();
+
+    await user.click(screen.getByRole('button', { name: 'Editar Banheiros' }));
+    await user.type(screen.getByLabelText('Nome da categoria'), ' Sociais');
+    await user.click(screen.getByRole('button', { name: 'Salvar categoria' }));
+
+    expect(
+      await screen.findByText('Essa categoria já tinha sido apagada. A lista foi atualizada.'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Banheiros/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Nome da categoria')).not.toBeInTheDocument();
+  });
+
+  it('drops a category that was already deleted elsewhere', async () => {
+    failingRequest = 'DELETE /api/categoria/3';
+    failingStatus = 404;
+    const user = userEvent.setup();
+    renderPanel();
+
+    await user.click(screen.getByRole('button', { name: 'Apagar Banheiros' }));
+    await user.click(screen.getByRole('button', { name: 'Apagar' }));
+
+    expect(await screen.findByText('1 categoria cadastrada')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('keeps the deletion dialog open on Escape while the category is being deleted', async () => {
+    hangingRequest = 'DELETE /api/categoria/3';
+    const user = userEvent.setup();
+    renderPanel();
+
+    await user.click(screen.getByRole('button', { name: 'Apagar Banheiros' }));
+    await user.click(screen.getByRole('button', { name: 'Apagar' }));
+    await user.keyboard('{Escape}');
+
+    expect(screen.getByRole('button', { name: 'Apagando...' })).toBeInTheDocument();
   });
 
   it('lets a category be saved keeping its own name', async () => {
