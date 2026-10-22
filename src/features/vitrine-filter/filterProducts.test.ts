@@ -3,9 +3,11 @@ import { filterProducts } from './filterProducts';
 import type { Product } from '@/entities/product';
 
 const buildProduct = (overrides: Partial<Product>): Product => ({
+  id: 1,
   slug: 'x',
   name: 'X',
   category: 'casa',
+  categoryId: null,
   shortDescription: 's',
   longDescription: 'l',
   images: ['/products/x.svg'],

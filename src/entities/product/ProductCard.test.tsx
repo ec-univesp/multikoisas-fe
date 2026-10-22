@@ -5,9 +5,11 @@ import { STORE_PRESENTATION } from './types';
 import type { Product } from './types';
 
 const product: Product = {
+  id: 1,
   slug: 'garrafa-termica-1l',
   name: 'Garrafa Térmica 1L',
   category: 'cozinha',
+  categoryId: null,
   shortDescription: 'Mantém a temperatura por até 12 horas.',
   longDescription: 'longa',
   images: ['/products/garrafa-termica-1l.svg'],
@@ -74,5 +76,19 @@ describe('ProductCard', () => {
     expect(screen.getByText('cozinha')).toBeInTheDocument();
     expect(screen.getByText(/12 horas/)).toBeInTheDocument();
     expect(screen.queryByText(/R\$/)).not.toBeInTheDocument();
+  });
+
+  it('shows a placeholder photo when the product has none', () => {
+    render(<ProductCard product={{ ...product, images: [] }} />);
+    expect(screen.getByAltText('Garrafa Térmica 1L')).toHaveAttribute(
+      'src',
+      expect.stringContaining('placeholder'),
+    );
+  });
+
+  it('offers only the details link when no store link exists', () => {
+    render(<ProductCard product={{ ...product, storeLinks: [] }} />);
+    expect(screen.queryByRole('link', { name: /comprar/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /ver detalhes/i })).toBeInTheDocument();
   });
 });

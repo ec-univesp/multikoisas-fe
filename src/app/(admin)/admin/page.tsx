@@ -4,15 +4,15 @@ import { MonthlyClicksChart } from "@/components/dashboard/MonthlyClicksChart";
 import { StoreClicksDistribution } from "@/components/dashboard/StoreClicksDistribution";
 import { TopClickedProducts } from "@/components/dashboard/TopClickedProducts";
 import { TopSearchedCategories } from "@/components/dashboard/TopSearchedCategories";
-import { getProducts } from "@/entities/product";
+import { fetchProducts } from "@/entities/product";
 
 export const metadata: Metadata = {
   title: "Painel | MultiKoisas",
   description: "Painel administrativo da vitrine MultiKoisas.",
 };
 
-export default function AdminDashboardPage() {
-  const publishedProductsCount = getProducts().length;
+export default async function AdminDashboardPage() {
+  const publishedProductsCount = (await fetchProducts({ fresh: true })).length;
 
   return (
     <div className="grid grid-cols-12 gap-4 md:gap-6">

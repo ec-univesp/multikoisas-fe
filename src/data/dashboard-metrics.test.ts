@@ -32,28 +32,28 @@ describe('calculateClickRate', () => {
 describe('getTopClickedProducts', () => {
   it('sorts entries by clicks in descending order', () => {
     const entries = [
-      { slug: 'a', clicks: 10 },
-      { slug: 'b', clicks: 30 },
-      { slug: 'c', clicks: 20 },
+      { name: 'a', category: 'Casa', clicks: 10 },
+      { name: 'b', category: 'Casa', clicks: 30 },
+      { name: 'c', category: 'Casa', clicks: 20 },
     ];
 
     expect(getTopClickedProducts(entries)).toEqual([
-      { slug: 'b', clicks: 30 },
-      { slug: 'c', clicks: 20 },
-      { slug: 'a', clicks: 10 },
+      { name: 'b', category: 'Casa', clicks: 30 },
+      { name: 'c', category: 'Casa', clicks: 20 },
+      { name: 'a', category: 'Casa', clicks: 10 },
     ]);
   });
 
   it('limits the result to the requested amount', () => {
     const entries = [
-      { slug: 'a', clicks: 10 },
-      { slug: 'b', clicks: 30 },
-      { slug: 'c', clicks: 20 },
+      { name: 'a', category: 'Casa', clicks: 10 },
+      { name: 'b', category: 'Casa', clicks: 30 },
+      { name: 'c', category: 'Casa', clicks: 20 },
     ];
 
     expect(getTopClickedProducts(entries, 2)).toEqual([
-      { slug: 'b', clicks: 30 },
-      { slug: 'c', clicks: 20 },
+      { name: 'b', category: 'Casa', clicks: 30 },
+      { name: 'c', category: 'Casa', clicks: 20 },
     ]);
   });
 

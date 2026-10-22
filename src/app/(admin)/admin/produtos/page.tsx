@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import { getProducts } from "@/entities/product";
+import { fetchCategories, fetchProducts } from "@/entities/product";
 import { ProductAdminPanel } from "@/features/product-admin";
 
 export const metadata: Metadata = {
@@ -8,13 +8,16 @@ export const metadata: Metadata = {
   description: "Produtos publicados na vitrine da MultiKoisas.",
 };
 
-const ProdutosPage = () => {
-  const products = getProducts();
+const ProdutosPage = async () => {
+  const [products, categories] = await Promise.all([
+    fetchProducts({ fresh: true }),
+    fetchCategories({ fresh: true }),
+  ]);
 
   return (
     <div>
       <PageBreadcrumb pageTitle="Produtos" />
-      <ProductAdminPanel initialProducts={products} />
+      <ProductAdminPanel initialProducts={products} categories={categories} />
     </div>
   );
 };

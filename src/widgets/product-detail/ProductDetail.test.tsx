@@ -4,9 +4,11 @@ import { ProductDetail } from './ProductDetail';
 import type { Product } from '@/entities/product';
 
 const product: Product = {
+  id: 1,
   slug: 'garrafa-termica-1l',
   name: 'Garrafa Térmica 1L',
   category: 'cozinha',
+  categoryId: null,
   shortDescription: 'Mantém a temperatura por até 12 horas.',
   longDescription:
     'Garrafa térmica de 1 litro com ampola de vidro, ideal para café e chá. Alça para transporte e tampa que serve de xícara.',
@@ -52,5 +54,11 @@ describe('ProductDetail', () => {
   it('never shows a price', () => {
     render(<ProductDetail product={product} />);
     expect(screen.queryByText(/R\$/)).not.toBeInTheDocument();
+  });
+
+  it('tells the visitor purchase links are coming when none exist', () => {
+    render(<ProductDetail product={{ ...product, images: [], storeLinks: [] }} />);
+    expect(screen.getByText('Links de compra em breve.')).toBeInTheDocument();
+    expect(screen.getByAltText(product.name)).toHaveAttribute('src', expect.stringContaining('placeholder'));
   });
 });

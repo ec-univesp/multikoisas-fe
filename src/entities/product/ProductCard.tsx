@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { STORE_PRESENTATION } from './types';
+import { PRODUCT_IMAGE_PLACEHOLDER, STORE_PRESENTATION } from './types';
 import type { Product } from './types';
 
 type ProductCardProps = {
@@ -10,9 +10,8 @@ type ProductCardProps = {
 
 export const ProductCard = ({ product, hasPriorityImage = false }: ProductCardProps) => {
   const [primaryStoreLink] = product.storeLinks;
-  const [coverImage] = product.images;
+  const coverImage = product.images[0] ?? PRODUCT_IMAGE_PLACEHOLDER;
   const detailPath = `/produto/${product.slug}`;
-  const primaryStore = STORE_PRESENTATION[primaryStoreLink.store];
 
   return (
     <article className="flex h-full flex-col rounded-2xl border border-gray-200 bg-white p-3">
@@ -41,14 +40,16 @@ export const ProductCard = ({ product, hasPriorityImage = false }: ProductCardPr
       </span>
       <p className="mt-2 line-clamp-1 text-sm text-gray-500">{product.shortDescription}</p>
       <div className="mt-auto flex flex-col gap-2 pt-4">
-        <a
-          href={primaryStoreLink.url}
-          target="_blank"
-          rel="noopener noreferrer sponsored"
-          className={`flex h-11 items-center justify-center rounded-lg px-4 text-sm font-semibold shadow-theme-xs ${primaryStore.purchaseButtonClassName}`}
-        >
-          {primaryStore.purchaseLabel}
-        </a>
+        {primaryStoreLink && (
+          <a
+            href={primaryStoreLink.url}
+            target="_blank"
+            rel="noopener noreferrer sponsored"
+            className={`flex h-11 items-center justify-center rounded-lg px-4 text-sm font-semibold shadow-theme-xs ${STORE_PRESENTATION[primaryStoreLink.store].purchaseButtonClassName}`}
+          >
+            {STORE_PRESENTATION[primaryStoreLink.store].purchaseLabel}
+          </a>
+        )}
         <Link
           href={detailPath}
           className="flex h-11 items-center justify-center rounded-lg border border-gray-200 px-4 text-sm font-medium text-gray-700 hover:bg-gray-50"

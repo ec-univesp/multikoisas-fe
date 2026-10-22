@@ -18,7 +18,8 @@ export type StoreClickShare = {
 };
 
 export type TopClickedProduct = {
-  slug: string;
+  name: string;
+  category: string;
   clicks: number;
 };
 
@@ -58,11 +59,11 @@ export const storeClickDistribution: readonly StoreClickShare[] = [
 ];
 
 export const topClickedProducts: readonly TopClickedProduct[] = [
-  { slug: 'kit-potes-hermeticos-5-pecas', clicks: 210 },
-  { slug: 'garrafa-termica-1l', clicks: 180 },
-  { slug: 'caixa-organizadora-30l', clicks: 150 },
-  { slug: 'escorredor-de-louca-inox', clicks: 120 },
-  { slug: 'organizador-de-gavetas', clicks: 95 },
+  { name: 'Caixa Maleta Ferramentas Com Trava Aço 13 Bandeja Preta', category: 'Ferramentas e Melhorias para a Casa', clicks: 210 },
+  { name: 'Suporte TV Fixo Universal 14 a 84 Polegadas', category: 'TVs e Acessórios', clicks: 180 },
+  { name: 'Tampa Assento Privada Vaso Sanitário Oval', category: 'Banheiros', clicks: 150 },
+  { name: 'Kit Adubo Orgânico Humus De Minhoca', category: 'Jardinagem', clicks: 120 },
+  { name: 'Mangueira Para Filtro Purificador Bebedouro', category: 'Utensílios de Cozinha', clicks: 95 },
 ];
 
 export const topSearchedCategories: readonly SearchedCategoryVolume[] = [
