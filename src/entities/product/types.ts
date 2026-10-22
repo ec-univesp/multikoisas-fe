@@ -42,11 +42,17 @@ export type StoreLink = {
   url: string;
 };
 
+export type Category = {
+  id: number;
+  name: string;
+};
+
 export type Product = {
   id: number;
   slug: string;
   name: string;
   category: string;
+  categoryId: number | null;
   shortDescription: string;
   longDescription: string;
   images: string[];

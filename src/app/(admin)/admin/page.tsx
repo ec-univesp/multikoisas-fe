@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminDashboardPage() {
-  const publishedProductsCount = (await fetchProducts()).length;
+  const publishedProductsCount = (await fetchProducts({ fresh: true })).length;
 
   return (
     <div className="grid grid-cols-12 gap-4 md:gap-6">
