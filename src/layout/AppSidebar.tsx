@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
 import {
   ChevronDownIcon,
+  FolderIcon,
   GridIcon,
   HorizontaLDots,
   TableIcon,
@@ -28,6 +29,11 @@ const navItems: NavItem[] = [
     icon: <TableIcon />,
     name: "Produtos",
     path: "/admin/produtos",
+  },
+  {
+    icon: <FolderIcon />,
+    name: "Categorias",
+    path: "/admin/categorias",
   },
 ];
 
