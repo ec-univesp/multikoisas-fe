@@ -8,7 +8,7 @@ import type { Category, Product } from '@/entities/product';
 import { ProductFormModal } from './ProductFormModal';
 import { DeleteProductModal } from './DeleteProductModal';
 import { ProductTable } from './ProductTable';
-import { createProduct, deleteProduct, updateProduct } from './productApi';
+import { CategoryLinkError, createProduct, deleteProduct, updateProduct } from './productApi';
 import type { ProductFormValues } from './types';
 
 type ProductAdminPanelProps = {
@@ -20,7 +20,8 @@ export const ProductAdminPanel = ({ initialProducts, categories }: ProductAdminP
   const [products, setProducts] = useState<Product[]>([...initialProducts]);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
 
   const formModal = useModal();
   const deleteModal = useModal();
@@ -37,38 +38,49 @@ export const ProductAdminPanel = ({ initialProducts, categories }: ProductAdminP
 
   const openDeleteModal = (product: Product) => {
     setDeletingProduct(product);
-    setDeleteError(null);
+    setFeedbackMessage(null);
     deleteModal.openModal();
   };
 
-  const saveProduct = async (values: ProductFormValues) => {
-    if (!editingProduct) {
-      const createdProduct = await createProduct(values, categories);
-      setProducts((currentProducts) => [...currentProducts, createdProduct]);
-      return;
-    }
-    const updatedProduct = await updateProduct(editingProduct, values, categories);
+  const showSavedProduct = (savedProduct: Product) =>
     setProducts((currentProducts) =>
-      currentProducts.map((candidate) =>
-        candidate.id === updatedProduct.id ? updatedProduct : candidate,
-      ),
+      currentProducts.some((candidate) => candidate.id === savedProduct.id)
+        ? currentProducts.map((candidate) =>
+            candidate.id === savedProduct.id ? savedProduct : candidate,
+          )
+        : [...currentProducts, savedProduct],
     );
+
+  const saveProduct = async (values: ProductFormValues) => {
+    setFeedbackMessage(null);
+    try {
+      showSavedProduct(
+        editingProduct
+          ? await updateProduct(editingProduct, values, categories)
+          : await createProduct(values, categories),
+      );
+    } catch (error) {
+      if (!(error instanceof CategoryLinkError)) throw error;
+      showSavedProduct(error.product);
+      setFeedbackMessage('Produto salvo, mas sem categoria. Edite o produto para escolher de novo.');
+    }
   };
 
   const confirmDeleteProduct = async () => {
-    if (!deletingProduct) return;
+    if (!deletingProduct || isDeleting) return;
+    setIsDeleting(true);
     try {
       await deleteProduct(deletingProduct);
+      setProducts((currentProducts) =>
+        currentProducts.filter((candidate) => candidate.id !== deletingProduct.id),
+      );
+      setDeletingProduct(null);
     } catch {
-      setDeleteError('Não foi possível apagar o produto. Tente de novo.');
+      setFeedbackMessage('Não foi possível apagar o produto. Recarregue a página e tente de novo.');
+    } finally {
+      setIsDeleting(false);
       deleteModal.closeModal();
-      return;
     }
-    setProducts((currentProducts) =>
-      currentProducts.filter((candidate) => candidate.id !== deletingProduct.id),
-    );
-    deleteModal.closeModal();
-    setDeletingProduct(null);
   };
 
   return (
@@ -83,28 +95,30 @@ export const ProductAdminPanel = ({ initialProducts, categories }: ProductAdminP
         </Button>
       </div>
 
-      {deleteError && (
+      {feedbackMessage && (
         <p role="alert" className="mb-4 text-sm text-error-500">
-          {deleteError}
+          {feedbackMessage}
         </p>
       )}
 
       <ProductTable products={products} onEdit={openEditModal} onDelete={openDeleteModal} />
 
-      <ProductFormModal
-        key={editingProduct?.id ?? 'novo-produto'}
-        isOpen={formModal.isOpen}
-        onClose={formModal.closeModal}
-        existingProduct={editingProduct ?? undefined}
-        categories={categories}
-        onSave={saveProduct}
-      />
+      {formModal.isOpen && (
+        <ProductFormModal
+          isOpen
+          onClose={formModal.closeModal}
+          existingProduct={editingProduct ?? undefined}
+          categories={categories}
+          onSave={saveProduct}
+        />
+      )}
 
       <DeleteProductModal
         isOpen={deleteModal.isOpen}
         onClose={deleteModal.closeModal}
         product={deletingProduct}
         onConfirm={confirmDeleteProduct}
+        isDeleting={isDeleting}
       />
     </div>
   );

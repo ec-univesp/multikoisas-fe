@@ -9,6 +9,7 @@ type DeleteProductModalProps = {
   onClose: () => void;
   product: Product | null;
   onConfirm: () => void;
+  isDeleting: boolean;
 };
 
 export const DeleteProductModal = ({
@@ -16,6 +17,7 @@ export const DeleteProductModal = ({
   onClose,
   product,
   onConfirm,
+  isDeleting,
 }: DeleteProductModalProps) => {
   if (!product) return null;
 
@@ -28,15 +30,16 @@ export const DeleteProductModal = ({
           Essa ação não pode ser desfeita e o produto sairá da vitrine.
         </p>
         <div className="flex items-center justify-end gap-3">
-          <Button size="sm" variant="outline" onClick={onClose}>
+          <Button size="sm" variant="outline" onClick={onClose} disabled={isDeleting}>
             Cancelar
           </Button>
           <Button
             size="sm"
             onClick={onConfirm}
+            disabled={isDeleting}
             className="bg-error-500 hover:bg-error-600"
           >
-            Apagar
+            {isDeleting ? 'Apagando...' : 'Apagar'}
           </Button>
         </div>
       </div>

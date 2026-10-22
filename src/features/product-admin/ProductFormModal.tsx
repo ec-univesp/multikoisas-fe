@@ -42,11 +42,8 @@ export const ProductFormModal = ({
   const updateField = (field: keyof ProductFormValues, value: string) =>
     setValues((previousValues) => ({ ...previousValues, [field]: value }));
 
-  const resetAndClose = () => {
-    setValues(buildInitialFormValues(existingProduct));
-    setErrors({});
-    setSaveError(null);
-    onClose();
+  const closeUnlessSaving = () => {
+    if (!isSaving) onClose();
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -59,16 +56,15 @@ export const ProductFormModal = ({
     setSaveError(null);
     try {
       await onSave(values);
-      resetAndClose();
+      onClose();
     } catch {
       setSaveError('Não foi possível salvar o produto. Tente de novo.');
-    } finally {
       setIsSaving(false);
     }
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={resetAndClose} className="m-4 max-w-[700px]">
+    <Modal isOpen={isOpen} onClose={closeUnlessSaving} className="m-4 max-w-[700px]">
       <div className="no-scrollbar relative w-full max-w-[700px] overflow-y-auto rounded-3xl bg-white p-4 lg:p-8">
         <h4 className="mb-1 text-2xl font-semibold text-gray-800">
           {existingProduct ? 'Editar produto' : 'Novo produto'}
@@ -106,7 +102,9 @@ export const ProductFormModal = ({
                 className="text-base"
               />
               {errors.categoryId && (
-                <p className="mt-1.5 text-xs text-error-500">{errors.categoryId}</p>
+                <p role="alert" className="mt-1.5 text-xs text-error-500">
+                  {errors.categoryId}
+                </p>
               )}
             </div>
 
@@ -132,7 +130,7 @@ export const ProductFormModal = ({
           )}
 
           <div className="mt-6 flex items-center justify-end gap-3 px-1">
-            <Button size="sm" variant="outline" onClick={resetAndClose}>
+            <Button size="sm" variant="outline" onClick={closeUnlessSaving} disabled={isSaving}>
               Cancelar
             </Button>
             <Button size="sm" type="submit" disabled={isSaving}>

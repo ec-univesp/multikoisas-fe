@@ -25,10 +25,11 @@ const buildProduct = (overrides: Partial<Product>): Product => ({
 type ApiCall = { method: string; path: string; body: unknown };
 
 let apiCalls: ApiCall[] = [];
-let failingMethod: string | null = null;
+let failingRequest: string | null = null;
+let hangingRequest: string | null = null;
 
 const respondTo = (method: string, path: string, body: unknown): Response => {
-  if (method === failingMethod) return new Response(null, { status: 500 });
+  if (`${method} ${path}`.startsWith(failingRequest ?? '-')) return new Response(null, { status: 500 });
   if (method === 'POST' && path === '/api/produto') {
     const request = body as { nome: string; descricaoProduto: string };
     return Response.json({ id: 99, ...request });
@@ -39,18 +40,26 @@ const respondTo = (method: string, path: string, body: unknown): Response => {
   if (method === 'GET' && path === '/api/categoriaproduto?produto=1') {
     return Response.json([{ produtoId: 1, categoriaId: 2 }]);
   }
+  if (method === 'GET' && path === '/api/categoriaproduto?produto=7') {
+    return Response.json([
+      { produtoId: 7, categoriaId: 2 },
+      { produtoId: 7, categoriaId: 3 },
+    ]);
+  }
   return new Response(null, { status: 200 });
 };
 
 beforeEach(() => {
   apiCalls = [];
-  failingMethod = null;
+  failingRequest = null;
+  hangingRequest = null;
   vi.stubGlobal(
     'fetch',
     vi.fn(async (path: string, init: RequestInit = {}) => {
       const method = init.method ?? 'GET';
       const body = init.body ? JSON.parse(String(init.body)) : undefined;
       apiCalls.push({ method, path, body });
+      if (`${method} ${path}`.startsWith(hangingRequest ?? '-')) return new Promise<Response>(() => {});
       return respondTo(method, path, body);
     }),
   );
@@ -138,13 +147,82 @@ describe('ProductAdminPanel', () => {
 
     expect(await screen.findByText('Banheiros')).toBeInTheDocument();
     expect(apiCalls.slice(1)).toEqual([
+      { method: 'GET', path: '/api/categoriaproduto?produto=1', body: undefined },
       { method: 'DELETE', path: '/api/categoriaproduto', body: { produtoId: 1, categoriaId: 2 } },
       { method: 'POST', path: '/api/categoriaproduto', body: { produtoId: 1, categoriaId: 3 } },
     ]);
   });
 
+  it('keeps only the chosen category when the product had several', async () => {
+    const user = userEvent.setup();
+    renderPanel([buildProduct({ id: 7, slug: 'caixa-7', name: 'Caixa' })]);
+
+    await user.click(screen.getByRole('button', { name: 'Editar Caixa' }));
+    await user.selectOptions(screen.getByLabelText('Categoria'), '3');
+    await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+    expect(await screen.findByText('Banheiros')).toBeInTheDocument();
+    expect(apiCalls.slice(1).map(({ method, path, body }) => [method, path, body])).toEqual([
+      ['GET', '/api/categoriaproduto?produto=7', undefined],
+      ['DELETE', '/api/categoriaproduto', { produtoId: 7, categoriaId: 2 }],
+    ]);
+  });
+
+  it('lists a created product without category when linking the category fails', async () => {
+    failingRequest = 'POST /api/categoriaproduto';
+    const user = userEvent.setup();
+    renderPanel([]);
+
+    await user.click(screen.getByRole('button', { name: 'Novo produto' }));
+    await fillProductForm(user, { name: 'Vassoura', categoryId: '2', description: 'Macia.' });
+    await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+    expect(
+      await screen.findByText('Produto salvo, mas sem categoria. Edite o produto para escolher de novo.'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Vassoura', { selector: 'a' })).toBeInTheDocument();
+    expect(screen.getByText('Sem categoria')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Nome do produto')).not.toBeInTheDocument();
+  });
+
+  it('shows the saved data when the same product is edited again', async () => {
+    const user = userEvent.setup();
+    renderPanel();
+
+    await user.click(screen.getByRole('button', { name: 'Editar Garrafa Térmica 1L' }));
+    await user.type(screen.getByLabelText('Nome do produto'), ' Inox');
+    await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
+    await user.click(await screen.findByRole('button', { name: 'Editar Garrafa Térmica 1L Inox' }));
+
+    expect(screen.getByLabelText('Nome do produto')).toHaveValue('Garrafa Térmica 1L Inox');
+  });
+
+  it('blocks cancel and a second submit while the product is being saved', async () => {
+    hangingRequest = 'POST /api/produto';
+    const user = userEvent.setup();
+    renderPanel();
+
+    await user.click(screen.getByRole('button', { name: 'Novo produto' }));
+    await fillProductForm(user, { name: 'Vassoura', categoryId: '2', description: 'Macia.' });
+    await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+    expect(await screen.findByRole('button', { name: 'Salvando...' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Cancelar' })).toBeDisabled();
+  });
+
+  it('blocks a second confirmation while the product is being deleted', async () => {
+    hangingRequest = 'GET /api/categoriaproduto';
+    const user = userEvent.setup();
+    renderPanel();
+
+    await user.click(screen.getByRole('button', { name: 'Apagar Garrafa Térmica 1L' }));
+    await user.click(screen.getByRole('button', { name: 'Apagar' }));
+
+    expect(await screen.findByRole('button', { name: 'Apagando...' })).toBeDisabled();
+  });
+
   it('keeps the form open with a message when the api fails to save', async () => {
-    failingMethod = 'POST';
+    failingRequest = 'POST /api/produto';
     const user = userEvent.setup();
     renderPanel();
 
@@ -167,7 +245,7 @@ describe('ProductAdminPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
 
     expect(screen.getByText('Informe o nome do produto.')).toBeInTheDocument();
-    expect(screen.getByText('Escolha a categoria do produto.')).toBeInTheDocument();
+    expect(screen.getByText('Escolha a categoria do produto.')).toHaveAttribute('role', 'alert');
     expect(screen.getByText('Informe a descrição do produto.')).toBeInTheDocument();
     expect(apiCalls).toEqual([]);
   });
@@ -213,7 +291,7 @@ describe('ProductAdminPanel', () => {
   });
 
   it('keeps the product with a message when the api fails to delete it', async () => {
-    failingMethod = 'DELETE';
+    failingRequest = 'DELETE /api/produto';
     const user = userEvent.setup();
     renderPanel();
 
@@ -221,7 +299,7 @@ describe('ProductAdminPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Apagar' }));
 
     expect(
-      await screen.findByText('Não foi possível apagar o produto. Tente de novo.'),
+      await screen.findByText('Não foi possível apagar o produto. Recarregue a página e tente de novo.'),
     ).toBeInTheDocument();
     expect(screen.getByText('Garrafa Térmica 1L', { selector: 'a' })).toBeInTheDocument();
   });

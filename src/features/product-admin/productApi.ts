@@ -34,6 +34,20 @@ const fetchCategoryLinks = async (produtoId: number): Promise<CategoriaProdutoBo
   return response.json();
 };
 
+export class CategoryLinkError extends Error {
+  constructor(readonly product: Product) {
+    super(`Produto ${product.id} salvo sem categoria`);
+  }
+}
+
+const keepOnlyCategory = async (produtoId: number, categoriaId: number) => {
+  const links = await fetchCategoryLinks(produtoId);
+  for (const link of links) {
+    if (link.categoriaId !== categoriaId) await unlinkCategory(produtoId, link.categoriaId);
+  }
+  if (!links.some((link) => link.categoriaId === categoriaId)) await linkCategory(produtoId, categoriaId);
+};
+
 const findCategory = (categories: readonly Category[], values: ProductFormValues) =>
   categories.find((category) => String(category.id) === values.categoryId);
 
@@ -45,7 +59,12 @@ export const createProduct = async (
     await callApi('POST', '/produto', toProdutoRequest(values))
   ).json();
   const category = findCategory(categories, values);
-  if (category) await linkCategory(produto.id, category.id);
+  if (!category) return toProduct(produto, undefined);
+  try {
+    await linkCategory(produto.id, category.id);
+  } catch {
+    throw new CategoryLinkError(toProduct(produto, undefined));
+  }
   return toProduct(produto, category);
 };
 
@@ -56,12 +75,16 @@ export const updateProduct = async (
 ): Promise<Product> => {
   const produtoRequest = toProdutoRequest(values);
   await callApi('PUT', `/produto/${product.id}`, produtoRequest);
+  const produto = { id: product.id, ...produtoRequest };
   const category = findCategory(categories, values);
   if (category && category.id !== product.categoryId) {
-    if (product.categoryId !== null) await unlinkCategory(product.id, product.categoryId);
-    await linkCategory(product.id, category.id);
+    try {
+      await keepOnlyCategory(product.id, category.id);
+    } catch {
+      throw new CategoryLinkError(toProduct(produto, undefined));
+    }
   }
-  return toProduct({ id: product.id, ...produtoRequest }, category);
+  return toProduct(produto, category);
 };
 
 export const deleteProduct = async (product: Product): Promise<void> => {
