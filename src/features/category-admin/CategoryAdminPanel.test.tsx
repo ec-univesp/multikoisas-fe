@@ -1,49 +1,36 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { delay, http, HttpResponse } from 'msw';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { CategoryAdminPanel } from './CategoryAdminPanel';
 import type { Category } from '@/entities/product';
+import { apiDatabase } from '@/test/msw/apiDatabase';
+import { recordApiRequests, server } from '@/test/msw/server';
 
 const categories: Category[] = [
   { id: 2, name: 'Utensílios de Cozinha' },
   { id: 3, name: 'Banheiros' },
 ];
 
-type ApiCall = { method: string; path: string; body: unknown };
-
-let apiCalls: ApiCall[] = [];
-let failingRequest: string | null = null;
-let failingStatus = 500;
-let hangingRequest: string | null = null;
-
-const respondTo = (method: string, path: string, body: unknown): Response => {
-  if (`${method} ${path}`.startsWith(failingRequest ?? '-')) return new Response(null, { status: failingStatus });
-  if (method === 'POST' && path === '/api/categoria') {
-    return Response.json({ id: 99, ...(body as { nome: string }) }, { status: 201 });
-  }
-  return new Response(null, { status: 204 });
-};
+let apiRequests: string[] = [];
 
 beforeEach(() => {
-  apiCalls = [];
-  failingRequest = null;
-  failingStatus = 500;
-  hangingRequest = null;
-  vi.stubGlobal(
-    'fetch',
-    vi.fn(async (path: string, init: RequestInit = {}) => {
-      const method = init.method ?? 'GET';
-      const body = init.body ? JSON.parse(String(init.body)) : undefined;
-      apiCalls.push({ method, path, body });
-      if (`${method} ${path}`.startsWith(hangingRequest ?? '-')) return new Promise<Response>(() => {});
-      return respondTo(method, path, body);
-    }),
-  );
+  apiRequests = recordApiRequests();
 });
 
-afterEach(() => {
-  vi.unstubAllGlobals();
-});
+const respondWith = (method: 'post' | 'delete', path: string, status: number) =>
+  server.use(http[method](path, () => new HttpResponse(null, { status })));
+
+const hang = (method: 'post' | 'delete', path: string) =>
+  server.use(http[method](path, () => delay('infinite')));
+
+const unlinkProductsFrom = (categoriaId: number) => {
+  apiDatabase.categoriaProduto = apiDatabase.categoriaProduto.filter((link) => link.categoriaId !== categoriaId);
+};
+
+const deleteFromApi = (categoriaId: number) => {
+  apiDatabase.categorias = apiDatabase.categorias.filter((categoria) => categoria.id !== categoriaId);
+};
 
 const renderPanel = (initialCategories: Category[] = categories) =>
   render(<CategoryAdminPanel initialCategories={initialCategories} />);
@@ -80,7 +67,8 @@ describe('CategoryAdminPanel', () => {
 
     expect(await screen.findByText('Casa e Banho')).toBeInTheDocument();
     expect(screen.getByText('3 categorias cadastradas')).toBeInTheDocument();
-    expect(apiCalls).toEqual([{ method: 'POST', path: '/api/categoria', body: { nome: 'Casa e Banho' } }]);
+    expect(apiDatabase.categorias).toContainEqual({ id: 100, nome: 'Casa e Banho' });
+    expect(apiRequests).toEqual(['POST /api/categoria']);
   });
 
   it('renames the category in the api and shows the saved name when reopened', async () => {
@@ -95,7 +83,7 @@ describe('CategoryAdminPanel', () => {
 
     expect(await screen.findByText('Banheiro e Lavabo')).toBeInTheDocument();
     expect(screen.queryByText('Banheiros')).not.toBeInTheDocument();
-    expect(apiCalls).toEqual([{ method: 'PUT', path: '/api/categoria/3', body: { nome: 'Banheiro e Lavabo' } }]);
+    expect(apiDatabase.categorias).toContainEqual({ id: 3, nome: 'Banheiro e Lavabo' });
 
     await user.click(screen.getByRole('button', { name: 'Editar Banheiro e Lavabo' }));
     expect(screen.getByLabelText('Nome da categoria')).toHaveValue('Banheiro e Lavabo');
@@ -108,7 +96,7 @@ describe('CategoryAdminPanel', () => {
     await submitNewCategory(user, '');
 
     expect(screen.getByText('Informe o nome da categoria.')).toBeInTheDocument();
-    expect(apiCalls).toEqual([]);
+    expect(apiRequests).toEqual([]);
   });
 
   it('rejects a name already used by another category, ignoring case', async () => {
@@ -118,7 +106,7 @@ describe('CategoryAdminPanel', () => {
     await submitNewCategory(user, ' banheiros ');
 
     expect(screen.getByText('Já existe uma categoria com esse nome.')).toHaveAttribute('role', 'alert');
-    expect(apiCalls).toEqual([]);
+    expect(apiRequests).toEqual([]);
   });
 
   it('rejects a repeated name that differs only in accents or spacing', async () => {
@@ -128,12 +116,11 @@ describe('CategoryAdminPanel', () => {
     await submitNewCategory(user, 'Utensilios  de cozinha');
 
     expect(screen.getByText('Já existe uma categoria com esse nome.')).toBeInTheDocument();
-    expect(apiCalls).toEqual([]);
+    expect(apiRequests).toEqual([]);
   });
 
   it('drops a category that no longer exists when renaming it', async () => {
-    failingRequest = 'PUT /api/categoria/3';
-    failingStatus = 404;
+    deleteFromApi(3);
     const user = userEvent.setup();
     renderPanel();
 
@@ -149,8 +136,7 @@ describe('CategoryAdminPanel', () => {
   });
 
   it('drops a category that was already deleted elsewhere', async () => {
-    failingRequest = 'DELETE /api/categoria/3';
-    failingStatus = 404;
+    deleteFromApi(3);
     const user = userEvent.setup();
     renderPanel();
 
@@ -162,7 +148,7 @@ describe('CategoryAdminPanel', () => {
   });
 
   it('keeps the deletion dialog open on Escape while the category is being deleted', async () => {
-    hangingRequest = 'DELETE /api/categoria/3';
+    hang('delete', '*/categoria/:id');
     const user = userEvent.setup();
     renderPanel();
 
@@ -181,11 +167,12 @@ describe('CategoryAdminPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Salvar categoria' }));
 
     expect(screen.queryByLabelText('Nome da categoria')).not.toBeInTheDocument();
-    expect(apiCalls).toEqual([{ method: 'PUT', path: '/api/categoria/3', body: { nome: 'Banheiros' } }]);
+    expect(apiRequests).toEqual(['PUT /api/categoria/3']);
+    expect(apiDatabase.categorias).toContainEqual({ id: 3, nome: 'Banheiros' });
   });
 
   it('keeps the form open with a message when the api fails to save', async () => {
-    failingRequest = 'POST /api/categoria';
+    respondWith('post', '*/categoria', 500);
     const user = userEvent.setup();
     renderPanel();
 
@@ -199,7 +186,7 @@ describe('CategoryAdminPanel', () => {
   });
 
   it('blocks cancel and a second submit while the category is being saved', async () => {
-    hangingRequest = 'POST /api/categoria';
+    hang('post', '*/categoria');
     const user = userEvent.setup();
     renderPanel();
 
@@ -217,10 +204,11 @@ describe('CategoryAdminPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Cancelar' }));
 
     expect(screen.getByText('Banheiros')).toBeInTheDocument();
-    expect(apiCalls).toEqual([]);
+    expect(apiRequests).toEqual([]);
   });
 
   it('deletes the category in the api after confirmation', async () => {
+    unlinkProductsFrom(3);
     const user = userEvent.setup();
     renderPanel([{ id: 3, name: 'Banheiros' }]);
 
@@ -228,12 +216,10 @@ describe('CategoryAdminPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Apagar' }));
 
     expect(await screen.findByText('Nenhuma categoria cadastrada.')).toBeInTheDocument();
-    expect(apiCalls).toEqual([{ method: 'DELETE', path: '/api/categoria/3', body: undefined }]);
+    expect(apiDatabase.categorias.map((categoria) => categoria.id)).toEqual([2]);
   });
 
   it('keeps a category that still has products and explains why', async () => {
-    failingRequest = 'DELETE /api/categoria/3';
-    failingStatus = 409;
     const user = userEvent.setup();
     renderPanel();
 
@@ -249,7 +235,7 @@ describe('CategoryAdminPanel', () => {
   });
 
   it('keeps the category with a message when the api fails to delete it', async () => {
-    failingRequest = 'DELETE /api/categoria/3';
+    respondWith('delete', '*/categoria/:id', 500);
     const user = userEvent.setup();
     renderPanel();
 
@@ -265,7 +251,7 @@ describe('CategoryAdminPanel', () => {
   });
 
   it('blocks cancel and a second confirmation while the category is being deleted', async () => {
-    hangingRequest = 'DELETE /api/categoria/3';
+    hang('delete', '*/categoria/:id');
     const user = userEvent.setup();
     renderPanel();
 
