@@ -11,7 +11,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { PencilIcon, TrashBinIcon } from '@/icons';
-import { STORE_PRESENTATION } from '@/entities/product';
+import { PRODUCT_IMAGE_PLACEHOLDER, STORE_PRESENTATION } from '@/entities/product';
 import type { Product } from '@/entities/product';
 
 type ProductTableProps = {
@@ -65,7 +65,7 @@ export const ProductTable = ({ products, onEdit, onDelete }: ProductTableProps) 
                   <div className="flex items-center gap-3">
                     <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-neutral-100">
                       <Image
-                        src={product.images[0]}
+                        src={product.images[0] ?? PRODUCT_IMAGE_PLACEHOLDER}
                         alt={product.name}
                         fill
                         sizes="40px"

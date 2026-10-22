@@ -35,6 +35,8 @@ export const STORE_PRESENTATION: Record<StoreSlug, StorePresentation> = {
   },
 };
 
+export const PRODUCT_IMAGE_PLACEHOLDER = '/images/product/placeholder.svg';
+
 export type StoreLink = {
   store: StoreSlug;
   url: string;

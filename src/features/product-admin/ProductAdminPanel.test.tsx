@@ -34,6 +34,14 @@ const fillRequiredProductFields = async (
 };
 
 describe('ProductAdminPanel', () => {
+  it('shows a placeholder photo for a product without images', () => {
+    render(<ProductAdminPanel initialProducts={[buildProduct({ images: [] })]} />);
+    expect(screen.getByAltText('Garrafa Térmica 1L')).toHaveAttribute(
+      'src',
+      expect.stringContaining('placeholder'),
+    );
+  });
+
   it('creates a product and lists it in the table', async () => {
     const user = userEvent.setup();
     render(<ProductAdminPanel initialProducts={[buildProduct({})]} />);

@@ -1,10 +1,10 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { STORE_PRESENTATION } from '@/entities/product';
+import { PRODUCT_IMAGE_PLACEHOLDER, STORE_PRESENTATION } from '@/entities/product';
 import type { Product } from '@/entities/product';
 
 export const ProductDetail = ({ product }: { product: Product }) => {
-  const [coverImage, ...remainingImages] = product.images;
+  const [coverImage = PRODUCT_IMAGE_PLACEHOLDER, ...remainingImages] = product.images;
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-16">
@@ -48,10 +48,13 @@ export const ProductDetail = ({ product }: { product: Product }) => {
           <h1 className="mt-3 text-3xl font-semibold tracking-tight text-gray-800 sm:text-4xl">
             {product.name}
           </h1>
-          <p className="mt-4 text-gray-500">{product.longDescription}</p>
+          <p className="mt-4 whitespace-pre-line text-gray-500">{product.longDescription}</p>
 
           <div className="mt-8">
             <h2 className="text-sm font-semibold text-gray-800">Onde comprar</h2>
+            {product.storeLinks.length === 0 && (
+              <p className="mt-3 text-sm text-gray-500">Links de compra em breve.</p>
+            )}
             <div className="mt-3 flex flex-col gap-2">
               {product.storeLinks.map((storeLink) => (
                 <a
