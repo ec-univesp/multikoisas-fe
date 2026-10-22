@@ -8,6 +8,7 @@ const product: Product = {
   slug: 'garrafa-termica-1l',
   name: 'Garrafa Térmica 1L',
   category: 'cozinha',
+  categoryId: null,
   shortDescription: 'Mantém a temperatura por até 12 horas.',
   longDescription:
     'Garrafa térmica de 1 litro com ampola de vidro, ideal para café e chá. Alça para transporte e tampa que serve de xícara.',

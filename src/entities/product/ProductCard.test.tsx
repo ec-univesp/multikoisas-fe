@@ -9,6 +9,7 @@ const product: Product = {
   slug: 'garrafa-termica-1l',
   name: 'Garrafa Térmica 1L',
   category: 'cozinha',
+  categoryId: null,
   shortDescription: 'Mantém a temperatura por até 12 horas.',
   longDescription: 'longa',
   images: ['/products/garrafa-termica-1l.svg'],

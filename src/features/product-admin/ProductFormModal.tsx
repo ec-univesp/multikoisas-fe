@@ -5,78 +5,66 @@ import { Modal } from '@/components/ui/modal';
 import Button from '@/components/ui/button/Button';
 import Label from '@/components/form/Label';
 import Input from '@/components/form/input/InputField';
+import Select from '@/components/form/Select';
 import TextArea from '@/components/form/input/TextArea';
-import { createSlugFromName, type Product } from '@/entities/product';
-import { StoreLinksField, createEmptyStoreLink } from './StoreLinksField';
+import type { Category, Product } from '@/entities/product';
 import { hasProductFormErrors, validateProductForm } from './validateProductForm';
 import type { ProductFormErrors, ProductFormValues } from './types';
 
 const buildInitialFormValues = (product?: Product): ProductFormValues => ({
   name: product?.name ?? '',
-  category: product?.category ?? '',
-  shortDescription: product?.shortDescription ?? '',
-  longDescription: product?.longDescription ?? '',
-  imageUrl: product?.images[0] ?? '',
-  storeLinks: product
-    ? product.storeLinks.map((storeLink) => ({ id: crypto.randomUUID(), ...storeLink }))
-    : [createEmptyStoreLink()],
-});
-
-const buildProductFromFormValues = (
-  values: ProductFormValues,
-  existingProduct: Product | undefined,
-  existingSlugs: readonly string[],
-): Product => ({
-  // ponytail: id provisório até o MK-4, quando a API passa a gerar o id
-  id: existingProduct?.id ?? 0,
-  slug: existingProduct?.slug ?? createSlugFromName(values.name, existingSlugs),
-  name: values.name.trim(),
-  category: values.category.trim(),
-  shortDescription: values.shortDescription.trim(),
-  longDescription: values.longDescription.trim(),
-  images: [values.imageUrl.trim()],
-  storeLinks: values.storeLinks.map(({ store, url }) => ({ store, url: url.trim() })),
+  categoryId: product?.categoryId === null || !product ? '' : String(product.categoryId),
+  description: product?.longDescription ?? '',
 });
 
 type ProductFormModalProps = {
   isOpen: boolean;
   onClose: () => void;
   existingProduct?: Product;
-  existingSlugs: readonly string[];
-  onSave: (product: Product) => void;
+  categories: readonly Category[];
+  onSave: (values: ProductFormValues) => Promise<void>;
 };
 
 export const ProductFormModal = ({
   isOpen,
   onClose,
   existingProduct,
-  existingSlugs,
+  categories,
   onSave,
 }: ProductFormModalProps) => {
   const [values, setValues] = useState<ProductFormValues>(() =>
     buildInitialFormValues(existingProduct),
   );
   const [errors, setErrors] = useState<ProductFormErrors>({});
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const updateField = <FieldName extends keyof ProductFormValues>(
-    field: FieldName,
-    value: ProductFormValues[FieldName],
-  ) => setValues((previousValues) => ({ ...previousValues, [field]: value }));
+  const updateField = (field: keyof ProductFormValues, value: string) =>
+    setValues((previousValues) => ({ ...previousValues, [field]: value }));
 
   const resetAndClose = () => {
     setValues(buildInitialFormValues(existingProduct));
     setErrors({});
+    setSaveError(null);
     onClose();
   };
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const validationErrors = validateProductForm(values);
     setErrors(validationErrors);
     if (hasProductFormErrors(validationErrors)) return;
 
-    onSave(buildProductFromFormValues(values, existingProduct, existingSlugs));
-    resetAndClose();
+    setIsSaving(true);
+    setSaveError(null);
+    try {
+      await onSave(values);
+      resetAndClose();
+    } catch {
+      setSaveError('Não foi possível salvar o produto. Tente de novo.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -106,77 +94,49 @@ export const ProductFormModal = ({
 
             <div>
               <Label htmlFor="product-category">Categoria</Label>
-              <Input
+              <Select
                 id="product-category"
-                type="text"
-                defaultValue={values.category}
-                onChange={(event) => updateField('category', event.target.value)}
-                error={Boolean(errors.category)}
-                hint={errors.category}
+                placeholder="Escolha uma categoria"
+                options={categories.map((category) => ({
+                  value: String(category.id),
+                  label: category.name,
+                }))}
+                defaultValue={values.categoryId}
+                onChange={(value) => updateField('categoryId', value)}
                 className="text-base"
               />
+              {errors.categoryId && (
+                <p className="mt-1.5 text-xs text-error-500">{errors.categoryId}</p>
+              )}
             </div>
 
             <div>
-              <Label htmlFor="product-image">Endereço da foto</Label>
-              <Input
-                id="product-image"
-                type="text"
-                placeholder="/products/nome-do-produto.svg"
-                defaultValue={values.imageUrl}
-                onChange={(event) => updateField('imageUrl', event.target.value)}
-                error={Boolean(errors.imageUrl)}
-                hint={errors.imageUrl}
-                className="text-base"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="product-short-description">
-                Descrição curta (aparece no card da vitrine)
-              </Label>
+              <Label htmlFor="product-description">Descrição</Label>
               <TextArea
-                id="product-short-description"
-                placeholder="Frase curta que resume o produto"
-                rows={2}
-                value={values.shortDescription}
-                onChange={(value) => updateField('shortDescription', value)}
-                error={Boolean(errors.shortDescription)}
-                hint={errors.shortDescription}
+                id="product-description"
+                placeholder="A primeira linha aparece no card da vitrine"
+                rows={6}
+                value={values.description}
+                onChange={(value) => updateField('description', value)}
+                error={Boolean(errors.description)}
+                hint={errors.description}
                 className="text-base"
               />
             </div>
-
-            <div>
-              <Label htmlFor="product-long-description">
-                Descrição completa (aparece na página do produto)
-              </Label>
-              <TextArea
-                id="product-long-description"
-                placeholder="Descrição detalhada do produto"
-                rows={4}
-                value={values.longDescription}
-                onChange={(value) => updateField('longDescription', value)}
-                error={Boolean(errors.longDescription)}
-                hint={errors.longDescription}
-                className="text-base"
-              />
-            </div>
-
-            <StoreLinksField
-              storeLinks={values.storeLinks}
-              onChange={(storeLinks) => updateField('storeLinks', storeLinks)}
-              generalError={errors.storeLinks}
-              urlErrors={errors.storeLinkUrls}
-            />
           </div>
+
+          {saveError && (
+            <p role="alert" className="mt-4 px-1 text-sm text-error-500">
+              {saveError}
+            </p>
+          )}
 
           <div className="mt-6 flex items-center justify-end gap-3 px-1">
             <Button size="sm" variant="outline" onClick={resetAndClose}>
               Cancelar
             </Button>
-            <Button size="sm" type="submit">
-              Salvar produto
+            <Button size="sm" type="submit" disabled={isSaving}>
+              {isSaving ? 'Salvando...' : 'Salvar produto'}
             </Button>
           </div>
         </form>

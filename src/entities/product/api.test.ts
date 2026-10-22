@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { fetchProductBySlug, fetchProducts } from './api';
+import { fetchCategories, fetchProductBySlug, fetchProducts } from './api';
 
 const apiResponses: Record<string, unknown> = {
   '/produto': [
@@ -38,6 +38,7 @@ describe('fetchProducts', () => {
       slug: 'garrafa-termica-1l-12',
       name: 'Garrafa Térmica 1L',
       category: 'Utensílios de Cozinha',
+      categoryId: 2,
       shortDescription: 'Mantém a temperatura.',
       longDescription: 'Mantém a temperatura.\r\n\r\nAmpola de vidro.',
       images: [],
@@ -49,6 +50,7 @@ describe('fetchProducts', () => {
     stubApi();
     const [, balde] = await fetchProducts();
     expect(balde.category).toBe('Sem categoria');
+    expect(balde.categoryId).toBeNull();
   });
 
   it('calls the api at the default address with a revalidation window', async () => {
@@ -56,6 +58,14 @@ describe('fetchProducts', () => {
     await fetchProducts();
     expect(fetchMock).toHaveBeenCalledWith('https://multikoisas-univesp.onrender.com/produto', {
       next: { revalidate: 300 },
+    });
+  });
+
+  it('skips the cache when fresh data is requested', async () => {
+    const fetchMock = stubApi();
+    await fetchProducts({ fresh: true });
+    expect(fetchMock).toHaveBeenCalledWith('https://multikoisas-univesp.onrender.com/produto', {
+      cache: 'no-store',
     });
   });
 
@@ -74,5 +84,15 @@ describe('fetchProductBySlug', () => {
   it('returns undefined for an unknown slug', async () => {
     stubApi();
     expect(await fetchProductBySlug('balde-31')).toBeUndefined();
+  });
+});
+
+describe('fetchCategories', () => {
+  it('lists the api categories', async () => {
+    stubApi();
+    expect(await fetchCategories({ fresh: true })).toEqual([
+      { id: 2, name: 'Utensílios de Cozinha' },
+      { id: 3, name: 'Banheiros' },
+    ]);
   });
 });
