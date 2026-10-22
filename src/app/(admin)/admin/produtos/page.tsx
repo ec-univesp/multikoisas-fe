@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import { getProducts } from "@/entities/product";
+import { fetchProducts } from "@/entities/product";
 import { ProductAdminPanel } from "@/features/product-admin";
 
 export const metadata: Metadata = {
@@ -8,8 +8,8 @@ export const metadata: Metadata = {
   description: "Produtos publicados na vitrine da MultiKoisas.",
 };
 
-const ProdutosPage = () => {
-  const products = getProducts();
+const ProdutosPage = async () => {
+  const products = await fetchProducts();
 
   return (
     <div>
