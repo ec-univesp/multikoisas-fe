@@ -1,0 +1,1 @@
+export { SalesChannelAdminScreen } from './SalesChannelAdminScreen';

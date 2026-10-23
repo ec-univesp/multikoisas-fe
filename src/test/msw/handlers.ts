@@ -9,6 +9,7 @@ const springError = (status: number, error: string, request: Request) =>
   );
 
 type NomeBody = { nome?: string };
+type CanalVendaBody = { id?: number; nome?: string };
 type ProdutoBody = { nome?: string; descricaoProduto?: string };
 
 export const handlers = [
@@ -117,4 +118,30 @@ export const handlers = [
   }),
 
   http.get('*/socialnetwork', () => HttpResponse.json(apiDatabase.redesSociais)),
+
+  http.get('*/canalvenda', () => HttpResponse.json(apiDatabase.canaisVenda)),
+
+  // A API exige o id no corpo: ela não gera o id do canal.
+  http.post<never, CanalVendaBody>('*/canalvenda', async ({ request }) => {
+    const { id, nome } = await request.json();
+    if (typeof id !== 'number' || !Number.isInteger(id) || !nome?.trim()) return springError(400, 'Bad Request', request);
+    if (apiDatabase.canaisVenda.some((canalVenda) => canalVenda.id === id)) {
+      return springError(409, 'Conflict', request);
+    }
+    const canalVenda = { id, nome };
+    apiDatabase.canaisVenda.push(canalVenda);
+    return HttpResponse.json(canalVenda, { status: 201 });
+  }),
+
+  // O SecurityConfig da API publicada não libera PUT em /canalvenda (UNIV-16 no santi).
+  http.put('*/canalvenda/:id', ({ request }) => springError(403, 'Forbidden', request)),
+
+  http.delete('*/canalvenda/:id', ({ request, params }) => {
+    const id = Number(params.id);
+    if (!apiDatabase.canaisVenda.some((canalVenda) => canalVenda.id === id)) {
+      return springError(404, 'Not Found', request);
+    }
+    apiDatabase.canaisVenda = apiDatabase.canaisVenda.filter((canalVenda) => canalVenda.id !== id);
+    return new HttpResponse(null, { status: 204 });
+  }),
 ];
