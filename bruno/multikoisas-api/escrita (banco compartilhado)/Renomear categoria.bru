@@ -1,0 +1,17 @@
+meta {
+  name: Renomear categoria
+  type: http
+  seq: 2
+}
+
+put {
+  url: {{baseUrl}}/categoria/0
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "nome": "Teste Bruno renomeada"
+  }
+}

@@ -1,0 +1,15 @@
+meta {
+  name: Produtos de uma categoria
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/categoriaproduto?categoria=1
+  body: none
+  auth: none
+}
+
+params:query {
+  categoria: 1
+}

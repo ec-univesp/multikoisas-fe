@@ -65,6 +65,18 @@ O catálogo vem da API do time, um serviço Spring Boot publicado no Render.
 | `GET /categoria`, `POST /categoria`, `PUT /categoria/{id}`, `DELETE /categoria/{id}` | filtro da vitrine e cadastro de categorias |
 | `GET /categoriaproduto`, `POST /categoriaproduto`, `DELETE /categoriaproduto` | categoria de cada produto |
 
+### Ver o JSON da API com o Bruno
+
+A pasta `bruno/multikoisas-api` é uma coleção pronta do [Bruno](https://www.usebruno.com), um cliente de API como o Postman, que guarda as requisições como arquivos no próprio repositório.
+
+1. No Bruno, **Open Collection** e escolha a pasta `bruno/multikoisas-api`.
+2. No seletor de ambiente (canto superior direito), escolha **API direta** para falar com o Render ou **Pelo site** para passar pelo proxy `/api` do Netlify.
+3. Abra uma requisição, como `produtos/Listar produtos`, e clique em enviar: o JSON aparece na aba de resposta.
+
+As pastas de leitura (`produtos`, `categorias`, `vinculos`, `canais-e-redes`) não alteram nada. A pasta `escrita (banco compartilhado)` grava no banco do time: use para estudar e apague o que criar.
+
+Também dá para rodar pelo terminal, sem abrir o aplicativo: `cd bruno/multikoisas-api && npx @usebruno/cli run produtos --env "API direta"`.
+
 ### O que você precisa saber antes de usar
 
 - **A primeira visita do dia pode demorar.** O Render desliga a API quando ela fica parada, e ela leva cerca de 1 minuto para voltar.

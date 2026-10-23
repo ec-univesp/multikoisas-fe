@@ -1,0 +1,17 @@
+meta {
+  name: Criar categoria
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/categoria
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "nome": "Teste Bruno"
+  }
+}
