@@ -82,12 +82,38 @@ describe('ProductAdminPanel', () => {
     expect(linksOf(100)).toEqual([{ produtoId: 100, categoriaId: 3 }]);
   });
 
+  it('loads the latest product from the api before editing it', async () => {
+    apiDatabase.produtos[0].nome = 'Garrafa Térmica Nova';
+    const user = userEvent.setup();
+    renderPanel();
+
+    await user.click(screen.getByRole('button', { name: 'Editar Garrafa Térmica 1L' }));
+
+    expect(await screen.findByLabelText('Nome do produto')).toHaveValue('Garrafa Térmica Nova');
+    expect(apiRequests).toEqual(['GET /api/produto/1', 'GET /api/categoriaproduto?produto=1']);
+  });
+
+  it('drops a product that was deleted elsewhere when opening it for edit', async () => {
+    apiDatabase.produtos = apiDatabase.produtos.filter((produto) => produto.id !== 5);
+    const user = userEvent.setup();
+    renderPanel([buildProduct({}), buildProduct({ id: 5, slug: 'balde-12l-5', name: 'Balde 12L', categoryId: null })]);
+
+    await user.click(screen.getByRole('button', { name: 'Editar Balde 12L' }));
+
+    expect(
+      await screen.findByText('Esse produto já tinha sido apagado. A lista foi atualizada.'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Balde 12L')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Nome do produto')).not.toBeInTheDocument();
+  });
+
   it('updates the product in the api without touching an unchanged category', async () => {
+    apiDatabase.produtos[0].descricaoProduto = 'Mantém a temperatura por 12 horas.\nAmpola de vidro.';
     const user = userEvent.setup();
     renderPanel([buildProduct({}), buildProduct({ id: 5, slug: 'balde-5', name: 'Balde 12L' })]);
 
     await user.click(screen.getByRole('button', { name: 'Editar Garrafa Térmica 1L' }));
-    const nameInput = screen.getByLabelText('Nome do produto');
+    const nameInput = await screen.findByLabelText('Nome do produto');
     await user.clear(nameInput);
     await user.type(nameInput, 'Garrafa Térmica 1.5L');
     await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
@@ -99,7 +125,11 @@ describe('ProductAdminPanel', () => {
       nome: 'Garrafa Térmica 1.5L',
       descricaoProduto: 'Mantém a temperatura por 12 horas.\nAmpola de vidro.',
     });
-    expect(apiRequests).toEqual(['PUT /api/produto/1']);
+    expect(apiRequests).toEqual([
+      'GET /api/produto/1',
+      'GET /api/categoriaproduto?produto=1',
+      'PUT /api/produto/1',
+    ]);
   });
 
   it('moves the product to the new category when it changes', async () => {
@@ -107,12 +137,12 @@ describe('ProductAdminPanel', () => {
     renderPanel();
 
     await user.click(screen.getByRole('button', { name: 'Editar Garrafa Térmica 1L' }));
-    await user.selectOptions(screen.getByLabelText('Categoria'), '3');
+    await user.selectOptions(await screen.findByLabelText('Categoria'), '3');
     await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
 
     expect(await screen.findByText('Banheiros')).toBeInTheDocument();
     expect(linksOf(1)).toEqual([{ produtoId: 1, categoriaId: 3 }]);
-    expect(apiRequests.slice(1)).toEqual([
+    expect(apiRequests.slice(-3)).toEqual([
       'GET /api/categoriaproduto?produto=1',
       'DELETE /api/categoriaproduto',
       'POST /api/categoriaproduto',
@@ -124,7 +154,7 @@ describe('ProductAdminPanel', () => {
     renderPanel([buildProduct({ id: 7, slug: 'caixa-7', name: 'Caixa' })]);
 
     await user.click(screen.getByRole('button', { name: 'Editar Caixa' }));
-    await user.selectOptions(screen.getByLabelText('Categoria'), '3');
+    await user.selectOptions(await screen.findByLabelText('Categoria'), '3');
     await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
 
     expect(await screen.findByText('Banheiros')).toBeInTheDocument();
@@ -154,11 +184,11 @@ describe('ProductAdminPanel', () => {
     renderPanel();
 
     await user.click(screen.getByRole('button', { name: 'Editar Garrafa Térmica 1L' }));
-    await user.type(screen.getByLabelText('Nome do produto'), ' Inox');
+    await user.type(await screen.findByLabelText('Nome do produto'), ' Inox');
     await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
     await user.click(await screen.findByRole('button', { name: 'Editar Garrafa Térmica 1L Inox' }));
 
-    expect(screen.getByLabelText('Nome do produto')).toHaveValue('Garrafa Térmica 1L Inox');
+    expect(await screen.findByLabelText('Nome do produto')).toHaveValue('Garrafa Térmica 1L Inox');
   });
 
   it('blocks cancel and a second submit while the product is being saved', async () => {

@@ -34,6 +34,18 @@ const fetchCategoryLinks = async (produtoId: number): Promise<CategoriaProdutoBo
   return response.json();
 };
 
+export const loadProductForEdit = async (
+  productId: number,
+  categories: readonly Category[],
+): Promise<Product | null> => {
+  const response = await fetch(`/api/produto/${productId}`, { cache: 'no-store' });
+  if (response.status === HTTP_NOT_FOUND) return null;
+  if (!response.ok) throw new Error(`GET /produto/${productId} respondeu ${response.status}`);
+  const produto: ProdutoResponse = await response.json();
+  const [firstLink] = await fetchCategoryLinks(productId);
+  return toProduct(produto, categories.find((category) => category.id === firstLink?.categoriaId));
+};
+
 export class CategoryLinkError extends Error {
   constructor(readonly product: Product) {
     super(`Produto ${product.id} salvo sem categoria`);
