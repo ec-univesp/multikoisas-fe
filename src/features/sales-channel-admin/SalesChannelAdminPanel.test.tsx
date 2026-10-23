@@ -111,19 +111,50 @@ describe('SalesChannelAdminPanel', () => {
     expect(apiRequests).toEqual([]);
   });
 
-  it('reloads the list when someone else took the next id at the same time', async () => {
+  it('reloads the list and keeps the form open when someone else took the next id', async () => {
     apiDatabase.canaisVenda.push({ id: 6, nome: 'Kwai' });
     const user = userEvent.setup();
     renderPanel();
 
     await submitNewSalesChannel(user, 'Mercado Livre');
 
-    expect(
-      await screen.findByText('Outra pessoa criou um canal ao mesmo tempo. Tente de novo.'),
-    ).toHaveAttribute('role', 'alert');
+    expect(await screen.findByText('Não foi possível salvar o canal. Tente de novo.')).toBeInTheDocument();
     expect(await screen.findByText('Kwai')).toBeInTheDocument();
+    expect(screen.getByLabelText('Nome do canal')).toHaveValue('Mercado Livre');
+
+    await user.click(screen.getByRole('button', { name: 'Salvar canal' }));
+
+    expect(await screen.findByText('Mercado Livre')).toBeInTheDocument();
+    expect(apiDatabase.canaisVenda).toContainEqual({ id: 7, nome: 'Mercado Livre' });
+    expect(apiRequests).toEqual(['POST /api/canalvenda', 'GET /api/canalvenda', 'POST /api/canalvenda']);
+  });
+
+  it('skips the taken id on the next try even when the list cannot be reloaded', async () => {
+    apiDatabase.canaisVenda.push({ id: 6, nome: 'Kwai' });
+    server.use(http.get('*/canalvenda', () => new HttpResponse(null, { status: 500 }), { once: true }));
+    const user = userEvent.setup();
+    renderPanel();
+
+    await submitNewSalesChannel(user, 'Mercado Livre');
+    expect(await screen.findByText('Não foi possível salvar o canal. Tente de novo.')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Salvar canal' }));
+
+    expect(await screen.findByText('Mercado Livre')).toBeInTheDocument();
+    expect(apiDatabase.canaisVenda).toContainEqual({ id: 7, nome: 'Mercado Livre' });
+  });
+
+  it('closes the form when the channel turns out to be already created', async () => {
+    apiDatabase.canaisVenda.push({ id: 6, nome: 'Mercado Livre' });
+    const user = userEvent.setup();
+    renderPanel();
+
+    await submitNewSalesChannel(user, 'mercado livre');
+
+    expect(
+      await screen.findByText('O canal "mercado livre" já tinha sido criado. A lista foi atualizada.'),
+    ).toHaveAttribute('role', 'alert');
+    expect(screen.getByText('Mercado Livre')).toBeInTheDocument();
     expect(screen.queryByLabelText('Nome do canal')).not.toBeInTheDocument();
-    expect(apiRequests).toEqual(['POST /api/canalvenda', 'GET /api/canalvenda']);
   });
 
   it('keeps the form open with a message when the api fails to save', async () => {
@@ -186,7 +217,7 @@ describe('SalesChannelAdminPanel', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
-  it('keeps the sales channel with a message when the api fails to delete it', async () => {
+  it('explains that a channel with linked products cannot be deleted (api answers 500)', async () => {
     respondWith('delete', '*/canalvenda/:id', 500);
     const user = userEvent.setup();
     renderPanel();
@@ -195,10 +226,22 @@ describe('SalesChannelAdminPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Apagar' }));
 
     expect(
-      await screen.findByText(
-        'Não foi possível apagar o canal. Se ele tiver produtos vinculados, desvincule antes.',
-      ),
+      await screen.findByText('Este canal tem produtos vinculados e não pode ser apagado.'),
     ).toHaveAttribute('role', 'alert');
+    expect(screen.getByText('Shopee')).toBeInTheDocument();
+  });
+
+  it('keeps the sales channel with a generic message on other delete failures', async () => {
+    respondWith('delete', '*/canalvenda/:id', 403);
+    const user = userEvent.setup();
+    renderPanel();
+
+    await user.click(screen.getByRole('button', { name: 'Apagar Shopee' }));
+    await user.click(screen.getByRole('button', { name: 'Apagar' }));
+
+    expect(
+      await screen.findByText('Não foi possível apagar o canal. Recarregue a página e tente de novo.'),
+    ).toBeInTheDocument();
     expect(screen.getByText('Shopee')).toBeInTheDocument();
   });
 

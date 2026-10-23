@@ -124,7 +124,7 @@ export const handlers = [
   // A API exige o id no corpo: ela não gera o id do canal.
   http.post<never, CanalVendaBody>('*/canalvenda', async ({ request }) => {
     const { id, nome } = await request.json();
-    if (id === undefined || !nome?.trim()) return springError(400, 'Bad Request', request);
+    if (typeof id !== 'number' || !Number.isInteger(id) || !nome?.trim()) return springError(400, 'Bad Request', request);
     if (apiDatabase.canaisVenda.some((canalVenda) => canalVenda.id === id)) {
       return springError(409, 'Conflict', request);
     }

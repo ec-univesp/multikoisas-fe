@@ -105,6 +105,8 @@ describe('multikoisas-api handlers', () => {
   it('rejects a sales channel without id, with a blank name or with a taken id', async () => {
     expect((await send('POST', '/api/canalvenda', { nome: 'Kwai' })).status).toBe(400);
     expect((await send('POST', '/api/canalvenda', { id: 9, nome: ' ' })).status).toBe(400);
+    expect((await send('POST', '/api/canalvenda', { id: null, nome: 'Kwai' })).status).toBe(400);
+    expect((await send('POST', '/api/canalvenda', { id: 'dez', nome: 'Kwai' })).status).toBe(400);
     const conflict = await send('POST', '/api/canalvenda', { id: 2, nome: 'Kwai' });
     expect(conflict.status).toBe(409);
     expect(await conflict.json()).toMatchObject({ status: 409, error: 'Conflict' });

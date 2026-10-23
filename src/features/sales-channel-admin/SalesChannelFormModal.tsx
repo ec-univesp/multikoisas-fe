@@ -9,7 +9,7 @@ import type { SalesChannel } from '@/entities/sales-channel';
 
 const collapseSpaces = (name: string): string => name.trim().replace(/\s+/g, ' ');
 
-const normalizeName = (name: string): string =>
+export const normalizeSalesChannelName = (name: string): string =>
   collapseSpaces(name)
     .normalize('NFD')
     .replace(/\p{Diacritic}/gu, '')
@@ -21,7 +21,7 @@ const validateSalesChannelName = (
 ): string | null => {
   if (!name.trim()) return 'Informe o nome do canal.';
   const isRepeated = salesChannels.some(
-    (salesChannel) => normalizeName(salesChannel.name) === normalizeName(name),
+    (salesChannel) => normalizeSalesChannelName(salesChannel.name) === normalizeSalesChannelName(name),
   );
   return isRepeated ? 'Já existe um canal com esse nome.' : null;
 };
