@@ -115,4 +115,6 @@ export const handlers = [
     apiDatabase.categoriaProduto = remaining;
     return HttpResponse.json({ mensagem: 'Categoria desassociada do produto com sucesso.' });
   }),
+
+  http.get('*/socialnetwork', () => HttpResponse.json(apiDatabase.redesSociais)),
 ];

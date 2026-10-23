@@ -1,28 +1,13 @@
+import { type FetchOptions, getFromApi } from '@/shared/api/getFromApi';
 import { toBaseSlug } from './toBaseSlug';
 import type { Category, Product } from './types';
 
 export type ProdutoResponse = { id: number; nome: string; descricaoProduto: string };
 type CategoriaResponse = { id: number; nome: string };
 type CategoriaProdutoResponse = { produtoId: number; categoriaId: number };
-type FetchOptions = { fresh?: boolean; fromBrowser?: boolean };
 type Catalog = { products: Product[]; categories: Category[] };
 
-export const API_URL = process.env.MULTIKOISAS_API_URL ?? 'https://multikoisas-univesp.onrender.com';
-const REVALIDATE_SECONDS = 300;
 const UNCATEGORIZED = 'Sem categoria';
-
-const getFromApi = async <Body>(
-  path: string,
-  { fresh = false, fromBrowser = false }: FetchOptions,
-): Promise<Body> => {
-  const cachePolicy: RequestInit = fresh
-    ? { cache: 'no-store' }
-    : { next: { revalidate: REVALIDATE_SECONDS } };
-  const baseUrl = fromBrowser ? '/api' : API_URL;
-  const response = await fetch(`${baseUrl}${path}`, cachePolicy);
-  if (!response.ok) throw new Error(`API ${path} respondeu ${response.status}`);
-  return response.json();
-};
 
 const firstNonEmptyLine = (text: string): string =>
   text.split(/\r?\n/).find((line) => line.trim().length > 0)?.trim() ?? '';
