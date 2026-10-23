@@ -1,0 +1,18 @@
+meta {
+  name: Vincular categoria ao produto (grava no banco)
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/categoriaproduto
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "produtoId": 0,
+    "categoriaId": 0
+  }
+}

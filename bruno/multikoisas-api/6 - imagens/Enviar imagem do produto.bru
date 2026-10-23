@@ -1,0 +1,16 @@
+meta {
+  name: Enviar imagem do produto (grava no banco)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/imagem
+  body: multipartForm
+  auth: none
+}
+
+body:multipart-form {
+  produtoId: 0
+  file: @file()
+}

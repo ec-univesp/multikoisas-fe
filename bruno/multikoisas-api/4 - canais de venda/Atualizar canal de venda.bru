@@ -1,0 +1,18 @@
+meta {
+  name: Atualizar canal de venda (grava no banco)
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/canalvenda/0
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "id": 0,
+    "nome": "Canal de teste editado"
+  }
+}

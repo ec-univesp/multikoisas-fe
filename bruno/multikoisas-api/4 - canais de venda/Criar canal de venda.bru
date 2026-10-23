@@ -1,0 +1,18 @@
+meta {
+  name: Criar canal de venda (grava no banco)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/canalvenda
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "id": 0,
+    "nome": "Canal de teste"
+  }
+}

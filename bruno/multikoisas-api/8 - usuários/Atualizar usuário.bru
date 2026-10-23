@@ -1,0 +1,17 @@
+meta {
+  name: Atualizar usuário (grava no banco)
+  type: http
+  seq: 5
+}
+
+put {
+  url: {{baseUrl}}/user/teste.bruno
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "firstName": "Teste editado"
+  }
+}
