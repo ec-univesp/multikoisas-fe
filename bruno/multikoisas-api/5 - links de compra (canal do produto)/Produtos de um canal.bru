@@ -1,0 +1,15 @@
+meta {
+  name: Produtos de um canal
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/canalvendaproduto?canalVenda=2
+  body: none
+  auth: none
+}
+
+params:query {
+  canalVenda: 2
+}

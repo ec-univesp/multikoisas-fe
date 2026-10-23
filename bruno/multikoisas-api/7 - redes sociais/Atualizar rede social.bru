@@ -1,0 +1,18 @@
+meta {
+  name: Atualizar rede social (grava no banco)
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/socialnetwork/Rede de teste
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "descricao": "Rede de teste",
+    "link": "https://exemplo.com/novo"
+  }
+}

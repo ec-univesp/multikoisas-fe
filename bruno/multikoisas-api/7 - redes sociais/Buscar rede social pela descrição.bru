@@ -1,0 +1,15 @@
+meta {
+  name: Buscar rede social pela descrição
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/socialnetwork?description=Instagram
+  body: none
+  auth: none
+}
+
+params:query {
+  description: Instagram
+}

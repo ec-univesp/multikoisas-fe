@@ -1,0 +1,18 @@
+meta {
+  name: Desvincular categoria do produto (grava no banco)
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/categoriaproduto
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "produtoId": 0,
+    "categoriaId": 0
+  }
+}

@@ -67,15 +67,22 @@ O catálogo vem da API do time, um serviço Spring Boot publicado no Render.
 
 ### Ver o JSON da API com o Bruno
 
-A pasta `bruno/multikoisas-api` é uma coleção pronta do [Bruno](https://www.usebruno.com), um cliente de API como o Postman, que guarda as requisições como arquivos no próprio repositório.
+A pasta `bruno/multikoisas-api` é uma coleção pronta do [Bruno](https://www.usebruno.com), um cliente de API como o Postman, que guarda as requisições como arquivos no próprio repositório. Ela cobre todos os endpoints da branch `develop` do back-end: produtos, categorias, categoria do produto, canais de venda, links de compra, imagens, redes sociais e usuários.
 
 1. No Bruno, **Open Collection** e escolha a pasta `bruno/multikoisas-api`.
-2. No seletor de ambiente (canto superior direito), escolha **API direta** para falar com o Render ou **Pelo site** para passar pelo proxy `/api` do Netlify.
-3. Abra uma requisição, como `produtos/Listar produtos`, e clique em enviar: o JSON aparece na aba de resposta.
+2. No seletor de ambiente (canto superior direito), escolha onde chamar:
 
-As pastas de leitura (`produtos`, `categorias`, `vinculos`, `canais-e-redes`) não alteram nada. A pasta `escrita (banco compartilhado)` grava no banco do time: use para estudar e apague o que criar.
+   | Ambiente | `baseUrl` | Para quê |
+   | --- | --- | --- |
+   | API direta | `https://multikoisas-univesp.onrender.com` | a API publicada (hoje roda a branch `master`) |
+   | Pelo site | `https://multikoisas.netlify.app/api` | o mesmo caminho que o painel usa, pelo proxy do Netlify |
+   | Local | `http://localhost:8080` | o back-end rodando na sua máquina, por exemplo na branch `develop` |
 
-Também dá para rodar pelo terminal, sem abrir o aplicativo: `cd bruno/multikoisas-api && npx @usebruno/cli run produtos --env "API direta"`.
+3. Abra uma requisição, como `1 - produtos/Listar produtos`, e clique em enviar: o JSON aparece na aba de resposta.
+
+Requisições com **(grava no banco)** no nome alteram o banco real do time: troque o `0` pelo id certo e apague o que criar. As de links de compra existem só na `develop` e respondem 403 até o back-end liberar `/canalvendaproduto` no `SecurityConfig` (card UNIV-12).
+
+Também dá para rodar pelo terminal, sem abrir o aplicativo: `cd bruno/multikoisas-api && npx @usebruno/cli run "1 - produtos/Listar produtos.bru" --env "API direta"`. Evite rodar uma pasta inteira contra a API real: ela inclui as requisições que gravam.
 
 ### O que você precisa saber antes de usar
 

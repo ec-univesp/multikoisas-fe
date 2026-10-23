@@ -1,0 +1,18 @@
+meta {
+  name: Atualizar produto (grava no banco)
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/produto/0
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "nome": "Produto de teste editado",
+    "descricaoProduto": "Editado pelo Bruno."
+  }
+}
