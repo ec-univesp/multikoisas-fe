@@ -93,4 +93,24 @@ describe('multikoisas-api handlers', () => {
     expect((await send('PUT', '/api/produto/404', { nome: 'x', descricaoProduto: 'x' })).status).toBe(404);
     expect((await send('DELETE', '/api/produto/1')).status).toBe(409);
   });
+  it('creates a sales channel with the id sent by the client and deletes it', async () => {
+    const created = await send('POST', '/api/canalvenda', { id: 6, nome: 'Mercado Livre' });
+    expect(created.status).toBe(201);
+    expect(await created.json()).toEqual({ id: 6, nome: 'Mercado Livre' });
+    expect(apiDatabase.canaisVenda).toContainEqual({ id: 6, nome: 'Mercado Livre' });
+    expect((await send('DELETE', '/api/canalvenda/6')).status).toBe(204);
+    expect((await send('DELETE', '/api/canalvenda/6')).status).toBe(404);
+  });
+
+  it('rejects a sales channel without id, with a blank name or with a taken id', async () => {
+    expect((await send('POST', '/api/canalvenda', { nome: 'Kwai' })).status).toBe(400);
+    expect((await send('POST', '/api/canalvenda', { id: 9, nome: ' ' })).status).toBe(400);
+    const conflict = await send('POST', '/api/canalvenda', { id: 2, nome: 'Kwai' });
+    expect(conflict.status).toBe(409);
+    expect(await conflict.json()).toMatchObject({ status: 409, error: 'Conflict' });
+  });
+
+  it('does not allow renaming a sales channel (UNIV-16)', async () => {
+    expect((await send('PUT', '/api/canalvenda/2', { nome: 'Shopee Brasil' })).status).toBe(403);
+  });
 });
