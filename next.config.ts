@@ -1,5 +1,5 @@
 import type { NextConfig } from "next";
-import { API_URL } from "./src/entities/product/api";
+import { API_URL } from "./src/shared/api/getFromApi";
 
 const nextConfig: NextConfig = {
   // A multikoisas-api não envia cabeçalhos CORS: o navegador fala com a mesma origem.
