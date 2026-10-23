@@ -4,17 +4,22 @@ import type { Category, Product } from './types';
 export type ProdutoResponse = { id: number; nome: string; descricaoProduto: string };
 type CategoriaResponse = { id: number; nome: string };
 type CategoriaProdutoResponse = { produtoId: number; categoriaId: number };
-type FetchOptions = { fresh?: boolean };
+type FetchOptions = { fresh?: boolean; fromBrowser?: boolean };
+type Catalog = { products: Product[]; categories: Category[] };
 
 export const API_URL = process.env.MULTIKOISAS_API_URL ?? 'https://multikoisas-univesp.onrender.com';
 const REVALIDATE_SECONDS = 300;
 const UNCATEGORIZED = 'Sem categoria';
 
-const getFromApi = async <Body>(path: string, { fresh = false }: FetchOptions): Promise<Body> => {
+const getFromApi = async <Body>(
+  path: string,
+  { fresh = false, fromBrowser = false }: FetchOptions,
+): Promise<Body> => {
   const cachePolicy: RequestInit = fresh
     ? { cache: 'no-store' }
     : { next: { revalidate: REVALIDATE_SECONDS } };
-  const response = await fetch(`${API_URL}${path}`, cachePolicy);
+  const baseUrl = fromBrowser ? '/api' : API_URL;
+  const response = await fetch(`${baseUrl}${path}`, cachePolicy);
   if (!response.ok) throw new Error(`API ${path} respondeu ${response.status}`);
   return response.json();
 };
@@ -41,7 +46,7 @@ export const fetchCategories = async (options: FetchOptions = {}): Promise<Categ
     name: categoria.nome,
   }));
 
-export const fetchProducts = async (options: FetchOptions = {}): Promise<Product[]> => {
+export const fetchCatalog = async (options: FetchOptions = {}): Promise<Catalog> => {
   const [produtos, categories, vinculos] = await Promise.all([
     getFromApi<ProdutoResponse[]>('/produto', options),
     fetchCategories(options),
@@ -51,8 +56,11 @@ export const fetchProducts = async (options: FetchOptions = {}): Promise<Product
     const vinculo = vinculos.find((candidate) => candidate.produtoId === produtoId);
     return categories.find((category) => category.id === vinculo?.categoriaId);
   };
-  return produtos.map((produto) => toProduct(produto, categoryOf(produto.id)));
+  return { products: produtos.map((produto) => toProduct(produto, categoryOf(produto.id))), categories };
 };
+
+export const fetchProducts = async (options: FetchOptions = {}): Promise<Product[]> =>
+  (await fetchCatalog(options)).products;
 
 export const fetchProductBySlug = async (slug: string): Promise<Product | undefined> =>
   (await fetchProducts()).find((product) => product.slug === slug);

@@ -23,6 +23,12 @@ describe('fetchProducts', () => {
     });
   });
 
+  it('goes through the site proxy when called from the browser', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    await fetchProducts({ fresh: true, fromBrowser: true });
+    expect(fetchSpy).toHaveBeenCalledWith('/api/produto', { cache: 'no-store' });
+  });
+
   it('labels a product with no linked category', async () => {
     const [, balde] = await fetchProducts();
     expect(balde.category).toBe('Sem categoria');

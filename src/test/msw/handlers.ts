@@ -14,6 +14,11 @@ type ProdutoBody = { nome?: string; descricaoProduto?: string };
 export const handlers = [
   http.get('*/produto', () => HttpResponse.json(apiDatabase.produtos)),
 
+  http.get('*/produto/:id', ({ request, params }) => {
+    const produto = apiDatabase.produtos.find((candidate) => candidate.id === Number(params.id));
+    return produto ? HttpResponse.json(produto) : springError(404, 'Not Found', request);
+  }),
+
   http.post<never, ProdutoBody>('*/produto', async ({ request }) => {
     const { nome, descricaoProduto = '' } = await request.json();
     if (!nome?.trim()) return springError(400, 'Bad Request', request);
