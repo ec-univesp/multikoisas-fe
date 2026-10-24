@@ -117,6 +117,12 @@ export const handlers = [
     return HttpResponse.json({ mensagem: 'Categoria desassociada do produto com sucesso.' });
   }),
 
+  http.get('*/imagem', () => HttpResponse.json(apiDatabase.imagens)),
+
+  http.get('*/imagem/:produtoId', ({ params }) =>
+    HttpResponse.json(apiDatabase.imagens.filter((imagem) => imagem.produtoId === Number(params.produtoId))),
+  ),
+
   http.get('*/socialnetwork', () => HttpResponse.json(apiDatabase.redesSociais)),
 
   http.get('*/canalvenda', () => HttpResponse.json(apiDatabase.canaisVenda)),

@@ -2,16 +2,20 @@ export type ProdutoRow = { id: number; nome: string; descricaoProduto: string };
 export type CategoriaRow = { id: number; nome: string };
 export type CategoriaProdutoRow = { produtoId: number; categoriaId: number };
 export type CanalVendaRow = { id: number; nome: string };
+export type ImagemRow = { id: number; produtoId: number; imagemUrl: string };
 export type RedeSocialRow = { id: number; descricao: string; link: string };
 
 type ApiDatabase = {
   produtos: ProdutoRow[];
   categorias: CategoriaRow[];
   categoriaProduto: CategoriaProdutoRow[];
+  imagens: ImagemRow[];
   redesSociais: RedeSocialRow[];
   canaisVenda: CanalVendaRow[];
   nextId: number;
 };
+
+const SUPABASE_IMAGES = 'https://avphmmvnlrbidhjrzozx.supabase.co/storage/v1/object/public/imagem';
 
 const seed = (): ApiDatabase => ({
   produtos: [
@@ -27,6 +31,16 @@ const seed = (): ApiDatabase => ({
     { produtoId: 1, categoriaId: 2 },
     { produtoId: 7, categoriaId: 2 },
     { produtoId: 7, categoriaId: 3 },
+  ],
+  imagens: [
+    { id: 12, produtoId: 1, imagemUrl: `${SUPABASE_IMAGES}/garrafa-lado.webp` },
+    { id: 10, produtoId: 1, imagemUrl: `${SUPABASE_IMAGES}/garrafa-frente.webp` },
+    { id: 20, produtoId: 7, imagemUrl: `${SUPABASE_IMAGES}/caixa.webp` },
+    {
+      id: 11,
+      produtoId: 1,
+      imagemUrl: 'https://avphmmvnlrbidhjrzozx.storage.supabase.co/storage/v1/object/public/imagem/garrafa-tampa.jpeg',
+    },
   ],
   redesSociais: [
     { id: 1, descricao: 'Instagram', link: 'https://www.instagram.com/multikoisas' },
