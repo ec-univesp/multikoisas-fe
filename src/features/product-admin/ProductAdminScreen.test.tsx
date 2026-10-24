@@ -21,8 +21,19 @@ describe('ProductAdminScreen', () => {
     expect([...apiRequests].sort()).toEqual([
       'GET /api/categoria',
       'GET /api/categoriaproduto',
+      'GET /api/imagem',
       'GET /api/produto',
     ]);
+  });
+
+  it('shows the first api photo as the table thumbnail', async () => {
+    render(<ProductAdminScreen />);
+
+    expect(await screen.findByAltText('Garrafa Térmica 1L')).toHaveAttribute(
+      'src',
+      expect.stringContaining('garrafa-frente.webp'),
+    );
+    expect(screen.getByAltText('Balde 12L')).toHaveAttribute('src', expect.stringContaining('placeholder'));
   });
 
   it('offers a retry when the api fails to load', async () => {

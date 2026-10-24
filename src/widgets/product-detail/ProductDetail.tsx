@@ -5,6 +5,10 @@ import type { Product } from '@/entities/product';
 
 export const ProductDetail = ({ product }: { product: Product }) => {
   const [coverImage = PRODUCT_IMAGE_PLACEHOLDER, ...remainingImages] = product.images;
+  const photoAlt = (position: number) =>
+    product.images.length === 0
+      ? product.name
+      : `${product.name}, foto ${position} de ${product.images.length}`;
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-16">
@@ -20,25 +24,29 @@ export const ProductDetail = ({ product }: { product: Product }) => {
           <div className="relative aspect-square overflow-hidden rounded-2xl bg-gray-100">
             <Image
               src={coverImage}
-              alt={product.name}
+              alt={photoAlt(1)}
               fill
               priority
               sizes="(max-width: 768px) 100vw, 50vw"
               className="object-cover"
             />
           </div>
-          {remainingImages.map((image) => (
-            <div key={image} className="relative aspect-square overflow-hidden rounded-2xl bg-gray-100">
-              <Image
-                src={image}
-                alt={product.name}
-                fill
-                loading="lazy"
-                sizes="(max-width: 768px) 100vw, 50vw"
-                className="object-cover"
-              />
-            </div>
-          ))}
+          {remainingImages.length > 0 && (
+            <ul className="grid grid-cols-4 gap-2 sm:gap-3">
+              {remainingImages.map((image, index) => (
+                <li key={image} className="relative aspect-square overflow-hidden rounded-xl bg-gray-100">
+                  <Image
+                    src={image}
+                    alt={photoAlt(index + 2)}
+                    fill
+                    loading="lazy"
+                    sizes="(max-width: 768px) 25vw, 12vw"
+                    className="object-cover"
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         <div>

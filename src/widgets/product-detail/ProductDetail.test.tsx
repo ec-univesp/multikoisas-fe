@@ -56,6 +56,18 @@ describe('ProductDetail', () => {
     expect(screen.queryByText(/R\$/)).not.toBeInTheDocument();
   });
 
+  it('shows every photo in order, each one numbered in its alt text', () => {
+    render(<ProductDetail product={product} />);
+    expect(screen.getByAltText('Garrafa Térmica 1L, foto 1 de 2')).toHaveAttribute(
+      'src',
+      expect.stringContaining('garrafa-termica-1l.svg'),
+    );
+    expect(screen.getByAltText('Garrafa Térmica 1L, foto 2 de 2')).toHaveAttribute(
+      'src',
+      expect.stringContaining('garrafa-termica-1l-detalhe.svg'),
+    );
+  });
+
   it('tells the visitor purchase links are coming when none exist', () => {
     render(<ProductDetail product={{ ...product, images: [], storeLinks: [] }} />);
     expect(screen.getByText('Links de compra em breve.')).toBeInTheDocument();

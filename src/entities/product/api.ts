@@ -5,6 +5,7 @@ import type { Category, Product } from './types';
 export type ProdutoResponse = { id: number; nome: string; descricaoProduto: string };
 type CategoriaResponse = { id: number; nome: string };
 type CategoriaProdutoResponse = { produtoId: number; categoriaId: number };
+type ImagemResponse = { id: number; produtoId: number; imagemUrl: string };
 type Catalog = { products: Product[]; categories: Category[] };
 
 const UNCATEGORIZED = 'Sem categoria';
@@ -12,7 +13,14 @@ const UNCATEGORIZED = 'Sem categoria';
 const firstNonEmptyLine = (text: string): string =>
   text.split(/\r?\n/).find((line) => line.trim().length > 0)?.trim() ?? '';
 
-export const toProduct = (produto: ProdutoResponse, category: Category | undefined): Product => ({
+const toImageUrls = (imagens: readonly ImagemResponse[]): string[] =>
+  [...imagens].sort((first, second) => first.id - second.id).map((imagem) => imagem.imagemUrl);
+
+export const toProduct = (
+  produto: ProdutoResponse,
+  category: Category | undefined,
+  images: string[] = [],
+): Product => ({
   id: produto.id,
   slug: `${toBaseSlug(produto.nome)}-${produto.id}`,
   name: produto.nome,
@@ -20,8 +28,8 @@ export const toProduct = (produto: ProdutoResponse, category: Category | undefin
   categoryId: category?.id ?? null,
   shortDescription: firstNonEmptyLine(produto.descricaoProduto),
   longDescription: produto.descricaoProduto.trim(),
-  // ponytail: a API ainda não expõe imagem nem link de compra (UNIV-11, UNIV-12 no santi)
-  images: [],
+  images,
+  // ponytail: a API ainda não expõe link de compra (UNIV-12 no santi)
   storeLinks: [],
 });
 
@@ -31,17 +39,27 @@ export const fetchCategories = async (options: FetchOptions = {}): Promise<Categ
     name: categoria.nome,
   }));
 
+export const fetchProductImages = async (produtoId: number, options: FetchOptions = {}): Promise<string[]> =>
+  toImageUrls(await getFromApi<ImagemResponse[]>(`/imagem/${produtoId}`, options));
+
 export const fetchCatalog = async (options: FetchOptions = {}): Promise<Catalog> => {
-  const [produtos, categories, vinculos] = await Promise.all([
+  const [produtos, categories, vinculos, imagens] = await Promise.all([
     getFromApi<ProdutoResponse[]>('/produto', options),
     fetchCategories(options),
     getFromApi<CategoriaProdutoResponse[]>('/categoriaproduto', options),
+    // Foto é acessória: sem a lista de imagens a vitrine segue com o placeholder.
+    getFromApi<ImagemResponse[]>('/imagem', options).catch((): ImagemResponse[] => []),
   ]);
   const categoryOf = (produtoId: number): Category | undefined => {
     const vinculo = vinculos.find((candidate) => candidate.produtoId === produtoId);
     return categories.find((category) => category.id === vinculo?.categoriaId);
   };
-  return { products: produtos.map((produto) => toProduct(produto, categoryOf(produto.id))), categories };
+  const imagesOf = (produtoId: number): string[] =>
+    toImageUrls(imagens.filter((imagem) => imagem.produtoId === produtoId));
+  return {
+    products: produtos.map((produto) => toProduct(produto, categoryOf(produto.id), imagesOf(produto.id))),
+    categories,
+  };
 };
 
 export const fetchProducts = async (options: FetchOptions = {}): Promise<Product[]> =>
