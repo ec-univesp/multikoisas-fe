@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import Badge from '@/components/ui/badge/Badge';
 import {
@@ -11,7 +10,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { PencilIcon, TrashBinIcon } from '@/icons';
-import { PRODUCT_IMAGE_PLACEHOLDER, STORE_PRESENTATION } from '@/entities/product';
+import { PRODUCT_IMAGE_PLACEHOLDER, ProductImage, STORE_PRESENTATION } from '@/entities/product';
 import type { Product } from '@/entities/product';
 
 type ProductTableProps = {
@@ -64,7 +63,7 @@ export const ProductTable = ({ products, onEdit, onDelete }: ProductTableProps) 
                 <TableCell className="px-5 py-4 text-start">
                   <div className="flex items-center gap-3">
                     <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-neutral-100">
-                      <Image
+                      <ProductImage
                         src={product.images[0] ?? PRODUCT_IMAGE_PLACEHOLDER}
                         alt={product.name}
                         fill

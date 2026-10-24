@@ -1,6 +1,5 @@
-import Image from 'next/image';
 import Link from 'next/link';
-import { PRODUCT_IMAGE_PLACEHOLDER, STORE_PRESENTATION } from '@/entities/product';
+import { PRODUCT_IMAGE_PLACEHOLDER, ProductImage, STORE_PRESENTATION } from '@/entities/product';
 import type { Product } from '@/entities/product';
 
 export const ProductDetail = ({ product }: { product: Product }) => {
@@ -22,7 +21,7 @@ export const ProductDetail = ({ product }: { product: Product }) => {
       <div className="mt-6 grid gap-8 md:grid-cols-2 md:gap-12">
         <div className="flex flex-col gap-4">
           <div className="relative aspect-square overflow-hidden rounded-2xl bg-gray-100">
-            <Image
+            <ProductImage
               src={coverImage}
               alt={photoAlt(1)}
               fill
@@ -35,7 +34,7 @@ export const ProductDetail = ({ product }: { product: Product }) => {
             <ul className="grid grid-cols-4 gap-2 sm:gap-3">
               {remainingImages.map((image, index) => (
                 <li key={image} className="relative aspect-square overflow-hidden rounded-xl bg-gray-100">
-                  <Image
+                  <ProductImage
                     src={image}
                     alt={photoAlt(index + 2)}
                     fill
