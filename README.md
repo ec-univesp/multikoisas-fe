@@ -9,7 +9,7 @@ O site mostra os produtos e leva o visitante para comprar nas lojas parceiras �
 
 [![Site no ar](https://img.shields.io/badge/site-multikoisas.netlify.app-0CCE6B?style=flat-square&logo=netlify&logoColor=white)](https://multikoisas.netlify.app)
 [![API](https://img.shields.io/badge/API-Swagger-85EA2D?style=flat-square&logo=swagger&logoColor=black)](https://multikoisas-univesp.onrender.com/swagger-ui/index.html)
-![Versão](https://img.shields.io/badge/versão-0.3.0-4F46E5?style=flat-square)
+![Versão](https://img.shields.io/badge/versão-0.4.0-4F46E5?style=flat-square)
 
 ![Next.js](https://img.shields.io/badge/Next.js-16-000000?style=flat-square&logo=nextdotjs&logoColor=white)
 ![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)
@@ -17,7 +17,7 @@ O site mostra os produtos e leva o visitante para comprar nas lojas parceiras �
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)
 ![pnpm](https://img.shields.io/badge/pnpm-11-F69220?style=flat-square&logo=pnpm&logoColor=white)
 
-![Testes](https://img.shields.io/badge/testes-106-6E9F18?style=flat-square&logo=vitest&logoColor=white)
+![Testes](https://img.shields.io/badge/testes-164-6E9F18?style=flat-square&logo=vitest&logoColor=white)
 ![Cobertura](https://img.shields.io/badge/cobertura-97%25-22C55E?style=flat-square)
 ![Lighthouse desktop](https://img.shields.io/badge/Lighthouse_desktop-100_·_96_·_100_·_100-0CCE6B?style=flat-square&logo=lighthouse&logoColor=white)
 ![Arquitetura](https://img.shields.io/badge/arquitetura-Feature--Sliced_Design-4F46E5?style=flat-square)
