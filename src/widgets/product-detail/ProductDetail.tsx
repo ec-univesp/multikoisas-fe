@@ -1,11 +1,9 @@
-import Image from 'next/image';
 import Link from 'next/link';
-import { PRODUCT_IMAGE_PLACEHOLDER, STORE_PRESENTATION } from '@/entities/product';
+import { STORE_PRESENTATION } from '@/entities/product';
 import type { Product } from '@/entities/product';
+import { ProductGallery } from './ProductGallery';
 
 export const ProductDetail = ({ product }: { product: Product }) => {
-  const [coverImage = PRODUCT_IMAGE_PLACEHOLDER, ...remainingImages] = product.images;
-
   return (
     <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-16">
       <Link
@@ -16,30 +14,7 @@ export const ProductDetail = ({ product }: { product: Product }) => {
       </Link>
 
       <div className="mt-6 grid gap-8 md:grid-cols-2 md:gap-12">
-        <div className="flex flex-col gap-4">
-          <div className="relative aspect-square overflow-hidden rounded-2xl bg-gray-100">
-            <Image
-              src={coverImage}
-              alt={product.name}
-              fill
-              priority
-              sizes="(max-width: 768px) 100vw, 50vw"
-              className="object-cover"
-            />
-          </div>
-          {remainingImages.map((image) => (
-            <div key={image} className="relative aspect-square overflow-hidden rounded-2xl bg-gray-100">
-              <Image
-                src={image}
-                alt={product.name}
-                fill
-                loading="lazy"
-                sizes="(max-width: 768px) 100vw, 50vw"
-                className="object-cover"
-              />
-            </div>
-          ))}
-        </div>
+        <ProductGallery name={product.name} images={product.images} />
 
         <div>
           <span className="w-fit rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">

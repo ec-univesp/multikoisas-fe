@@ -112,6 +112,28 @@ describe('multikoisas-api handlers', () => {
     expect(await conflict.json()).toMatchObject({ status: 409, error: 'Conflict' });
   });
 
+  it('lists every product image on /imagem, apart from /imagem/{produtoId}', async () => {
+    const images = await (await send('GET', `${SERVER_ORIGIN}/imagem`)).json();
+    expect(images).toHaveLength(6);
+    expect(images).toContainEqual({
+      id: 20,
+      produtoId: 7,
+      imagemUrl: 'https://avphmmvnlrbidhjrzozx.supabase.co/storage/v1/object/public/imagem/caixa.webp',
+    });
+  });
+
+  it('lists the images of one product and answers 200 [] for a product without images', async () => {
+    const images: { produtoId: number }[] = await (await send('GET', '/api/imagem/1')).json();
+    expect(images).toHaveLength(3);
+    expect(images.every((image) => image.produtoId === 1)).toBe(true);
+
+    for (const produtoId of [5, 404]) {
+      const response = await send('GET', `/api/imagem/${produtoId}`);
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual([]);
+    }
+  });
+
   it('does not allow renaming a sales channel (UNIV-16)', async () => {
     expect((await send('PUT', '/api/canalvenda/2', { nome: 'Shopee Brasil' })).status).toBe(403);
   });

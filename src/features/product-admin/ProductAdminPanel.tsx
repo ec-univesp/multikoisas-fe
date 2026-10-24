@@ -52,7 +52,7 @@ export const ProductAdminPanel = ({ initialProducts, categories }: ProductAdminP
     setFeedbackMessage(null);
     setIsLoadingProduct(true);
     try {
-      const latestProduct = await loadProductForEdit(product.id, categories);
+      const latestProduct = await loadProductForEdit(product, categories);
       if (!latestProduct) {
         setProducts((currentProducts) =>
           currentProducts.filter((candidate) => candidate.id !== product.id),

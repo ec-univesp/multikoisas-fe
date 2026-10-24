@@ -3,6 +3,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { server } from '@/test/msw/server';
 import { fetchCategories, fetchProductBySlug, fetchProducts } from './api';
 
+const SUPABASE_IMAGES = 'https://avphmmvnlrbidhjrzozx.supabase.co/storage/v1/object/public/imagem';
+
 afterEach(() => {
   vi.restoreAllMocks();
 });
@@ -18,15 +20,36 @@ describe('fetchProducts', () => {
       categoryId: 2,
       shortDescription: 'Mantém a temperatura.',
       longDescription: 'Mantém a temperatura.\r\n\r\nAmpola de vidro.',
-      images: [],
+      images: [
+        `${SUPABASE_IMAGES}/garrafa-frente.webp`,
+        'https://avphmmvnlrbidhjrzozx.storage.supabase.co/storage/v1/object/public/imagem/garrafa-tampa.jpeg',
+        `${SUPABASE_IMAGES}/garrafa-lado.webp`,
+      ],
       storeLinks: [],
     });
+  });
+
+  it('gives each product only its own images and none to a product without images', async () => {
+    const [, balde, caixa] = await fetchProducts();
+    expect(balde.images).toEqual([]);
+    expect(caixa.images).toEqual([
+      `${SUPABASE_IMAGES}/caixa.webp`,
+      'https://avphmmvnlrbidhjrzozx.storage.supabase.co/storage/v1/object/public/imagem/caixa-tampa.jpeg',
+    ]);
+  });
+
+  it('keeps the storefront up without images when the image list fails', async () => {
+    server.use(http.get('*/imagem', () => new HttpResponse(null, { status: 500 })));
+    const products = await fetchProducts();
+    expect(products).toHaveLength(3);
+    expect(products.every((product) => product.images.length === 0)).toBe(true);
   });
 
   it('goes through the site proxy when called from the browser', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch');
     await fetchProducts({ fresh: true, fromBrowser: true });
     expect(fetchSpy).toHaveBeenCalledWith('/api/produto', { cache: 'no-store' });
+    expect(fetchSpy).toHaveBeenCalledWith('/api/imagem', { cache: 'no-store' });
   });
 
   it('labels a product with no linked category', async () => {
@@ -39,6 +62,9 @@ describe('fetchProducts', () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch');
     await fetchProducts();
     expect(fetchSpy).toHaveBeenCalledWith('https://multikoisas-univesp.onrender.com/produto', {
+      next: { revalidate: 300 },
+    });
+    expect(fetchSpy).toHaveBeenCalledWith('https://multikoisas-univesp.onrender.com/imagem', {
       next: { revalidate: 300 },
     });
   });

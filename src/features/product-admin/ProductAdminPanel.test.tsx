@@ -90,7 +90,53 @@ describe('ProductAdminPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Editar Garrafa Térmica 1L' }));
 
     expect(await screen.findByLabelText('Nome do produto')).toHaveValue('Garrafa Térmica Nova');
-    expect(apiRequests).toEqual(['GET /api/produto/1', 'GET /api/categoriaproduto?produto=1']);
+    expect(apiRequests).toEqual([
+      'GET /api/produto/1',
+      'GET /api/categoriaproduto?produto=1',
+      'GET /api/imagem/1',
+    ]);
+  });
+
+  it('reloads the api photos of the product opened for edit and keeps them after a rename', async () => {
+    const user = userEvent.setup();
+    renderPanel();
+
+    await user.click(screen.getByRole('button', { name: 'Editar Garrafa Térmica 1L' }));
+    const nameInput = await screen.findByLabelText('Nome do produto');
+    expect(screen.getByAltText('Garrafa Térmica 1L')).toHaveAttribute(
+      'src',
+      expect.stringContaining('garrafa-frente.webp'),
+    );
+    await user.clear(nameInput);
+    await user.type(nameInput, 'Garrafa Inox');
+    await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+    expect(await screen.findByAltText('Garrafa Inox')).toHaveAttribute(
+      'src',
+      expect.stringContaining('garrafa-frente.webp'),
+    );
+  });
+
+  it('opens the edit with the photos it already had when the api photos fail', async () => {
+    server.use(http.get('*/imagem/:produtoId', () => new HttpResponse(null, { status: 500 })));
+    const user = userEvent.setup();
+    renderPanel([buildProduct({ images: ['https://avphmmvnlrbidhjrzozx.supabase.co/storage/v1/object/public/imagem/antiga.webp'] })]);
+
+    await user.click(screen.getByRole('button', { name: 'Editar Garrafa Térmica 1L' }));
+
+    expect(await screen.findByLabelText('Nome do produto')).toHaveValue('Garrafa Térmica 1L');
+    expect(screen.getByAltText('Garrafa Térmica 1L')).toHaveAttribute('src', expect.stringContaining('antiga.webp'));
+  });
+
+  it('shows the placeholder for a newly created product', async () => {
+    const user = userEvent.setup();
+    renderPanel([]);
+
+    await user.click(screen.getByRole('button', { name: 'Novo produto' }));
+    await fillProductForm(user, { name: 'Vassoura', categoryId: '2', description: 'Macia.' });
+    await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+    expect(await screen.findByAltText('Vassoura')).toHaveAttribute('src', expect.stringContaining('placeholder'));
   });
 
   it('drops a product that was deleted elsewhere when opening it for edit', async () => {
@@ -128,6 +174,7 @@ describe('ProductAdminPanel', () => {
     expect(apiRequests).toEqual([
       'GET /api/produto/1',
       'GET /api/categoriaproduto?produto=1',
+      'GET /api/imagem/1',
       'PUT /api/produto/1',
     ]);
   });

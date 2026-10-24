@@ -1,5 +1,5 @@
-import Image from 'next/image';
 import Link from 'next/link';
+import { ProductImage } from './ProductImage';
 import { PRODUCT_IMAGE_PLACEHOLDER, STORE_PRESENTATION } from './types';
 import type { Product } from './types';
 
@@ -21,7 +21,7 @@ export const ProductCard = ({ product, hasPriorityImage = false }: ProductCardPr
         tabIndex={-1}
         className="relative block aspect-square overflow-hidden rounded-xl bg-gray-100"
       >
-        <Image
+        <ProductImage
           src={coverImage}
           alt={product.name}
           fill
