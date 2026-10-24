@@ -35,16 +35,17 @@ const fetchCategoryLinks = async (produtoId: number): Promise<CategoriaProdutoBo
 };
 
 export const loadProductForEdit = async (
-  productId: number,
+  product: Product,
   categories: readonly Category[],
 ): Promise<Product | null> => {
+  const productId = product.id;
   const response = await fetch(`/api/produto/${productId}`, { cache: 'no-store' });
   if (response.status === HTTP_NOT_FOUND) return null;
   if (!response.ok) throw new Error(`GET /produto/${productId} respondeu ${response.status}`);
   const produto: ProdutoResponse = await response.json();
   const [[firstLink], images] = await Promise.all([
     fetchCategoryLinks(productId),
-    fetchProductImages(productId, { fresh: true, fromBrowser: true }),
+    fetchProductImages(productId, { fresh: true, fromBrowser: true }).catch(() => product.images),
   ]);
   return toProduct(produto, categories.find((category) => category.id === firstLink?.categoriaId), images);
 };

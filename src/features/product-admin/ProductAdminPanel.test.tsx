@@ -117,6 +117,17 @@ describe('ProductAdminPanel', () => {
     );
   });
 
+  it('opens the edit with the photos it already had when the api photos fail', async () => {
+    server.use(http.get('*/imagem/:produtoId', () => new HttpResponse(null, { status: 500 })));
+    const user = userEvent.setup();
+    renderPanel([buildProduct({ images: ['https://avphmmvnlrbidhjrzozx.supabase.co/storage/v1/object/public/imagem/antiga.webp'] })]);
+
+    await user.click(screen.getByRole('button', { name: 'Editar Garrafa Térmica 1L' }));
+
+    expect(await screen.findByLabelText('Nome do produto')).toHaveValue('Garrafa Térmica 1L');
+    expect(screen.getByAltText('Garrafa Térmica 1L')).toHaveAttribute('src', expect.stringContaining('antiga.webp'));
+  });
+
   it('shows the placeholder for a newly created product', async () => {
     const user = userEvent.setup();
     renderPanel([]);
