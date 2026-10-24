@@ -8,7 +8,13 @@ import type { Category, Product } from '@/entities/product';
 import { ProductFormModal } from './ProductFormModal';
 import { DeleteProductModal } from './DeleteProductModal';
 import { ProductTable } from './ProductTable';
-import { CategoryLinkError, createProduct, deleteProduct, updateProduct } from './productApi';
+import {
+  CategoryLinkError,
+  createProduct,
+  deleteProduct,
+  loadProductForEdit,
+  updateProduct,
+} from './productApi';
 import type { ProductFormValues } from './types';
 
 type ProductAdminPanelProps = {
@@ -21,26 +27,11 @@ export const ProductAdminPanel = ({ initialProducts, categories }: ProductAdminP
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isLoadingProduct, setIsLoadingProduct] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
 
   const formModal = useModal();
   const deleteModal = useModal();
-
-  const openCreateModal = () => {
-    setEditingProduct(null);
-    formModal.openModal();
-  };
-
-  const openEditModal = (product: Product) => {
-    setEditingProduct(product);
-    formModal.openModal();
-  };
-
-  const openDeleteModal = (product: Product) => {
-    setDeletingProduct(product);
-    setFeedbackMessage(null);
-    deleteModal.openModal();
-  };
 
   const showSavedProduct = (savedProduct: Product) =>
     setProducts((currentProducts) =>
@@ -50,6 +41,40 @@ export const ProductAdminPanel = ({ initialProducts, categories }: ProductAdminP
           )
         : [...currentProducts, savedProduct],
     );
+
+  const openCreateModal = () => {
+    setEditingProduct(null);
+    formModal.openModal();
+  };
+
+  const openEditModal = async (product: Product) => {
+    if (isLoadingProduct) return;
+    setFeedbackMessage(null);
+    setIsLoadingProduct(true);
+    try {
+      const latestProduct = await loadProductForEdit(product, categories);
+      if (!latestProduct) {
+        setProducts((currentProducts) =>
+          currentProducts.filter((candidate) => candidate.id !== product.id),
+        );
+        setFeedbackMessage('Esse produto já tinha sido apagado. A lista foi atualizada.');
+        return;
+      }
+      showSavedProduct(latestProduct);
+      setEditingProduct(latestProduct);
+      formModal.openModal();
+    } catch {
+      setFeedbackMessage('Não foi possível carregar o produto. Tente de novo.');
+    } finally {
+      setIsLoadingProduct(false);
+    }
+  };
+
+  const openDeleteModal = (product: Product) => {
+    setDeletingProduct(product);
+    setFeedbackMessage(null);
+    deleteModal.openModal();
+  };
 
   const saveProduct = async (values: ProductFormValues) => {
     setFeedbackMessage(null);

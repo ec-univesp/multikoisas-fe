@@ -9,6 +9,7 @@ import {
   FolderIcon,
   GridIcon,
   HorizontaLDots,
+  PlugInIcon,
   TableIcon,
 } from "../icons/index";
 
@@ -34,6 +35,11 @@ const navItems: NavItem[] = [
     icon: <FolderIcon />,
     name: "Categorias",
     path: "/admin/categorias",
+  },
+  {
+    icon: <PlugInIcon />,
+    name: "Canais de venda",
+    path: "/admin/canais",
   },
 ];
 

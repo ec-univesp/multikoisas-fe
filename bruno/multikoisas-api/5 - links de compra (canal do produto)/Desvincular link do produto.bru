@@ -1,0 +1,18 @@
+meta {
+  name: Desvincular link do produto (grava no banco)
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/canalvendaproduto
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "produtoId": 0,
+    "canalVendaId": 0
+  }
+}

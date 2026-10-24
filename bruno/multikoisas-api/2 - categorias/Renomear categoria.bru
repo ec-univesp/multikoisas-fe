@@ -1,0 +1,17 @@
+meta {
+  name: Renomear categoria (grava no banco)
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/categoria/0
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "nome": "Categoria de teste renomeada"
+  }
+}

@@ -1,0 +1,17 @@
+meta {
+  name: Criar categoria (grava no banco)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/categoria
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "nome": "Categoria de teste"
+  }
+}

@@ -1,4 +1,4 @@
-import { toProduct, type Category, type Product, type ProdutoResponse } from '@/entities/product';
+import { fetchProductImages, toProduct, type Category, type Product, type ProdutoResponse } from '@/entities/product';
 import type { ProductFormValues } from './types';
 
 type CategoriaProdutoBody = { produtoId: number; categoriaId: number };
@@ -32,6 +32,22 @@ const fetchCategoryLinks = async (produtoId: number): Promise<CategoriaProdutoBo
   if (response.status === HTTP_NOT_FOUND) return [];
   if (!response.ok) throw new Error(`GET /categoriaproduto respondeu ${response.status}`);
   return response.json();
+};
+
+export const loadProductForEdit = async (
+  product: Product,
+  categories: readonly Category[],
+): Promise<Product | null> => {
+  const productId = product.id;
+  const response = await fetch(`/api/produto/${productId}`, { cache: 'no-store' });
+  if (response.status === HTTP_NOT_FOUND) return null;
+  if (!response.ok) throw new Error(`GET /produto/${productId} respondeu ${response.status}`);
+  const produto: ProdutoResponse = await response.json();
+  const [[firstLink], images] = await Promise.all([
+    fetchCategoryLinks(productId),
+    fetchProductImages(productId, { fresh: true, fromBrowser: true }).catch(() => product.images),
+  ]);
+  return toProduct(produto, categories.find((category) => category.id === firstLink?.categoriaId), images);
 };
 
 export class CategoryLinkError extends Error {
@@ -81,10 +97,10 @@ export const updateProduct = async (
     try {
       await keepOnlyCategory(product.id, category.id);
     } catch {
-      throw new CategoryLinkError(toProduct(produto, undefined));
+      throw new CategoryLinkError(toProduct(produto, undefined, product.images));
     }
   }
-  return toProduct(produto, category);
+  return toProduct(produto, category, product.images);
 };
 
 export const deleteProduct = async (product: Product): Promise<void> => {

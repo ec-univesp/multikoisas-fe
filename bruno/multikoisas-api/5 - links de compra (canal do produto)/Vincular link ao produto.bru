@@ -1,0 +1,19 @@
+meta {
+  name: Vincular link ao produto (grava no banco)
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/canalvendaproduto
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "produtoId": 0,
+    "canalVendaId": 0,
+    "link": "https://shopee.com.br/"
+  }
+}

@@ -1,0 +1,18 @@
+meta {
+  name: Criar produto (grava no banco)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/produto
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "nome": "Produto de teste",
+    "descricaoProduto": "Criado pelo Bruno."
+  }
+}

@@ -1,0 +1,21 @@
+meta {
+  name: Criar usuário (grava no banco)
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/user
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "teste@exemplo.com",
+    "password": "troque-esta-senha",
+    "firstName": "Teste",
+    "lastName": "Bruno",
+    "username": "teste.bruno"
+  }
+}
