@@ -1,4 +1,5 @@
 import { type FetchOptions, getFromApi } from '@/shared/api/getFromApi';
+import { toDisplayableImageUrl } from './imageUrl';
 import { toBaseSlug } from './toBaseSlug';
 import type { Category, Product } from './types';
 
@@ -14,7 +15,10 @@ const firstNonEmptyLine = (text: string): string =>
   text.split(/\r?\n/).find((line) => line.trim().length > 0)?.trim() ?? '';
 
 const toImageUrls = (imagens: readonly ImagemResponse[]): string[] =>
-  [...imagens].sort((first, second) => first.id - second.id).map((imagem) => imagem.imagemUrl);
+  [...imagens]
+    .sort((first, second) => first.id - second.id)
+    .map((imagem) => toDisplayableImageUrl(imagem.imagemUrl))
+    .filter((url) => url !== null);
 
 export const toProduct = (
   produto: ProdutoResponse,

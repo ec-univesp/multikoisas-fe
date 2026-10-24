@@ -114,7 +114,7 @@ describe('multikoisas-api handlers', () => {
 
   it('lists every product image on /imagem, apart from /imagem/{produtoId}', async () => {
     const images = await (await send('GET', `${SERVER_ORIGIN}/imagem`)).json();
-    expect(images).toHaveLength(4);
+    expect(images).toHaveLength(6);
     expect(images).toContainEqual({
       id: 20,
       produtoId: 7,

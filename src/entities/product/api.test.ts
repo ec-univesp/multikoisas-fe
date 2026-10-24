@@ -32,7 +32,10 @@ describe('fetchProducts', () => {
   it('gives each product only its own images and none to a product without images', async () => {
     const [, balde, caixa] = await fetchProducts();
     expect(balde.images).toEqual([]);
-    expect(caixa.images).toEqual([`${SUPABASE_IMAGES}/caixa.webp`]);
+    expect(caixa.images).toEqual([
+      `${SUPABASE_IMAGES}/caixa.webp`,
+      'https://avphmmvnlrbidhjrzozx.storage.supabase.co/storage/v1/object/public/imagem/caixa-tampa.jpeg',
+    ]);
   });
 
   it('keeps the storefront up without images when the image list fails', async () => {

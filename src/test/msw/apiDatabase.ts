@@ -36,6 +36,13 @@ const seed = (): ApiDatabase => ({
     { id: 12, produtoId: 1, imagemUrl: `${SUPABASE_IMAGES}/garrafa-lado.webp` },
     { id: 10, produtoId: 1, imagemUrl: `${SUPABASE_IMAGES}/garrafa-frente.webp` },
     { id: 20, produtoId: 7, imagemUrl: `${SUPABASE_IMAGES}/caixa.webp` },
+    // Como a API real devolve a imagem 29: sem o /object/ (UNIV-17 no santi).
+    {
+      id: 21,
+      produtoId: 7,
+      imagemUrl: 'https://avphmmvnlrbidhjrzozx.storage.supabase.co/storage/v1/public/imagem/caixa-tampa.jpeg',
+    },
+    { id: 22, produtoId: 7, imagemUrl: 'https://example.com/caixa-lado.webp' },
     {
       id: 11,
       produtoId: 1,
