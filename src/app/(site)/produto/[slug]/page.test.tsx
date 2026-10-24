@@ -8,15 +8,18 @@ const renderProductPage = async (slug: string) =>
 describe('ProductPage', () => {
   it('shows every api photo of the product in id order', async () => {
     await renderProductPage('garrafa-termica-1l-1');
-    const photos = screen.getAllByAltText(/^Garrafa Térmica 1L, foto \d de 3$/);
-    expect(photos.map((photo) => photo.getAttribute('alt'))).toEqual([
-      'Garrafa Térmica 1L, foto 1 de 3',
-      'Garrafa Térmica 1L, foto 2 de 3',
-      'Garrafa Térmica 1L, foto 3 de 3',
+    expect(screen.getByAltText('Garrafa Térmica 1L, foto 1 de 3')).toHaveAttribute(
+      'src',
+      expect.stringContaining('garrafa-frente.webp'),
+    );
+    const thumbnailSources = screen
+      .getAllByRole('button', { name: /^Ver foto \d de 3$/ })
+      .map((thumbnail) => thumbnail.querySelector('img')?.getAttribute('src'));
+    expect(thumbnailSources).toEqual([
+      expect.stringContaining('garrafa-frente.webp'),
+      expect.stringContaining('garrafa-tampa.jpeg'),
+      expect.stringContaining('garrafa-lado.webp'),
     ]);
-    expect(photos[0]).toHaveAttribute('src', expect.stringContaining('garrafa-frente.webp'));
-    expect(photos[1]).toHaveAttribute('src', expect.stringContaining('garrafa-tampa.jpeg'));
-    expect(photos[2]).toHaveAttribute('src', expect.stringContaining('garrafa-lado.webp'));
   });
 
   it('shows the placeholder for a product without photos', async () => {

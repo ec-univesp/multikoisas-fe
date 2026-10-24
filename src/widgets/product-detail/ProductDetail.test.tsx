@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { ProductDetail } from './ProductDetail';
 import type { Product } from '@/entities/product';
@@ -56,16 +56,39 @@ describe('ProductDetail', () => {
     expect(screen.queryByText(/R\$/)).not.toBeInTheDocument();
   });
 
-  it('shows every photo in order, each one numbered in its alt text', () => {
+  it('opens on the first photo and lists every photo in order as a thumbnail', () => {
     render(<ProductDetail product={product} />);
     expect(screen.getByAltText('Garrafa Térmica 1L, foto 1 de 2')).toHaveAttribute(
       'src',
       expect.stringContaining('garrafa-termica-1l.svg'),
     );
-    expect(screen.getByAltText('Garrafa Térmica 1L, foto 2 de 2')).toHaveAttribute(
+    const thumbnails = screen.getAllByRole('button', { name: /^Ver foto/ });
+    expect(thumbnails.map((thumbnail) => thumbnail.getAttribute('aria-label'))).toEqual([
+      'Ver foto 1 de 2',
+      'Ver foto 2 de 2',
+    ]);
+    expect(thumbnails[0]).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('switches the main photo to the chosen thumbnail', () => {
+    const images = [...product.images, '/products/garrafa-termica-1l-tampa.svg'];
+    render(<ProductDetail product={{ ...product, images }} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ver foto 3 de 3' }));
+
+    expect(screen.getByAltText('Garrafa Térmica 1L, foto 3 de 3')).toHaveAttribute(
       'src',
-      expect.stringContaining('garrafa-termica-1l-detalhe.svg'),
+      expect.stringContaining('garrafa-termica-1l-tampa.svg'),
     );
+    expect(screen.queryByAltText('Garrafa Térmica 1L, foto 1 de 3')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ver foto 3 de 3' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Ver foto 1 de 3' })).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('shows no thumbnails for a single photo', () => {
+    render(<ProductDetail product={{ ...product, images: [product.images[0]] }} />);
+    expect(screen.getByAltText('Garrafa Térmica 1L, foto 1 de 1')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Ver foto/ })).not.toBeInTheDocument();
   });
 
   it('tells the visitor purchase links are coming when none exist', () => {
