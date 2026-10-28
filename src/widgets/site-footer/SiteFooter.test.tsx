@@ -30,6 +30,20 @@ describe('SiteFooter', () => {
     expect(screen.queryByRole('link')).not.toBeInTheDocument();
   });
 
+  it('leaves out a social network whose link is not https', async () => {
+    server.use(
+      http.get('*/socialnetwork', () =>
+        HttpResponse.json([
+          { id: 1, descricao: 'Instagram', link: 'https://www.instagram.com/multikoisas' },
+          { id: 2, descricao: 'Site', link: 'http://multikoisas.com.br' },
+        ]),
+      ),
+    );
+    render(await SiteFooter());
+    expect(screen.getByRole('link', { name: 'Instagram' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Site' })).not.toBeInTheDocument();
+  });
+
   it('hides the social networks block when the store has none', async () => {
     server.use(http.get('*/socialnetwork', () => HttpResponse.json([])));
     render(await SiteFooter());

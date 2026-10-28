@@ -15,6 +15,22 @@ describe('fetchSocialNetworks', () => {
     ]);
   });
 
+  it('drops social networks whose link is not a valid https address', async () => {
+    server.use(
+      http.get('*/socialnetwork', () =>
+        HttpResponse.json([
+          { id: 1, descricao: 'Instagram', link: 'https://www.instagram.com/multikoisas' },
+          { id: 2, descricao: 'Site', link: 'http://multikoisas.com.br' },
+          { id: 3, descricao: 'WhatsApp', link: 'wa.me/5500000000000' },
+          { id: 4, descricao: 'Script', link: 'javascript:alert(1)' },
+        ]),
+      ),
+    );
+    expect(await fetchSocialNetworks()).toEqual([
+      { id: 1, name: 'Instagram', url: 'https://www.instagram.com/multikoisas' },
+    ]);
+  });
+
   it('calls the api with a revalidation window', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch');
     await fetchSocialNetworks();
