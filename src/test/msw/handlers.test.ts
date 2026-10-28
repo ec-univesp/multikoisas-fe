@@ -31,14 +31,14 @@ describe('multikoisas-api handlers', () => {
   });
 
   it('filters links by product or category', async () => {
-    expect(await (await send('GET', '/api/categoriaproduto?produto=7')).json()).toHaveLength(2);
-    expect(await (await send('GET', '/api/categoriaproduto?categoria=3')).json()).toEqual([
+    expect(await (await send('GET', '/api/categoriaproduto?produtoId=7')).json()).toHaveLength(2);
+    expect(await (await send('GET', '/api/categoriaproduto?categoriaId=3')).json()).toEqual([
       { produtoId: 7, categoriaId: 3 },
     ]);
   });
 
   it('answers 404 without body for an empty link list (UNIV-28)', async () => {
-    const response = await send('GET', '/api/categoriaproduto?produto=5');
+    const response = await send('GET', '/api/categoriaproduto?produtoId=5');
     expect(response.status).toBe(404);
     expect(await response.text()).toBe('');
   });

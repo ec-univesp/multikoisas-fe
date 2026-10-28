@@ -27,7 +27,7 @@ const unlinkCategory = (produtoId: number, categoriaId: number) =>
   callApi('DELETE', '/categoriaproduto', { produtoId, categoriaId } satisfies CategoriaProdutoBody);
 
 const fetchCategoryLinks = async (produtoId: number): Promise<CategoriaProdutoBody[]> => {
-  const response = await fetch(`/api/categoriaproduto?produto=${produtoId}`);
+  const response = await fetch(`/api/categoriaproduto?produtoId=${produtoId}`);
   // A API responde 404, e não [], para produto sem categoria (UNIV-28 no santi).
   if (response.status === HTTP_NOT_FOUND) return [];
   if (!response.ok) throw new Error(`GET /categoriaproduto respondeu ${response.status}`);
