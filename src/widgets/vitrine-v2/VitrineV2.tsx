@@ -7,7 +7,7 @@ export const VitrineV2 = async () => {
 
   return (
     <section id="vitrine" className="mx-auto max-w-7xl scroll-mt-4 px-4 pb-12 lg:px-8">
-      <h2 className="sr-only">Vitrine de produtos</h2>
+      <h2 tabIndex={-1} className="sr-only">Vitrine de produtos</h2>
       <VitrineFilterV2 products={products} categories={categories} />
     </section>
   );

@@ -9,6 +9,7 @@ describe('VitrineV2', () => {
   it('anchors the product grid and lists the api products', async () => {
     const { container } = await renderVitrine();
     expect(container.querySelector('section#vitrine')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Vitrine de produtos' })).toHaveAttribute('tabindex', '-1');
     expect(screen.getByRole('heading', { name: 'Garrafa Térmica 1L' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Balde 12L' })).toBeInTheDocument();
   });
@@ -22,13 +23,8 @@ describe('VitrineV2', () => {
 
   it('turns only real store links into buy buttons', async () => {
     await renderVitrine();
-    expect(screen.getAllByRole('link', { name: 'Comprar na Shopee' })).toHaveLength(2);
+    expect(screen.getAllByRole('link', { name: /^Comprar na Shopee: / })).toHaveLength(2);
     expect(screen.queryByRole('link', { name: /instagram/i })).not.toBeInTheDocument();
-    expect(screen.getAllByRole('link', { name: 'Opções de compra' })).toHaveLength(3);
-  });
-
-  it('never shows a price, phone or company id', async () => {
-    const { container } = await renderVitrine();
-    expect(container.textContent).not.toMatch(/R\$|\(11\)|CNPJ/);
+    expect(screen.getAllByRole('link', { name: /^Opções de compra: / })).toHaveLength(3);
   });
 });

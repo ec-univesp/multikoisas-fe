@@ -31,7 +31,11 @@ export const ProductCardV2 = ({ product, hasPriorityImage = false }: ProductCard
         />
       </Link>
       <span className="mt-3 line-clamp-1 text-xs font-semibold tracking-wider text-store-navy uppercase">{product.category}</span>
-      <h3 className="mt-1 line-clamp-2 font-semibold leading-tight text-gray-800">{product.name}</h3>
+      <h3 className="mt-1 line-clamp-2 font-semibold leading-tight text-gray-800">
+        <Link href={detailPath} className="hover:text-store-navy">
+          {product.name}
+        </Link>
+      </h3>
       <p className="mt-1 line-clamp-2 text-sm text-gray-500">{product.shortDescription}</p>
       <div className="mt-auto flex flex-col gap-2 pt-4">
         {product.storeLinks.length > 0 && (
@@ -42,7 +46,7 @@ export const ProductCardV2 = ({ product, hasPriorityImage = false }: ProductCard
                 href={storeLink.url}
                 target="_blank"
                 rel="noopener noreferrer sponsored"
-                aria-label={STORE_PRESENTATION[storeLink.store].purchaseLabel}
+                aria-label={`${STORE_PRESENTATION[storeLink.store].purchaseLabel}: ${product.name}`}
                 className={`flex h-11 items-center justify-center rounded-lg px-2 text-sm font-semibold ${STORE_PRESENTATION[storeLink.store].purchaseButtonClassName}`}
               >
                 {STORE_PRESENTATION[storeLink.store].name}
@@ -52,6 +56,7 @@ export const ProductCardV2 = ({ product, hasPriorityImage = false }: ProductCard
         )}
         <Link
           href={detailPath}
+          aria-label={`Opções de compra: ${product.name}`}
           className="flex h-11 items-center justify-center rounded-lg bg-store-navy px-2 text-center text-sm font-semibold text-white hover:bg-store-navy-950"
         >
           Opções de compra

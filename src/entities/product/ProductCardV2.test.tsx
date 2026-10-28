@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { ProductCardV2 } from './ProductCardV2';
 import { STORE_PRESENTATION } from './types';
@@ -23,15 +23,19 @@ describe('ProductCardV2', () => {
   it('shows the category, name, short description and photo', () => {
     render(<ProductCardV2 product={product} />);
     expect(screen.getByText('Utensílios de Cozinha')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Garrafa Térmica 1L' })).toBeInTheDocument();
+    const heading = screen.getByRole('heading', { name: 'Garrafa Térmica 1L' });
+    expect(within(heading).getByRole('link', { name: 'Garrafa Térmica 1L' })).toHaveAttribute(
+      'href',
+      '/produto/garrafa-termica-1l-1',
+    );
     expect(screen.getByText('Mantém a temperatura.')).toBeInTheDocument();
     expect(screen.getByAltText('Garrafa Térmica 1L')).toHaveAttribute('src', expect.stringContaining('garrafa.webp'));
   });
 
   it('opens one sponsored new tab link per real store, side by side, in the store colors', () => {
     render(<ProductCardV2 product={product} />);
-    const shopee = screen.getByRole('link', { name: 'Comprar na Shopee' });
-    const mercadoLivre = screen.getByRole('link', { name: 'Comprar no Mercado Livre' });
+    const shopee = screen.getByRole('link', { name: 'Comprar na Shopee: Garrafa Térmica 1L' });
+    const mercadoLivre = screen.getByRole('link', { name: 'Comprar no Mercado Livre: Garrafa Térmica 1L' });
     expect(shopee).toHaveAttribute('href', 'https://shopee.com.br/garrafa');
     expect(shopee).toHaveAttribute('target', '_blank');
     expect(shopee).toHaveAttribute('rel', 'noopener noreferrer sponsored');
@@ -54,16 +58,15 @@ describe('ProductCardV2', () => {
         }}
       />,
     );
-    expect(screen.getByRole('link', { name: 'Comprar na Magalu' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Comprar na Magalu: Garrafa Térmica 1L' })).toBeInTheDocument();
     expect(consoleError).not.toHaveBeenCalled();
     consoleError.mockRestore();
   });
 
   it('spans a single store button across the card', () => {
     render(<ProductCardV2 product={{ ...product, storeLinks: [product.storeLinks[0]] }} />);
-    expect(screen.getByRole('link', { name: 'Comprar na Shopee' }).parentElement?.className).not.toContain(
-      'sm:grid-cols-2',
-    );
+    const shopee = screen.getByRole('link', { name: 'Comprar na Shopee: Garrafa Térmica 1L' });
+    expect(shopee.parentElement?.className).not.toContain('sm:grid-cols-2');
   });
 
   it('shows no store button when the product has no store link', () => {
@@ -73,7 +76,7 @@ describe('ProductCardV2', () => {
 
   it('leads to the product page from the purchase options button and the photo', () => {
     render(<ProductCardV2 product={product} />);
-    expect(screen.getByRole('link', { name: 'Opções de compra' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Opções de compra: Garrafa Térmica 1L' })).toHaveAttribute(
       'href',
       '/produto/garrafa-termica-1l-1',
     );
