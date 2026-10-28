@@ -13,12 +13,6 @@ export const SiteHeader = () => (
         >
           Sobre
         </Link>
-        <Link
-          href="/admin"
-          className="flex h-11 items-center rounded-lg border border-gray-200 px-4 text-sm font-medium text-gray-700 hover:bg-gray-50"
-        >
-          Painel
-        </Link>
       </nav>
     </div>
   </header>

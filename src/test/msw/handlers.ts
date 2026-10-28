@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw';
-import { apiDatabase, type CategoriaProdutoRow } from './apiDatabase';
+import { apiDatabase, SUPABASE_IMAGES, type CategoriaProdutoRow } from './apiDatabase';
 
 // Corpo de erro padrão do Spring Boot para ResponseStatusException.
 const springError = (status: number, error: string, request: Request) =>
@@ -11,6 +11,9 @@ const springError = (status: number, error: string, request: Request) =>
 type NomeBody = { nome?: string };
 type CanalVendaBody = { id?: number; nome?: string };
 type ProdutoBody = { nome?: string; descricaoProduto?: string };
+type ImagemBody = { id?: number; produtoId?: number };
+
+const MAX_UPLOAD_BYTES = 1_048_576;
 
 export const handlers = [
   http.get('*/produto', () => HttpResponse.json(apiDatabase.produtos)),
@@ -123,9 +126,32 @@ export const handlers = [
     HttpResponse.json(apiDatabase.imagens.filter((imagem) => imagem.produtoId === Number(params.produtoId))),
   ),
 
+  http.post('*/imagem', async ({ request }) => {
+    const form = await request.formData();
+    const file = form.get('file');
+    if (file === null || typeof file === 'string') return springError(400, 'Bad Request', request);
+    if (file.size === 0) return HttpResponse.text('O arquivo enviado está vazio.', { status: 409 });
+    if (file.size > MAX_UPLOAD_BYTES) return springError(413, 'Payload Too Large', request);
+    const id = apiDatabase.nextId++;
+    // O jsdom do Vitest troca o nome do arquivo por "blob" no multipart.
+    const imagem = { id, produtoId: Number(form.get('produtoId')), imagemUrl: `${SUPABASE_IMAGES}/upload-${id}` };
+    apiDatabase.imagens.push(imagem);
+    return HttpResponse.json(imagem, { status: 201 });
+  }),
+
+  http.delete<never, ImagemBody>('*/imagem', async ({ request }) => {
+    const { id, produtoId } = await request.json();
+    const remaining = apiDatabase.imagens.filter((imagem) => !(imagem.id === id && imagem.produtoId === produtoId));
+    if (remaining.length === apiDatabase.imagens.length) return springError(404, 'Not Found', request);
+    apiDatabase.imagens = remaining;
+    return new HttpResponse(null, { status: 204 });
+  }),
+
   http.get('*/socialnetwork', () => HttpResponse.json(apiDatabase.redesSociais)),
 
   http.get('*/canalvenda', () => HttpResponse.json(apiDatabase.canaisVenda)),
+
+  http.get('*/canalvendaproduto', () => HttpResponse.json(apiDatabase.canalVendaProduto)),
 
   // A API exige o id no corpo: ela não gera o id do canal.
   http.post<never, CanalVendaBody>('*/canalvenda', async ({ request }) => {

@@ -28,7 +28,6 @@ export type SearchedCategoryVolume = {
   volume: number;
 };
 
-// TODO: API — todo o conteúdo abaixo é mock até a origem real dos eventos de clique/visita existir.
 export const monthlyVisitors = {
   current: 4820,
   previous: 4290,

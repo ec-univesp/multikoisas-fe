@@ -9,7 +9,7 @@ O site mostra os produtos e leva o visitante para comprar nas lojas parceiras �
 
 [![Site no ar](https://img.shields.io/badge/site-multikoisas.netlify.app-0CCE6B?style=flat-square&logo=netlify&logoColor=white)](https://multikoisas.netlify.app)
 [![API](https://img.shields.io/badge/API-Swagger-85EA2D?style=flat-square&logo=swagger&logoColor=black)](https://multikoisas-univesp.onrender.com/swagger-ui/index.html)
-![Versão](https://img.shields.io/badge/versão-0.4.1-4F46E5?style=flat-square)
+![Versão](https://img.shields.io/badge/versão-0.5.0-4F46E5?style=flat-square)
 
 ![Next.js](https://img.shields.io/badge/Next.js-16-000000?style=flat-square&logo=nextdotjs&logoColor=white)
 ![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)
@@ -17,8 +17,8 @@ O site mostra os produtos e leva o visitante para comprar nas lojas parceiras �
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)
 ![pnpm](https://img.shields.io/badge/pnpm-11-F69220?style=flat-square&logo=pnpm&logoColor=white)
 
-![Testes](https://img.shields.io/badge/testes-164-6E9F18?style=flat-square&logo=vitest&logoColor=white)
-![Cobertura](https://img.shields.io/badge/cobertura-97%25-22C55E?style=flat-square)
+![Testes](https://img.shields.io/badge/testes-316-6E9F18?style=flat-square&logo=vitest&logoColor=white)
+![Cobertura](https://img.shields.io/badge/cobertura-98%25-22C55E?style=flat-square)
 ![Lighthouse desktop](https://img.shields.io/badge/Lighthouse_desktop-100_·_96_·_100_·_100-0CCE6B?style=flat-square&logo=lighthouse&logoColor=white)
 ![Arquitetura](https://img.shields.io/badge/arquitetura-Feature--Sliced_Design-4F46E5?style=flat-square)
 
@@ -139,6 +139,33 @@ pnpm dev
 Abra <http://localhost:3000> e a vitrine aparece. O painel fica em <http://localhost:3000/admin>.
 
 O servidor recarrega sozinho a cada arquivo salvo — não precisa reiniciar nada enquanto desenvolve.
+
+### Login do painel
+
+O painel (`/admin`) pede login em `/panel`. Os usuários e as senhas ficam em variáveis de ambiente do servidor; copie o `.env.example` para `.env.local` e preencha:
+
+| Variável | Conteúdo |
+| --- | --- |
+| `ADMIN_USERS` | lista de usuários do painel, uma entrada `usuário=hash` por pessoa, separadas por vírgula |
+| `SESSION_SECRET` | texto aleatório com 32 caracteres ou mais, por exemplo `openssl rand -base64 48` |
+
+Para gerar a entrada de uma pessoa, rode o comando abaixo com o usuário dela, digite a senha quando pedir (ela não aparece na tela) e copie a linha impressa:
+
+```bash
+node scripts/hash-password.mjs multeste
+```
+
+O usuário aceita letras sem acento, números e `. _ @ -`. Junte as linhas de todo mundo com vírgula, sem quebra de linha:
+
+```bash
+ADMIN_USERS=emerson=scrypt:ab12...:cd34...,multeste=scrypt:56ef...:78ab...
+```
+
+Entrada mal formada é ignorada (as outras continuam valendo); usuário repetido vale a primeira entrada. Se `ADMIN_USERS` não tiver nenhuma entrada válida ou faltar o `SESSION_SECRET`, ninguém entra no painel.
+
+Qualquer mudança em `ADMIN_USERS` (incluir ou tirar alguém, trocar uma senha) desconecta todo mundo: cada pessoa precisa entrar de novo.
+
+Antes de publicar esta mudança, crie `ADMIN_USERS` no Netlify em todos os contextos; depois `ADMIN_USERNAME` e `ADMIN_PASSWORD_HASH` podem ser apagadas. O Netlify limita as variáveis de uma função a cerca de 4 KB, o que dá uns 20 usuários.
 
 ### Se algo der errado
 
