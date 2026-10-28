@@ -433,4 +433,73 @@ describe('ProductAdminPanel', () => {
       expect(apiRequests).toEqual([]);
     });
   });
+
+  describe('photos of an existing product', () => {
+    it('removes the marked photos and uploads the new ones only when the product is saved', async () => {
+      const user = userEvent.setup();
+      renderPanel();
+
+      await user.click(screen.getByRole('button', { name: 'Editar Garrafa Térmica 1L' }));
+      expect(await screen.findByAltText('Foto 1')).toHaveAttribute('src', expect.stringContaining('garrafa-frente.webp'));
+      expect(screen.getByAltText('Foto 3')).toHaveAttribute('src', expect.stringContaining('garrafa-lado.webp'));
+      await user.click(screen.getByRole('button', { name: 'Remover foto 1' }));
+      await user.upload(screen.getByLabelText('Fotos'), photo('nova.png'));
+
+      expect(screen.getByRole('button', { name: 'Desfazer remoção da foto 1' })).toBeInTheDocument();
+      expect(screen.getByAltText('Foto 4')).toHaveAttribute('src', expect.stringMatching(/^blob:/));
+      expect(apiRequests).toHaveLength(3);
+      await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+      expect(await screen.findByAltText('Garrafa Térmica 1L')).toHaveAttribute(
+        'src',
+        expect.stringContaining('garrafa-tampa.jpeg'),
+      );
+      expect(apiRequests.slice(3)).toEqual(['PUT /api/produto/1', 'DELETE /api/imagem', 'POST /api/imagem']);
+      expect(photoIdsOf(1)).toEqual([12, 11, 100]);
+    });
+
+    it('keeps a photo whose removal was undone before saving', async () => {
+      const user = userEvent.setup();
+      renderPanel();
+
+      await user.click(screen.getByRole('button', { name: 'Editar Garrafa Térmica 1L' }));
+      await user.click(await screen.findByRole('button', { name: 'Remover foto 2' }));
+      await user.click(screen.getByRole('button', { name: 'Desfazer remoção da foto 2' }));
+      await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+      expect(await screen.findByAltText('Garrafa Térmica 1L')).toBeInTheDocument();
+      expect(apiRequests).not.toContain('DELETE /api/imagem');
+      expect(photoIdsOf(1)).toEqual([12, 10, 11]);
+    });
+
+    it('discards the marks and the new photos when the edit is cancelled', async () => {
+      const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL');
+      const user = userEvent.setup();
+      renderPanel();
+
+      await user.click(screen.getByRole('button', { name: 'Editar Garrafa Térmica 1L' }));
+      await user.click(await screen.findByRole('button', { name: 'Remover foto 1' }));
+      await user.upload(screen.getByLabelText('Fotos'), photo('nova.png'));
+      await user.click(screen.getByRole('button', { name: 'Cancelar' }));
+
+      expect(revokeObjectURL).toHaveBeenCalledTimes(1);
+      await user.click(screen.getByRole('button', { name: 'Editar Garrafa Térmica 1L' }));
+      expect(await screen.findByRole('button', { name: 'Remover foto 1' })).toBeInTheDocument();
+      expect(screen.queryByAltText('Foto 4')).not.toBeInTheDocument();
+      expect(apiRequests.filter((request) => !request.startsWith('GET'))).toEqual([]);
+    });
+
+    it('shows the placeholder for a photo the storefront cannot display and still lets it be removed', async () => {
+      const user = userEvent.setup();
+      renderPanel([buildProduct({ id: 7, slug: 'caixa-7', name: 'Caixa' })]);
+
+      await user.click(screen.getByRole('button', { name: 'Editar Caixa' }));
+      expect(await screen.findByAltText('Foto 3')).toHaveAttribute('src', expect.stringContaining('placeholder'));
+      await user.click(screen.getByRole('button', { name: 'Remover foto 3' }));
+      await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+      expect(await screen.findByAltText('Caixa')).toBeInTheDocument();
+      expect(photoIdsOf(7)).toEqual([20, 21]);
+    });
+  });
 });

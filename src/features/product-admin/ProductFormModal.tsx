@@ -7,7 +7,7 @@ import Label from '@/components/form/Label';
 import Input from '@/components/form/input/InputField';
 import Select from '@/components/form/Select';
 import TextArea from '@/components/form/input/TextArea';
-import type { Category, Product } from '@/entities/product';
+import type { Category, Product, ProductImageRecord } from '@/entities/product';
 import { hasProductFormErrors, validateProductForm } from './validateProductForm';
 import { ProductPhotosField, type NewPhoto } from './ProductPhotosField';
 import type { PhotoChanges, ProductFormErrors, ProductFormValues } from './types';
@@ -22,6 +22,7 @@ type ProductFormModalProps = {
   isOpen: boolean;
   onClose: () => void;
   existingProduct?: Product;
+  existingPhotos?: readonly ProductImageRecord[];
   categories: readonly Category[];
   onSave: (values: ProductFormValues, photoChanges: PhotoChanges) => Promise<number>;
 };
@@ -30,6 +31,7 @@ export const ProductFormModal = ({
   isOpen,
   onClose,
   existingProduct,
+  existingPhotos = [],
   categories,
   onSave,
 }: ProductFormModalProps) => {
@@ -40,6 +42,7 @@ export const ProductFormModal = ({
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [newPhotos, setNewPhotos] = useState<NewPhoto[]>([]);
+  const [removedPhotoIds, setRemovedPhotoIds] = useState<number[]>([]);
 
   const updateField = (field: keyof ProductFormValues, value: string) =>
     setValues((previousValues) => ({ ...previousValues, [field]: value }));
@@ -49,6 +52,11 @@ export const ProductFormModal = ({
       ...previousPhotos,
       ...files.map((file) => ({ file, previewUrl: URL.createObjectURL(file) })),
     ]);
+
+  const togglePhotoRemoval = (photoId: number) =>
+    setRemovedPhotoIds((previousIds) =>
+      previousIds.includes(photoId) ? previousIds.filter((id) => id !== photoId) : [...previousIds, photoId],
+    );
 
   const discardNewPhoto = (photo: NewPhoto) => {
     URL.revokeObjectURL(photo.previewUrl);
@@ -73,7 +81,7 @@ export const ProductFormModal = ({
     setIsSaving(true);
     setSaveError(null);
     try {
-      await onSave(values, { removedPhotoIds: [], newFiles: newPhotos.map((photo) => photo.file) });
+      await onSave(values, { removedPhotoIds, newFiles: newPhotos.map((photo) => photo.file) });
       releasePreviewsAndClose();
     } catch {
       setSaveError('Não foi possível salvar o produto. Tente de novo.');
@@ -140,7 +148,14 @@ export const ProductFormModal = ({
               />
             </div>
 
-            <ProductPhotosField newPhotos={newPhotos} onAddFiles={addPhotos} onDiscardNewPhoto={discardNewPhoto} />
+            <ProductPhotosField
+              existingPhotos={existingPhotos}
+              removedPhotoIds={removedPhotoIds}
+              newPhotos={newPhotos}
+              onToggleRemoval={togglePhotoRemoval}
+              onAddFiles={addPhotos}
+              onDiscardNewPhoto={discardNewPhoto}
+            />
           </div>
 
           {saveError && (
