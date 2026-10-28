@@ -47,7 +47,12 @@ export const loadProductForEdit = async (
     fetchCategoryLinks(productId),
     fetchProductImages(productId, { fresh: true, fromBrowser: true }).catch(() => product.images),
   ]);
-  return toProduct(produto, categories.find((category) => category.id === firstLink?.categoriaId), images);
+  return toProduct(
+    produto,
+    categories.find((category) => category.id === firstLink?.categoriaId),
+    images,
+    product.storeLinks,
+  );
 };
 
 export class CategoryLinkError extends Error {
@@ -97,10 +102,10 @@ export const updateProduct = async (
     try {
       await keepOnlyCategory(product.id, category.id);
     } catch {
-      throw new CategoryLinkError(toProduct(produto, undefined, product.images));
+      throw new CategoryLinkError(toProduct(produto, undefined, product.images, product.storeLinks));
     }
   }
-  return toProduct(produto, category, product.images);
+  return toProduct(produto, category, product.images, product.storeLinks);
 };
 
 export const deleteProduct = async (product: Product): Promise<void> => {

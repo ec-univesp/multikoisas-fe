@@ -25,8 +25,27 @@ describe('fetchProducts', () => {
         'https://avphmmvnlrbidhjrzozx.storage.supabase.co/storage/v1/object/public/imagem/garrafa-tampa.jpeg',
         `${SUPABASE_IMAGES}/garrafa-lado.webp`,
       ],
-      storeLinks: [],
+      storeLinks: [{ store: 'shopee', url: 'https://shopee.com.br/garrafa-termica' }],
     });
+  });
+
+  it('gives each product only its own store links and none to a product without links', async () => {
+    const [, balde, caixa] = await fetchProducts();
+    expect(balde.storeLinks).toEqual([]);
+    expect(caixa.storeLinks).toEqual([{ store: 'shopee', url: 'https://shopee.com.br/caixa' }]);
+  });
+
+  it('names the store from the sales channel, whatever its spelling in the api', async () => {
+    server.use(http.get('*/canalvenda', () => HttpResponse.json([{ id: 2, nome: 'MagaLu' }])));
+    const [garrafa] = await fetchProducts();
+    expect(garrafa.storeLinks).toEqual([{ store: 'magalu', url: 'https://shopee.com.br/garrafa-termica' }]);
+  });
+
+  it('keeps the storefront up without store links when the links fail', async () => {
+    server.use(http.get('*/canalvendaproduto', () => new HttpResponse(null, { status: 500 })));
+    const products = await fetchProducts();
+    expect(products).toHaveLength(3);
+    expect(products.every((product) => product.storeLinks.length === 0)).toBe(true);
   });
 
   it('gives each product only its own images and none to a product without images', async () => {

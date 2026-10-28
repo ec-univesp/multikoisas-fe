@@ -2,6 +2,7 @@ export type ProdutoRow = { id: number; nome: string; descricaoProduto: string };
 export type CategoriaRow = { id: number; nome: string };
 export type CategoriaProdutoRow = { produtoId: number; categoriaId: number };
 export type CanalVendaRow = { id: number; nome: string };
+export type CanalVendaProdutoRow = { produtoId: number; canalVendaId: number; link: string };
 export type ImagemRow = { id: number; produtoId: number; imagemUrl: string };
 export type RedeSocialRow = { id: number; descricao: string; link: string };
 
@@ -12,6 +13,7 @@ type ApiDatabase = {
   imagens: ImagemRow[];
   redesSociais: RedeSocialRow[];
   canaisVenda: CanalVendaRow[];
+  canalVendaProduto: CanalVendaProdutoRow[];
   nextId: number;
 };
 
@@ -58,6 +60,11 @@ const seed = (): ApiDatabase => ({
     { id: 3, nome: 'Instagram' },
     { id: 4, nome: 'Facebook' },
     { id: 5, nome: 'TikTok' },
+  ],
+  canalVendaProduto: [
+    { produtoId: 1, canalVendaId: 2, link: 'https://shopee.com.br/garrafa-termica' },
+    { produtoId: 1, canalVendaId: 3, link: 'https://www.instagram.com/p/garrafa' },
+    { produtoId: 7, canalVendaId: 2, link: 'https://shopee.com.br/caixa' },
   ],
   nextId: 100,
 });
