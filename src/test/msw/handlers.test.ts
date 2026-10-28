@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { apiDatabase } from './apiDatabase';
+import { apiDatabase, SUPABASE_IMAGES } from './apiDatabase';
 
 const SERVER_ORIGIN = 'https://multikoisas-univesp.onrender.com';
 
@@ -8,6 +8,26 @@ const send = (method: string, path: string, body?: unknown) =>
     method,
     headers: body ? { 'Content-Type': 'application/json' } : undefined,
     body: body ? JSON.stringify(body) : undefined,
+  });
+
+// O jsdom do Vitest troca o conteúdo de todo File no FormData: o multipart vai escrito à mão.
+const uploadToProduct5 = (fileName: string, content: string) =>
+  fetch('/api/imagem', {
+    method: 'POST',
+    headers: { 'Content-Type': 'multipart/form-data; boundary=limite' },
+    body: [
+      '--limite',
+      'Content-Disposition: form-data; name="produtoId"',
+      '',
+      '5',
+      '--limite',
+      `Content-Disposition: form-data; name="file"; filename="${fileName}"`,
+      'Content-Type: image/png',
+      '',
+      content,
+      '--limite--',
+      '',
+    ].join('\r\n'),
   });
 
 describe('multikoisas-api handlers', () => {
@@ -132,6 +152,30 @@ describe('multikoisas-api handlers', () => {
       expect(response.status).toBe(200);
       expect(await response.json()).toEqual([]);
     }
+  });
+
+  it('stores a multipart image upload and serves it on /imagem/{produtoId}', async () => {
+    const created = await uploadToProduct5('balde.png', 'png');
+    expect(created.status).toBe(201);
+    const image = { id: 100, produtoId: 5, imagemUrl: `${SUPABASE_IMAGES}/upload-100` };
+    expect(await created.json()).toEqual(image);
+    expect(await (await send('GET', '/api/imagem/5')).json()).toEqual([image]);
+  });
+
+  it('rejects an upload without file, an empty file and a file above 1 MB', async () => {
+    const withoutFile = new FormData();
+    withoutFile.append('produtoId', '5');
+    expect((await fetch('/api/imagem', { method: 'POST', body: withoutFile })).status).toBe(400);
+    expect((await uploadToProduct5('vazio.png', '')).status).toBe(409);
+    expect((await uploadToProduct5('grande.png', 'x'.repeat(1_048_577))).status).toBe(413);
+    expect(apiDatabase.imagens.filter((image) => image.produtoId === 5)).toEqual([]);
+  });
+
+  it('deletes an image by id and product', async () => {
+    expect((await send('DELETE', '/api/imagem', { id: 20, produtoId: 7 })).status).toBe(204);
+    expect(apiDatabase.imagens.map((image) => image.id)).not.toContain(20);
+    expect((await send('DELETE', '/api/imagem', { id: 20, produtoId: 7 })).status).toBe(404);
+    expect((await send('DELETE', '/api/imagem', { id: 21, produtoId: 1 })).status).toBe(404);
   });
 
   it('does not allow renaming a sales channel (UNIV-16)', async () => {

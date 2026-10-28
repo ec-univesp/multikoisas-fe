@@ -2,11 +2,13 @@ export {
   fetchCatalog,
   fetchCategories,
   fetchProductBySlug,
-  fetchProductImages,
+  fetchProductImageRecords,
   fetchProducts,
+  toImageRecord,
+  toImageUrlsInIdOrder,
   toProduct,
 } from './api';
-export type { ProdutoResponse } from './api';
+export type { ImagemResponse, ProductImageRecord, ProdutoResponse } from './api';
 export { ProductCard } from './ProductCard';
 export { ProductImage } from './ProductImage';
 export { PRODUCT_IMAGE_PLACEHOLDER, STORE_PRESENTATION } from './types';

@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { server } from '@/test/msw/server';
-import { fetchCategories, fetchProductBySlug, fetchProducts } from './api';
+import { fetchCategories, fetchProductBySlug, fetchProductImageRecords, fetchProducts } from './api';
 
 const SUPABASE_IMAGES = 'https://avphmmvnlrbidhjrzozx.supabase.co/storage/v1/object/public/imagem';
 
@@ -117,6 +117,16 @@ describe('fetchCategories', () => {
     expect(await fetchCategories({ fresh: true })).toEqual([
       { id: 2, name: 'Utensílios de Cozinha' },
       { id: 3, name: 'Banheiros' },
+    ]);
+  });
+});
+
+describe('fetchProductImageRecords', () => {
+  it('lists the photos of a product with their ids in id order, ready to display', async () => {
+    expect(await fetchProductImageRecords(7, { fresh: true, fromBrowser: true })).toEqual([
+      { id: 20, url: `${SUPABASE_IMAGES}/caixa.webp` },
+      { id: 21, url: 'https://avphmmvnlrbidhjrzozx.storage.supabase.co/storage/v1/object/public/imagem/caixa-tampa.jpeg' },
+      { id: 22, url: null },
     ]);
   });
 });

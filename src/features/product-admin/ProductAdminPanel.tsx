@@ -52,16 +52,16 @@ export const ProductAdminPanel = ({ initialProducts, categories }: ProductAdminP
     setFeedbackMessage(null);
     setIsLoadingProduct(true);
     try {
-      const latestProduct = await loadProductForEdit(product, categories);
-      if (!latestProduct) {
+      const editableProduct = await loadProductForEdit(product, categories);
+      if (!editableProduct) {
         setProducts((currentProducts) =>
           currentProducts.filter((candidate) => candidate.id !== product.id),
         );
         setFeedbackMessage('Esse produto já tinha sido apagado. A lista foi atualizada.');
         return;
       }
-      showSavedProduct(latestProduct);
-      setEditingProduct(latestProduct);
+      showSavedProduct(editableProduct.product);
+      setEditingProduct(editableProduct.product);
       formModal.openModal();
     } catch {
       setFeedbackMessage('Não foi possível carregar o produto. Tente de novo.');
