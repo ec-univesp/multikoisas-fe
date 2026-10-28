@@ -140,6 +140,24 @@ Abra <http://localhost:3000> e a vitrine aparece. O painel fica em <http://local
 
 O servidor recarrega sozinho a cada arquivo salvo — não precisa reiniciar nada enquanto desenvolve.
 
+### Login do painel
+
+O painel (`/admin`) pede login em `/panel`. Usuário e senha ficam em variáveis de ambiente do servidor; copie o `.env.example` para `.env.local` e preencha:
+
+| Variável | Conteúdo |
+| --- | --- |
+| `ADMIN_USERNAME` | usuário do painel |
+| `ADMIN_PASSWORD_HASH` | hash da senha, gerado pelo comando abaixo |
+| `SESSION_SECRET` | texto aleatório com 32 caracteres ou mais, por exemplo `openssl rand -base64 48` |
+
+Para gerar o hash, rode o comando abaixo e cole a linha impressa no `.env.local`:
+
+```bash
+node scripts/hash-password.mjs 'sua-senha'
+```
+
+Se faltar qualquer uma das três, ninguém entra no painel.
+
 ### Se algo der errado
 
 **`pnpm: command not found`** — o corepack não foi habilitado. Rode `corepack enable pnpm` e abra um terminal novo.
