@@ -1,16 +1,28 @@
-import { fetchProductImages, toProduct, type Category, type Product, type ProdutoResponse } from '@/entities/product';
-import type { ProductFormValues } from './types';
+import {
+  fetchProductImageRecords,
+  toImageRecord,
+  toImageUrlsInIdOrder,
+  toProduct,
+  type Category,
+  type ImagemResponse,
+  type Product,
+  type ProductImageRecord,
+  type ProdutoResponse,
+} from '@/entities/product';
+import type { PhotoChanges, ProductFormValues } from './types';
 
 type CategoriaProdutoBody = { produtoId: number; categoriaId: number };
 
 const HTTP_NOT_FOUND = 404;
 
+const toRequestBody = (body: unknown): RequestInit => {
+  if (body === undefined) return {};
+  if (body instanceof FormData) return { body };
+  return { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
+};
+
 const callApi = async (method: string, path: string, body?: unknown): Promise<Response> => {
-  const response = await fetch(`/api${path}`, {
-    method,
-    headers: body ? { 'Content-Type': 'application/json' } : undefined,
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  const response = await fetch(`/api${path}`, { method, ...toRequestBody(body) });
   if (!response.ok) throw new Error(`${method} ${path} respondeu ${response.status}`);
   return response;
 };
@@ -34,25 +46,30 @@ const fetchCategoryLinks = async (produtoId: number): Promise<CategoriaProdutoBo
   return response.json();
 };
 
+export type EditableProduct = { product: Product; photos: ProductImageRecord[] | null };
+
 export const loadProductForEdit = async (
   product: Product,
   categories: readonly Category[],
-): Promise<Product | null> => {
+): Promise<EditableProduct | null> => {
   const productId = product.id;
   const response = await fetch(`/api/produto/${productId}`, { cache: 'no-store' });
   if (response.status === HTTP_NOT_FOUND) return null;
   if (!response.ok) throw new Error(`GET /produto/${productId} respondeu ${response.status}`);
   const produto: ProdutoResponse = await response.json();
-  const [[firstLink], images] = await Promise.all([
+  const [[firstLink], photos] = await Promise.all([
     fetchCategoryLinks(productId),
-    fetchProductImages(productId, { fresh: true, fromBrowser: true }).catch(() => product.images),
+    fetchProductImageRecords(productId, { fresh: true, fromBrowser: true }).catch(() => null),
   ]);
-  return toProduct(
-    produto,
-    categories.find((category) => category.id === firstLink?.categoriaId),
-    images,
-    product.storeLinks,
-  );
+  return {
+    product: toProduct(
+      produto,
+      categories.find((category) => category.id === firstLink?.categoriaId),
+      photos ? toImageUrlsInIdOrder(photos) : product.images,
+      product.storeLinks,
+    ),
+    photos,
+  };
 };
 
 export class CategoryLinkError extends Error {
@@ -112,4 +129,71 @@ export const deleteProduct = async (product: Product): Promise<void> => {
   const links = await fetchCategoryLinks(product.id);
   for (const link of links) await unlinkCategory(link.produtoId, link.categoriaId);
   await callApi('DELETE', `/produto/${product.id}`);
+};
+
+const uploadProductImage = async (produtoId: number, file: File): Promise<ProductImageRecord | null> => {
+  const form = new FormData();
+  form.append('produtoId', String(produtoId));
+  form.append('file', file);
+  const response = await callApi('POST', '/imagem', form);
+  try {
+    const imagem: ImagemResponse = await response.json();
+    return toImageRecord(imagem);
+  } catch {
+    return null;
+  }
+};
+
+const deleteProductImage = async (produtoId: number, imageId: number) => {
+  const response = await fetch('/api/imagem', { method: 'DELETE', ...toRequestBody({ id: imageId, produtoId }) });
+  if (!response.ok && response.status !== HTTP_NOT_FOUND) {
+    throw new Error(`DELETE /imagem respondeu ${response.status}`);
+  }
+};
+
+const reloadImages = async (produtoId: number, fallbackImages: string[]) => {
+  try {
+    return toImageUrlsInIdOrder(await fetchProductImageRecords(produtoId, { fresh: true, fromBrowser: true }));
+  } catch {
+    return fallbackImages;
+  }
+};
+
+export type PhotoSyncResult = { product: Product; failedPhotoCount: number };
+
+export const syncProductImages = async (
+  product: Product,
+  currentPhotos: readonly ProductImageRecord[] | null,
+  { removedPhotoIds, newFiles }: PhotoChanges,
+): Promise<PhotoSyncResult> => {
+  let failedPhotoCount = 0;
+  const keptPhotos: ProductImageRecord[] = [];
+  for (const photo of currentPhotos ?? []) {
+    if (!removedPhotoIds.includes(photo.id)) {
+      keptPhotos.push(photo);
+      continue;
+    }
+    try {
+      await deleteProductImage(product.id, photo.id);
+    } catch {
+      failedPhotoCount += 1;
+      keptPhotos.push(photo);
+    }
+  }
+  const uploadedPhotos: ProductImageRecord[] = [];
+  let hasUnreadableUpload = false;
+  for (const file of newFiles) {
+    try {
+      const uploadedPhoto = await uploadProductImage(product.id, file);
+      if (uploadedPhoto) uploadedPhotos.push(uploadedPhoto);
+      else hasUnreadableUpload = true;
+    } catch {
+      failedPhotoCount += 1;
+    }
+  }
+  const knownImages = currentPhotos
+    ? toImageUrlsInIdOrder([...keptPhotos, ...uploadedPhotos])
+    : [...product.images, ...toImageUrlsInIdOrder(uploadedPhotos)];
+  const images = hasUnreadableUpload ? await reloadImages(product.id, knownImages) : knownImages;
+  return { product: { ...product, images }, failedPhotoCount };
 };

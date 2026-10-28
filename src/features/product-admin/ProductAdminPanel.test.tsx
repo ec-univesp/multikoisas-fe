@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { delay, http, HttpResponse } from 'msw';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProductAdminPanel } from './ProductAdminPanel';
 import type { Category, Product } from '@/entities/product';
 import { apiDatabase } from '@/test/msw/apiDatabase';
@@ -28,6 +28,7 @@ const buildProduct = (overrides: Partial<Product>): Product => ({
 let apiRequests: string[] = [];
 
 beforeEach(() => {
+  vi.restoreAllMocks();
   apiRequests = recordApiRequests();
 });
 
@@ -36,6 +37,12 @@ const respondWith = (method: 'post' | 'delete', path: string, status: number) =>
 
 const hang = (method: 'get' | 'post', path: string) =>
   server.use(http[method](path, () => delay('infinite')));
+
+const photo = (name: string, type = 'image/png', size = 3) =>
+  new File(['x'.repeat(size)], name, { type });
+
+const photoIdsOf = (produtoId: number) =>
+  apiDatabase.imagens.filter((imagem) => imagem.produtoId === produtoId).map((imagem) => imagem.id);
 
 const linksOf = (produtoId: number) =>
   apiDatabase.categoriaProduto.filter((link) => link.produtoId === produtoId);
@@ -363,5 +370,299 @@ describe('ProductAdminPanel', () => {
       await screen.findByText('Não foi possível apagar o produto. Recarregue a página e tente de novo.'),
     ).toBeInTheDocument();
     expect(screen.getByText('Garrafa Térmica 1L', { selector: 'a' })).toBeInTheDocument();
+  });
+
+  describe('photos of a new product', () => {
+    it('creates the product and then uploads the chosen photos in order', async () => {
+      const user = userEvent.setup();
+      renderPanel([]);
+
+      await user.click(screen.getByRole('button', { name: 'Novo produto' }));
+      await fillProductForm(user, { name: 'Vassoura', categoryId: '2', description: 'Macia.' });
+      expect(screen.getByText('JPG, PNG ou WebP, até 1 MB cada.')).toBeInTheDocument();
+      await user.upload(screen.getByLabelText('Fotos'), [photo('frente.png'), photo('lado.webp', 'image/webp')]);
+      expect(screen.getByAltText('Foto 1')).toHaveAttribute('src', expect.stringMatching(/^blob:/));
+      expect(screen.getByAltText('Foto 2')).toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+      expect(await screen.findByAltText('Vassoura')).toHaveAttribute(
+        'src',
+        expect.stringContaining('upload-101'),
+      );
+      expect(apiRequests).toEqual([
+        'POST /api/produto',
+        'POST /api/categoriaproduto',
+        'POST /api/imagem',
+        'POST /api/imagem',
+      ]);
+      expect(photoIdsOf(100)).toEqual([101, 102]);
+      expect(screen.queryByLabelText('Fotos')).not.toBeInTheDocument();
+    });
+
+    it('lets a chosen photo be dropped before saving and releases its preview', async () => {
+      const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL');
+      const user = userEvent.setup();
+      renderPanel([]);
+
+      await user.click(screen.getByRole('button', { name: 'Novo produto' }));
+      await fillProductForm(user, { name: 'Vassoura', categoryId: '2', description: 'Macia.' });
+      await user.upload(screen.getByLabelText('Fotos'), [photo('frente.png'), photo('lado.png')]);
+      const droppedPreview = screen.getByAltText('Foto 1').getAttribute('src');
+      await user.click(screen.getByRole('button', { name: 'Remover foto 1' }));
+
+      expect(revokeObjectURL).toHaveBeenCalledWith(droppedPreview);
+      expect(screen.queryByAltText('Foto 2')).not.toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+      expect(await screen.findByAltText('Vassoura')).toBeInTheDocument();
+      expect(apiRequests.filter((request) => request === 'POST /api/imagem')).toHaveLength(1);
+      expect(photoIdsOf(100)).toEqual([101]);
+    });
+
+    it('discards the chosen photos and their previews when the form is cancelled', async () => {
+      const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL');
+      const user = userEvent.setup();
+      renderPanel([]);
+
+      await user.click(screen.getByRole('button', { name: 'Novo produto' }));
+      await user.upload(screen.getByLabelText('Fotos'), [photo('frente.png'), photo('lado.png')]);
+      await user.click(screen.getByRole('button', { name: 'Cancelar' }));
+
+      expect(revokeObjectURL).toHaveBeenCalledTimes(2);
+      await user.click(screen.getByRole('button', { name: 'Novo produto' }));
+      expect(screen.queryByAltText('Foto 1')).not.toBeInTheDocument();
+      expect(apiRequests).toEqual([]);
+    });
+
+    it('disables the photo controls while the product is being saved', async () => {
+      hang('post', '*/produto');
+      const user = userEvent.setup();
+      renderPanel([]);
+
+      await user.click(screen.getByRole('button', { name: 'Novo produto' }));
+      await fillProductForm(user, { name: 'Vassoura', categoryId: '2', description: 'Macia.' });
+      await user.upload(screen.getByLabelText('Fotos'), photo('frente.png'));
+      await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+      expect(await screen.findByRole('button', { name: 'Salvando...' })).toBeDisabled();
+      expect(screen.getByLabelText('Fotos')).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Adicionar fotos' })).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Remover foto 1' })).toBeDisabled();
+    });
+
+    it('releases the chosen previews when the panel goes away', async () => {
+      const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL');
+      const user = userEvent.setup();
+      const { unmount } = renderPanel([]);
+
+      await user.click(screen.getByRole('button', { name: 'Novo produto' }));
+      await user.upload(screen.getByLabelText('Fotos'), [photo('frente.png'), photo('lado.png')]);
+      unmount();
+
+      expect(revokeObjectURL).toHaveBeenCalledTimes(2);
+    });
+
+    it('opens the photo picker from a button in portuguese', async () => {
+      const user = userEvent.setup();
+      renderPanel([]);
+
+      await user.click(screen.getByRole('button', { name: 'Novo produto' }));
+      const photoInput = screen.getByLabelText('Fotos');
+      const openPicker = vi.spyOn(photoInput, 'click');
+      await user.click(screen.getByRole('button', { name: 'Adicionar fotos' }));
+
+      expect(openPicker).toHaveBeenCalledTimes(1);
+      expect(photoInput).toHaveAttribute('type', 'file');
+    });
+  });
+
+  describe('photos of an existing product', () => {
+    it('removes the marked photos and uploads the new ones only when the product is saved', async () => {
+      const user = userEvent.setup();
+      renderPanel();
+
+      await user.click(screen.getByRole('button', { name: 'Editar Garrafa Térmica 1L' }));
+      expect(await screen.findByAltText('Foto 1')).toHaveAttribute('src', expect.stringContaining('garrafa-frente.webp'));
+      expect(screen.getByAltText('Foto 3')).toHaveAttribute('src', expect.stringContaining('garrafa-lado.webp'));
+      await user.click(screen.getByRole('button', { name: 'Remover foto 1' }));
+      await user.upload(screen.getByLabelText('Fotos'), photo('nova.png'));
+
+      expect(screen.getByRole('button', { name: 'Desfazer remoção da foto 1' })).toBeInTheDocument();
+      expect(screen.getByAltText('Foto 4')).toHaveAttribute('src', expect.stringMatching(/^blob:/));
+      expect(apiRequests).toHaveLength(3);
+      await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+      expect(await screen.findByAltText('Garrafa Térmica 1L')).toHaveAttribute(
+        'src',
+        expect.stringContaining('garrafa-tampa.jpeg'),
+      );
+      expect(apiRequests.slice(3)).toEqual(['PUT /api/produto/1', 'DELETE /api/imagem', 'POST /api/imagem']);
+      expect(photoIdsOf(1)).toEqual([12, 11, 100]);
+    });
+
+    it('keeps a photo whose removal was undone before saving', async () => {
+      const user = userEvent.setup();
+      renderPanel();
+
+      await user.click(screen.getByRole('button', { name: 'Editar Garrafa Térmica 1L' }));
+      await user.click(await screen.findByRole('button', { name: 'Remover foto 2' }));
+      await user.click(screen.getByRole('button', { name: 'Desfazer remoção da foto 2' }));
+      await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+      expect(await screen.findByAltText('Garrafa Térmica 1L')).toBeInTheDocument();
+      expect(apiRequests).not.toContain('DELETE /api/imagem');
+      expect(photoIdsOf(1)).toEqual([12, 10, 11]);
+    });
+
+    it('discards the marks and the new photos when the edit is cancelled', async () => {
+      const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL');
+      const user = userEvent.setup();
+      renderPanel();
+
+      await user.click(screen.getByRole('button', { name: 'Editar Garrafa Térmica 1L' }));
+      await user.click(await screen.findByRole('button', { name: 'Remover foto 1' }));
+      await user.upload(screen.getByLabelText('Fotos'), photo('nova.png'));
+      await user.click(screen.getByRole('button', { name: 'Cancelar' }));
+
+      expect(revokeObjectURL).toHaveBeenCalledTimes(1);
+      await user.click(screen.getByRole('button', { name: 'Editar Garrafa Térmica 1L' }));
+      expect(await screen.findByRole('button', { name: 'Remover foto 1' })).toBeInTheDocument();
+      expect(screen.queryByAltText('Foto 4')).not.toBeInTheDocument();
+      expect(apiRequests.filter((request) => !request.startsWith('GET'))).toEqual([]);
+    });
+
+    it('shows the placeholder for a photo the storefront cannot display and still lets it be removed', async () => {
+      const user = userEvent.setup();
+      renderPanel([buildProduct({ id: 7, slug: 'caixa-7', name: 'Caixa' })]);
+
+      await user.click(screen.getByRole('button', { name: 'Editar Caixa' }));
+      expect(await screen.findByAltText('Foto 3')).toHaveAttribute('src', expect.stringContaining('placeholder'));
+      await user.click(screen.getByRole('button', { name: 'Remover foto 3' }));
+      await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+      expect(await screen.findByAltText('Caixa')).toBeInTheDocument();
+      expect(photoIdsOf(7)).toEqual([20, 21]);
+    });
+
+    it('warns that the current photos could not be loaded and still accepts new ones', async () => {
+      server.use(http.get('*/imagem/:produtoId', () => new HttpResponse(null, { status: 500 })));
+      const user = userEvent.setup();
+      renderPanel();
+
+      await user.click(screen.getByRole('button', { name: 'Editar Garrafa Térmica 1L' }));
+
+      expect(
+        await screen.findByText(
+          'Não foi possível carregar as fotos atuais. Feche e abra de novo para tentar outra vez.',
+        ),
+      ).toBeInTheDocument();
+      expect(screen.queryByAltText('Foto 1')).not.toBeInTheDocument();
+      await user.upload(screen.getByLabelText('Fotos'), photo('nova.png'));
+      expect(screen.getByAltText('Foto 1')).toHaveAttribute('src', expect.stringMatching(/^blob:/));
+      await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+      expect(await screen.findByAltText('Garrafa Térmica 1L')).toHaveAttribute(
+        'src',
+        expect.stringContaining('upload-100'),
+      );
+      expect(photoIdsOf(1)).toEqual([12, 10, 11, 100]);
+    });
+  });
+
+  describe('photo validation and partial failures', () => {
+    it('keeps out of the list the files that are not jpg, png or webp or pass 1 MB', async () => {
+      const user = userEvent.setup({ applyAccept: false });
+      renderPanel([]);
+
+      await user.click(screen.getByRole('button', { name: 'Novo produto' }));
+      await fillProductForm(user, { name: 'Vassoura', categoryId: '2', description: 'Macia.' });
+      await user.upload(screen.getByLabelText('Fotos'), [
+        photo('nota.pdf', 'application/pdf'),
+        photo('grande.png', 'image/png', 1_048_577),
+        photo('frente.jpg', 'image/jpeg'),
+        photo('limite.webp', 'image/webp', 1_048_576),
+      ]);
+
+      expect(screen.getByText('nota.pdf: use JPG, PNG ou WebP.')).toBeInTheDocument();
+      expect(screen.getByText('grande.png: a foto passa de 1 MB.')).toBeInTheDocument();
+      expect(screen.getByAltText('Foto 2')).toBeInTheDocument();
+      expect(screen.queryByAltText('Foto 3')).not.toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+      expect(await screen.findByAltText('Vassoura')).toBeInTheDocument();
+      expect(photoIdsOf(100)).toEqual([101, 102]);
+    });
+
+    it('lists every rejected file even when two share a name', async () => {
+      const consoleError = vi.spyOn(console, 'error');
+      const user = userEvent.setup({ applyAccept: false });
+      renderPanel([]);
+
+      await user.click(screen.getByRole('button', { name: 'Novo produto' }));
+      await user.upload(screen.getByLabelText('Fotos'), [
+        photo('nota.pdf', 'application/pdf'),
+        photo('nota.pdf', 'application/pdf'),
+      ]);
+
+      expect(screen.getAllByText('nota.pdf: use JPG, PNG ou WebP.')).toHaveLength(2);
+      expect(consoleError.mock.calls.flat().join(' ')).not.toContain('same key');
+    });
+
+    it('does not add the same file twice', async () => {
+      const user = userEvent.setup();
+      renderPanel([]);
+      const frente = photo('frente.png');
+
+      await user.click(screen.getByRole('button', { name: 'Novo produto' }));
+      await user.upload(screen.getByLabelText('Fotos'), frente);
+      await user.upload(screen.getByLabelText('Fotos'), [frente, photo('lado.png')]);
+
+      expect(screen.getByAltText('Foto 2')).toBeInTheDocument();
+      expect(screen.queryByAltText('Foto 3')).not.toBeInTheDocument();
+    });
+
+    it('lists the new product with the photos that worked and never creates it twice', async () => {
+      server.use(http.post('*/imagem', () => new HttpResponse('erro interno do bucket', { status: 500 }), { once: true }));
+      const user = userEvent.setup();
+      renderPanel([]);
+
+      await user.click(screen.getByRole('button', { name: 'Novo produto' }));
+      await fillProductForm(user, { name: 'Vassoura', categoryId: '2', description: 'Macia.' });
+      await user.upload(screen.getByLabelText('Fotos'), [photo('frente.png'), photo('lado.png')]);
+      await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+      expect(
+        await screen.findByText('Produto salvo, mas 1 foto(s) não foram atualizadas. Tente de novo pelo Editar.'),
+      ).toBeInTheDocument();
+      expect(screen.queryByText(/bucket/)).not.toBeInTheDocument();
+      expect(screen.getByAltText('Vassoura')).toHaveAttribute('src', expect.stringContaining('upload-101'));
+      expect(screen.getByRole('button', { name: 'Salvar produto' })).toBeDisabled();
+      expect(screen.getByLabelText('Fotos')).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Remover foto 1' })).toBeDisabled();
+      await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
+      expect(apiRequests.filter((request) => request === 'POST /api/produto')).toHaveLength(1);
+
+      await user.click(screen.getByRole('button', { name: 'Fechar' }));
+      expect(screen.queryByLabelText('Fotos')).not.toBeInTheDocument();
+    });
+
+    it('keeps a photo whose removal failed and warns about it', async () => {
+      respondWith('delete', '*/imagem', 500);
+      const user = userEvent.setup();
+      renderPanel();
+
+      await user.click(screen.getByRole('button', { name: 'Editar Garrafa Térmica 1L' }));
+      await user.click(await screen.findByRole('button', { name: 'Remover foto 1' }));
+      await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+      expect(
+        await screen.findByText('Produto salvo, mas 1 foto(s) não foram atualizadas. Tente de novo pelo Editar.'),
+      ).toBeInTheDocument();
+      expect(screen.getByAltText('Garrafa Térmica 1L')).toHaveAttribute(
+        'src',
+        expect.stringContaining('garrafa-frente.webp'),
+      );
+      expect(photoIdsOf(1)).toEqual([12, 10, 11]);
+    });
   });
 });

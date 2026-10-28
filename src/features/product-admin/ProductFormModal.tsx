@@ -1,15 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Modal } from '@/components/ui/modal';
 import Button from '@/components/ui/button/Button';
 import Label from '@/components/form/Label';
 import Input from '@/components/form/input/InputField';
 import Select from '@/components/form/Select';
 import TextArea from '@/components/form/input/TextArea';
-import type { Category, Product } from '@/entities/product';
+import type { Category, Product, ProductImageRecord } from '@/entities/product';
 import { hasProductFormErrors, validateProductForm } from './validateProductForm';
-import type { ProductFormErrors, ProductFormValues } from './types';
+import { ProductPhotosField, type NewPhoto } from './ProductPhotosField';
+import type { PhotoChanges, ProductFormErrors, ProductFormValues } from './types';
+
+const isSameFile = (first: File, second: File) =>
+  first.name === second.name && first.size === second.size && first.lastModified === second.lastModified;
+
+const revokeAll = (previewUrls: Set<string>) => {
+  previewUrls.forEach((previewUrl) => URL.revokeObjectURL(previewUrl));
+  previewUrls.clear();
+};
 
 const buildInitialFormValues = (product?: Product): ProductFormValues => ({
   name: product?.name ?? '',
@@ -21,14 +30,16 @@ type ProductFormModalProps = {
   isOpen: boolean;
   onClose: () => void;
   existingProduct?: Product;
+  existingPhotos?: readonly ProductImageRecord[] | null;
   categories: readonly Category[];
-  onSave: (values: ProductFormValues) => Promise<void>;
+  onSave: (values: ProductFormValues, photoChanges: PhotoChanges) => Promise<number>;
 };
 
 export const ProductFormModal = ({
   isOpen,
   onClose,
   existingProduct,
+  existingPhotos = [],
   categories,
   onSave,
 }: ProductFormModalProps) => {
@@ -38,12 +49,44 @@ export const ProductFormModal = ({
   const [errors, setErrors] = useState<ProductFormErrors>({});
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [newPhotos, setNewPhotos] = useState<NewPhoto[]>([]);
+  const [removedPhotoIds, setRemovedPhotoIds] = useState<number[]>([]);
+  const [failedPhotoCount, setFailedPhotoCount] = useState(0);
+  const previewUrlsRef = useRef(new Set<string>());
+
+  useEffect(() => {
+    const previewUrls = previewUrlsRef.current;
+    return () => revokeAll(previewUrls);
+  }, []);
 
   const updateField = (field: keyof ProductFormValues, value: string) =>
     setValues((previousValues) => ({ ...previousValues, [field]: value }));
 
+  const addPhotos = (files: File[]) => {
+    const unseenFiles = files.filter((file) => !newPhotos.some((photo) => isSameFile(photo.file, file)));
+    const addedPhotos = unseenFiles.map((file) => ({ file, previewUrl: URL.createObjectURL(file) }));
+    addedPhotos.forEach((photo) => previewUrlsRef.current.add(photo.previewUrl));
+    setNewPhotos((previousPhotos) => [...previousPhotos, ...addedPhotos]);
+  };
+
+  const togglePhotoRemoval = (photoId: number) =>
+    setRemovedPhotoIds((previousIds) =>
+      previousIds.includes(photoId) ? previousIds.filter((id) => id !== photoId) : [...previousIds, photoId],
+    );
+
+  const discardNewPhoto = (photo: NewPhoto) => {
+    URL.revokeObjectURL(photo.previewUrl);
+    previewUrlsRef.current.delete(photo.previewUrl);
+    setNewPhotos((previousPhotos) => previousPhotos.filter((candidate) => candidate !== photo));
+  };
+
+  const releasePreviewsAndClose = () => {
+    revokeAll(previewUrlsRef.current);
+    onClose();
+  };
+
   const closeUnlessSaving = () => {
-    if (!isSaving) onClose();
+    if (!isSaving) releasePreviewsAndClose();
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -55,8 +98,13 @@ export const ProductFormModal = ({
     setIsSaving(true);
     setSaveError(null);
     try {
-      await onSave(values);
-      onClose();
+      const failedCount = await onSave(values, { removedPhotoIds, newFiles: newPhotos.map((photo) => photo.file) });
+      if (failedCount === 0) {
+        releasePreviewsAndClose();
+        return;
+      }
+      setFailedPhotoCount(failedCount);
+      setIsSaving(false);
     } catch {
       setSaveError('Não foi possível salvar o produto. Tente de novo.');
       setIsSaving(false);
@@ -121,7 +169,23 @@ export const ProductFormModal = ({
                 className="text-base"
               />
             </div>
+
+            <ProductPhotosField
+              existingPhotos={existingPhotos}
+              removedPhotoIds={removedPhotoIds}
+              newPhotos={newPhotos}
+              onToggleRemoval={togglePhotoRemoval}
+              onAddFiles={addPhotos}
+              onDiscardNewPhoto={discardNewPhoto}
+              disabled={isSaving || failedPhotoCount > 0}
+            />
           </div>
+
+          {failedPhotoCount > 0 && (
+            <p role="alert" className="mt-4 px-1 text-sm text-error-500">
+              Produto salvo, mas {failedPhotoCount} foto(s) não foram atualizadas. Tente de novo pelo Editar.
+            </p>
+          )}
 
           {saveError && (
             <p role="alert" className="mt-4 px-1 text-sm text-error-500">
@@ -131,9 +195,9 @@ export const ProductFormModal = ({
 
           <div className="mt-6 flex items-center justify-end gap-3 px-1">
             <Button size="sm" variant="outline" onClick={closeUnlessSaving} disabled={isSaving}>
-              Cancelar
+              {failedPhotoCount > 0 ? 'Fechar' : 'Cancelar'}
             </Button>
-            <Button size="sm" type="submit" disabled={isSaving}>
+            <Button size="sm" type="submit" disabled={isSaving || failedPhotoCount > 0}>
               {isSaving ? 'Salvando...' : 'Salvar produto'}
             </Button>
           </div>

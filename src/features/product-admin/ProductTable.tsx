@@ -30,7 +30,7 @@ export const ProductTable = ({ products, onEdit, onDelete }: ProductTableProps) 
 
   return (
     <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
-      <div className="overflow-x-auto">
+      <div className="relative overflow-x-auto">
         <Table>
           <TableHeader className="border-b border-gray-200">
             <TableRow>

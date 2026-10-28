@@ -17,7 +17,7 @@ type ApiDatabase = {
   nextId: number;
 };
 
-const SUPABASE_IMAGES = 'https://avphmmvnlrbidhjrzozx.supabase.co/storage/v1/object/public/imagem';
+export const SUPABASE_IMAGES = 'https://avphmmvnlrbidhjrzozx.supabase.co/storage/v1/object/public/imagem';
 
 const seed = (): ApiDatabase => ({
   produtos: [
