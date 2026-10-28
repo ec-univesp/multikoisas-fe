@@ -150,10 +150,10 @@ O painel (`/admin`) pede login em `/panel`. Usuário e senha ficam em variáveis
 | `ADMIN_PASSWORD_HASH` | hash da senha, gerado pelo comando abaixo |
 | `SESSION_SECRET` | texto aleatório com 32 caracteres ou mais, por exemplo `openssl rand -base64 48` |
 
-Para gerar o hash, rode o comando abaixo e cole a linha impressa no `.env.local`:
+Para gerar o hash, rode o comando abaixo, digite a senha quando pedir (ela não aparece na tela) e cole a linha impressa no `.env.local`:
 
 ```bash
-node scripts/hash-password.mjs 'sua-senha'
+node scripts/hash-password.mjs
 ```
 
 Se faltar qualquer uma das três, ninguém entra no painel.
