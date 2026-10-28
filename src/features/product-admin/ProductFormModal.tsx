@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Modal } from '@/components/ui/modal';
 import Button from '@/components/ui/button/Button';
 import Label from '@/components/form/Label';
@@ -15,6 +15,11 @@ import type { PhotoChanges, ProductFormErrors, ProductFormValues } from './types
 const isSameFile = (first: File, second: File) =>
   first.name === second.name && first.size === second.size && first.lastModified === second.lastModified;
 
+const revokeAll = (previewUrls: Set<string>) => {
+  previewUrls.forEach((previewUrl) => URL.revokeObjectURL(previewUrl));
+  previewUrls.clear();
+};
+
 const buildInitialFormValues = (product?: Product): ProductFormValues => ({
   name: product?.name ?? '',
   categoryId: product?.categoryId === null || !product ? '' : String(product.categoryId),
@@ -25,7 +30,7 @@ type ProductFormModalProps = {
   isOpen: boolean;
   onClose: () => void;
   existingProduct?: Product;
-  existingPhotos?: readonly ProductImageRecord[];
+  existingPhotos?: readonly ProductImageRecord[] | null;
   categories: readonly Category[];
   onSave: (values: ProductFormValues, photoChanges: PhotoChanges) => Promise<number>;
 };
@@ -47,16 +52,21 @@ export const ProductFormModal = ({
   const [newPhotos, setNewPhotos] = useState<NewPhoto[]>([]);
   const [removedPhotoIds, setRemovedPhotoIds] = useState<number[]>([]);
   const [failedPhotoCount, setFailedPhotoCount] = useState(0);
+  const previewUrlsRef = useRef(new Set<string>());
+
+  useEffect(() => {
+    const previewUrls = previewUrlsRef.current;
+    return () => revokeAll(previewUrls);
+  }, []);
 
   const updateField = (field: keyof ProductFormValues, value: string) =>
     setValues((previousValues) => ({ ...previousValues, [field]: value }));
 
   const addPhotos = (files: File[]) => {
     const unseenFiles = files.filter((file) => !newPhotos.some((photo) => isSameFile(photo.file, file)));
-    setNewPhotos((previousPhotos) => [
-      ...previousPhotos,
-      ...unseenFiles.map((file) => ({ file, previewUrl: URL.createObjectURL(file) })),
-    ]);
+    const addedPhotos = unseenFiles.map((file) => ({ file, previewUrl: URL.createObjectURL(file) }));
+    addedPhotos.forEach((photo) => previewUrlsRef.current.add(photo.previewUrl));
+    setNewPhotos((previousPhotos) => [...previousPhotos, ...addedPhotos]);
   };
 
   const togglePhotoRemoval = (photoId: number) =>
@@ -66,11 +76,12 @@ export const ProductFormModal = ({
 
   const discardNewPhoto = (photo: NewPhoto) => {
     URL.revokeObjectURL(photo.previewUrl);
+    previewUrlsRef.current.delete(photo.previewUrl);
     setNewPhotos((previousPhotos) => previousPhotos.filter((candidate) => candidate !== photo));
   };
 
   const releasePreviewsAndClose = () => {
-    newPhotos.forEach((photo) => URL.revokeObjectURL(photo.previewUrl));
+    revokeAll(previewUrlsRef.current);
     onClose();
   };
 
@@ -166,6 +177,7 @@ export const ProductFormModal = ({
               onToggleRemoval={togglePhotoRemoval}
               onAddFiles={addPhotos}
               onDiscardNewPhoto={discardNewPhoto}
+              disabled={isSaving || failedPhotoCount > 0}
             />
           </div>
 

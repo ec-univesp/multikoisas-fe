@@ -144,7 +144,7 @@ export const ProductAdminPanel = ({ initialProducts, categories }: ProductAdminP
           isOpen
           onClose={formModal.closeModal}
           existingProduct={editingProduct?.product}
-          existingPhotos={editingProduct?.photos ?? []}
+          existingPhotos={editingProduct?.photos}
           categories={categories}
           onSave={saveProduct}
         />

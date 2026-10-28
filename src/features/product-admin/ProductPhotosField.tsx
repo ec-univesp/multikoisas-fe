@@ -1,20 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Label from '@/components/form/Label';
-import FileInput from '@/components/form/input/FileInput';
+import Button from '@/components/ui/button/Button';
 import { TrashBinIcon } from '@/icons';
 import { PRODUCT_IMAGE_PLACEHOLDER, ProductImage, type ProductImageRecord } from '@/entities/product';
 
 export type NewPhoto = { file: File; previewUrl: string };
 
 type ProductPhotosFieldProps = {
-  existingPhotos: readonly ProductImageRecord[];
+  existingPhotos: readonly ProductImageRecord[] | null;
   removedPhotoIds: readonly number[];
   newPhotos: readonly NewPhoto[];
   onToggleRemoval: (photoId: number) => void;
   onAddFiles: (files: File[]) => void;
   onDiscardNewPhoto: (photo: NewPhoto) => void;
+  disabled: boolean;
 };
 
 type PhotoTile = { key: string; src: string; isMarkedForRemoval: boolean; onToggle: () => void };
@@ -35,9 +36,11 @@ export const ProductPhotosField = ({
   onToggleRemoval,
   onAddFiles,
   onDiscardNewPhoto,
+  disabled,
 }: ProductPhotosFieldProps) => {
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const tiles: PhotoTile[] = [
-    ...existingPhotos.map((photo) => ({
+    ...(existingPhotos ?? []).map((photo) => ({
       key: `photo-${photo.id}`,
       src: photo.url ?? PRODUCT_IMAGE_PLACEHOLDER,
       isMarkedForRemoval: removedPhotoIds.includes(photo.id),
@@ -61,23 +64,35 @@ export const ProductPhotosField = ({
   };
 
   return (
-    <div>
+    <div className="relative">
       <Label htmlFor="product-photos">Fotos</Label>
-      <FileInput
+      <input
+        ref={photoInputRef}
         id="product-photos"
+        type="file"
         multiple
         accept={ACCEPTED_PHOTO_TYPES.join(',')}
         aria-describedby="product-photos-hint"
         onChange={handleChange}
-        className="text-base"
+        disabled={disabled}
+        tabIndex={-1}
+        className="sr-only"
       />
+      <Button size="sm" variant="outline" onClick={() => photoInputRef.current?.click()} disabled={disabled}>
+        Adicionar fotos
+      </Button>
       <p id="product-photos-hint" className="mt-1.5 text-xs text-gray-500">
         JPG, PNG ou WebP, até 1 MB cada.
       </p>
+      {existingPhotos === null && (
+        <p role="alert" className="mt-1.5 text-xs text-error-500">
+          Não foi possível carregar as fotos atuais. Feche e abra de novo para tentar outra vez.
+        </p>
+      )}
       {rejectionMessages.length > 0 && (
         <div role="alert" className="mt-1.5 text-xs text-error-500">
-          {rejectionMessages.map((message) => (
-            <p key={message}>{message}</p>
+          {rejectionMessages.map((message, index) => (
+            <p key={`${index}-${message}`}>{message}</p>
           ))}
         </div>
       )}
@@ -96,6 +111,7 @@ export const ProductPhotosField = ({
                 <button
                   type="button"
                   onClick={tile.onToggle}
+                  disabled={disabled}
                   aria-label={`Desfazer remoção da foto ${index + 1}`}
                   className="absolute inset-x-0 bottom-0 min-h-11 bg-white/90 text-sm font-medium text-gray-700 hover:text-brand-500"
                 >
@@ -105,6 +121,7 @@ export const ProductPhotosField = ({
                 <button
                   type="button"
                   onClick={tile.onToggle}
+                  disabled={disabled}
                   aria-label={`Remover foto ${index + 1}`}
                   title="Remover foto"
                   className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center rounded-bl-lg bg-white/90 text-gray-600 hover:text-error-500"

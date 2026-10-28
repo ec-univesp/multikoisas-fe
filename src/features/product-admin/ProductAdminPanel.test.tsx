@@ -28,6 +28,7 @@ const buildProduct = (overrides: Partial<Product>): Product => ({
 let apiRequests: string[] = [];
 
 beforeEach(() => {
+  vi.restoreAllMocks();
   apiRequests = recordApiRequests();
 });
 
@@ -432,6 +433,47 @@ describe('ProductAdminPanel', () => {
       expect(screen.queryByAltText('Foto 1')).not.toBeInTheDocument();
       expect(apiRequests).toEqual([]);
     });
+
+    it('disables the photo controls while the product is being saved', async () => {
+      hang('post', '*/produto');
+      const user = userEvent.setup();
+      renderPanel([]);
+
+      await user.click(screen.getByRole('button', { name: 'Novo produto' }));
+      await fillProductForm(user, { name: 'Vassoura', categoryId: '2', description: 'Macia.' });
+      await user.upload(screen.getByLabelText('Fotos'), photo('frente.png'));
+      await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+      expect(await screen.findByRole('button', { name: 'Salvando...' })).toBeDisabled();
+      expect(screen.getByLabelText('Fotos')).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Adicionar fotos' })).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Remover foto 1' })).toBeDisabled();
+    });
+
+    it('releases the chosen previews when the panel goes away', async () => {
+      const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL');
+      const user = userEvent.setup();
+      const { unmount } = renderPanel([]);
+
+      await user.click(screen.getByRole('button', { name: 'Novo produto' }));
+      await user.upload(screen.getByLabelText('Fotos'), [photo('frente.png'), photo('lado.png')]);
+      unmount();
+
+      expect(revokeObjectURL).toHaveBeenCalledTimes(2);
+    });
+
+    it('opens the photo picker from a button in portuguese', async () => {
+      const user = userEvent.setup();
+      renderPanel([]);
+
+      await user.click(screen.getByRole('button', { name: 'Novo produto' }));
+      const photoInput = screen.getByLabelText('Fotos');
+      const openPicker = vi.spyOn(photoInput, 'click');
+      await user.click(screen.getByRole('button', { name: 'Adicionar fotos' }));
+
+      expect(openPicker).toHaveBeenCalledTimes(1);
+      expect(photoInput).toHaveAttribute('type', 'file');
+    });
   });
 
   describe('photos of an existing product', () => {
@@ -501,6 +543,30 @@ describe('ProductAdminPanel', () => {
       expect(await screen.findByAltText('Caixa')).toBeInTheDocument();
       expect(photoIdsOf(7)).toEqual([20, 21]);
     });
+
+    it('warns that the current photos could not be loaded and still accepts new ones', async () => {
+      server.use(http.get('*/imagem/:produtoId', () => new HttpResponse(null, { status: 500 })));
+      const user = userEvent.setup();
+      renderPanel();
+
+      await user.click(screen.getByRole('button', { name: 'Editar Garrafa Térmica 1L' }));
+
+      expect(
+        await screen.findByText(
+          'Não foi possível carregar as fotos atuais. Feche e abra de novo para tentar outra vez.',
+        ),
+      ).toBeInTheDocument();
+      expect(screen.queryByAltText('Foto 1')).not.toBeInTheDocument();
+      await user.upload(screen.getByLabelText('Fotos'), photo('nova.png'));
+      expect(screen.getByAltText('Foto 1')).toHaveAttribute('src', expect.stringMatching(/^blob:/));
+      await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+      expect(await screen.findByAltText('Garrafa Térmica 1L')).toHaveAttribute(
+        'src',
+        expect.stringContaining('upload-100'),
+      );
+      expect(photoIdsOf(1)).toEqual([12, 10, 11, 100]);
+    });
   });
 
   describe('photo validation and partial failures', () => {
@@ -525,6 +591,21 @@ describe('ProductAdminPanel', () => {
 
       expect(await screen.findByAltText('Vassoura')).toBeInTheDocument();
       expect(photoIdsOf(100)).toEqual([101, 102]);
+    });
+
+    it('lists every rejected file even when two share a name', async () => {
+      const consoleError = vi.spyOn(console, 'error');
+      const user = userEvent.setup({ applyAccept: false });
+      renderPanel([]);
+
+      await user.click(screen.getByRole('button', { name: 'Novo produto' }));
+      await user.upload(screen.getByLabelText('Fotos'), [
+        photo('nota.pdf', 'application/pdf'),
+        photo('nota.pdf', 'application/pdf'),
+      ]);
+
+      expect(screen.getAllByText('nota.pdf: use JPG, PNG ou WebP.')).toHaveLength(2);
+      expect(consoleError.mock.calls.flat().join(' ')).not.toContain('same key');
     });
 
     it('does not add the same file twice', async () => {
@@ -556,6 +637,8 @@ describe('ProductAdminPanel', () => {
       expect(screen.queryByText(/bucket/)).not.toBeInTheDocument();
       expect(screen.getByAltText('Vassoura')).toHaveAttribute('src', expect.stringContaining('upload-101'));
       expect(screen.getByRole('button', { name: 'Salvar produto' })).toBeDisabled();
+      expect(screen.getByLabelText('Fotos')).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Remover foto 1' })).toBeDisabled();
       await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
       expect(apiRequests.filter((request) => request === 'POST /api/produto')).toHaveLength(1);
 
