@@ -39,7 +39,7 @@ const PANEL_ICON_MAX_ROTATION = 60;
 
 const hashUnit = (index: number, multiplier: number) => ((index * multiplier) % 1000) / 1000;
 
-const TEXT_ZONE = { minLeft: 4, maxLeft: 55, minTop: 34, maxTop: 66 };
+const TEXT_ZONE = { minLeft: 0, maxLeft: 80, minTop: 34, maxTop: 64 };
 
 const PANEL_ICON_TIERS = [
   { minSize: 36, sizeRange: 10, minOpacity: 0.22, opacityRange: 0.064, strokeWidth: 2.5 },
