@@ -48,9 +48,9 @@ const hashUnit = (index: number, multiplier: number) => ((index * multiplier) % 
 const TEXT_ZONE = { minLeft: 0, maxLeft: 80, minTop: 34, maxTop: 64 };
 
 const PANEL_ICON_TIERS = [
-  { minSize: 36, sizeRange: 10, minOpacity: 0.22, opacityRange: 0.064, strokeWidth: 2.5 },
-  { minSize: 26, sizeRange: 8, minOpacity: 0.12, opacityRange: 0.048, strokeWidth: 2 },
-  { minSize: 42, sizeRange: 12, minOpacity: 0.04, opacityRange: 0.016, strokeWidth: 1.25 },
+  { minSize: 36, sizeRange: 10, minOpacity: 0.5, opacityRange: 0.12, strokeWidth: 2.5 },
+  { minSize: 26, sizeRange: 8, minOpacity: 0.4, opacityRange: 0.1, strokeWidth: 2 },
+  { minSize: 42, sizeRange: 12, minOpacity: 0.14, opacityRange: 0.04, strokeWidth: 1.25 },
 ] as const;
 
 const PANEL_ICONS = Array.from({ length: PANEL_ICON_GRID_ROWS }).flatMap((_row, row) =>
@@ -65,7 +65,6 @@ const PANEL_ICONS = Array.from({ length: PANEL_ICON_GRID_ROWS }).flatMap((_row, 
     const inTextZone =
       left >= TEXT_ZONE.minLeft && left <= TEXT_ZONE.maxLeft && top >= TEXT_ZONE.minTop && top <= TEXT_ZONE.maxTop;
     const tier = inTextZone ? PANEL_ICON_TIERS[2] : PANEL_ICON_TIERS[index % 3];
-    const isYellowAccent = tier === PANEL_ICON_TIERS[0] && index % 2 === 0;
 
     return {
       id: `panel-icon-${index}`,
@@ -74,10 +73,9 @@ const PANEL_ICONS = Array.from({ length: PANEL_ICON_GRID_ROWS }).flatMap((_row, 
       left,
       size: tier.minSize + ((index * 7) % tier.sizeRange),
       rotation: (hashUnit(index, 3266489917) - 0.5) * 2 * PANEL_ICON_MAX_ROTATION,
-      opacity: (tier.minOpacity + ((index * 3) % 5) * (tier.opacityRange / 5)) * (isYellowAccent ? 2.5 : 1),
+      opacity: tier.minOpacity + ((index * 3) % 5) * (tier.opacityRange / 5),
       strokeWidth: tier.strokeWidth,
       delay: `${(index % 6) * 1.4}s`,
-      colorClassName: isYellowAccent ? 'text-store-yellow' : 'text-white',
     };
   }),
 );
@@ -108,7 +106,7 @@ export default function AuthLayout({ children }: Readonly<{ children: React.Reac
         />
 
         <div aria-hidden className="pointer-events-none absolute inset-0 hidden lg:block">
-          {PANEL_ICONS.map(({ id, Icon, top, left, size, rotation, opacity, strokeWidth, delay, colorClassName }) => (
+          {PANEL_ICONS.map(({ id, Icon, top, left, size, rotation, opacity, strokeWidth, delay }) => (
             <div
               key={id}
               className="absolute"
@@ -117,7 +115,7 @@ export default function AuthLayout({ children }: Readonly<{ children: React.Reac
               <Icon
                 size={size}
                 strokeWidth={strokeWidth}
-                className={`animate-[auth-panel-drift_10s_ease-in-out_infinite] motion-reduce:animate-none ${colorClassName}`}
+                className="animate-[auth-panel-drift_10s_ease-in-out_infinite] text-store-yellow motion-reduce:animate-none"
                 style={{ opacity, animationDelay: delay }}
               />
             </div>
