@@ -7,6 +7,9 @@ interface InputProps {
   name?: string;
   autoComplete?: string;
   autoFocus?: boolean;
+  autoCapitalize?: string;
+  autoCorrect?: string;
+  spellCheck?: boolean;
   placeholder?: string;
   defaultValue?: string | number;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -28,6 +31,9 @@ const Input: FC<InputProps> = ({
   name,
   autoComplete,
   autoFocus,
+  autoCapitalize,
+  autoCorrect,
+  spellCheck,
   placeholder,
   defaultValue,
   onChange,
@@ -64,6 +70,9 @@ const Input: FC<InputProps> = ({
         name={name}
         autoComplete={autoComplete}
         autoFocus={autoFocus}
+        autoCapitalize={autoCapitalize}
+        autoCorrect={autoCorrect}
+        spellCheck={spellCheck}
         placeholder={placeholder}
         defaultValue={defaultValue}
         onChange={onChange}
