@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { ProductCard } from '@/entities/product';
 import type { Product } from '@/entities/product';
-import { filterProducts } from './filterProducts';
+import { useProductFilter } from './useProductFilter';
 
 const PRIORITY_IMAGE_COUNT = 4;
 
@@ -20,15 +20,11 @@ const chipClassName = (isActive: boolean): string =>
   }`;
 
 export const VitrineFilter = ({ products, categories }: VitrineFilterProps) => {
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-
-  const visibleProducts = filterProducts(products, { category: activeCategory, searchTerm });
-
-  const clearFilters = () => {
-    setActiveCategory(null);
-    setSearchTerm('');
-  };
+  const { activeCategory, setActiveCategory, visibleProducts, isCatalogEmpty, clearFilters } = useProductFilter(
+    products,
+    { searchTerm, setSearchTerm },
+  );
 
   return (
     <div>
@@ -71,13 +67,15 @@ export const VitrineFilter = ({ products, categories }: VitrineFilterProps) => {
       {visibleProducts.length === 0 ? (
         <div className="mt-8 flex flex-col items-center gap-4 text-center">
           <p className="text-gray-500">Nenhum produto encontrado.</p>
-          <button
-            type="button"
-            onClick={clearFilters}
-            className="flex h-11 items-center justify-center rounded-lg border border-gray-200 px-4 text-sm font-medium text-gray-700 hover:bg-gray-50"
-          >
-            Limpar filtros
-          </button>
+          {!isCatalogEmpty && (
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="flex h-11 items-center justify-center rounded-lg border border-gray-200 px-4 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Limpar filtros
+            </button>
+          )}
         </div>
       ) : (
         <ul className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
