@@ -142,21 +142,30 @@ O servidor recarrega sozinho a cada arquivo salvo — não precisa reiniciar nad
 
 ### Login do painel
 
-O painel (`/admin`) pede login em `/panel`. Usuário e senha ficam em variáveis de ambiente do servidor; copie o `.env.example` para `.env.local` e preencha:
+O painel (`/admin`) pede login em `/panel`. Os usuários e as senhas ficam em variáveis de ambiente do servidor; copie o `.env.example` para `.env.local` e preencha:
 
 | Variável | Conteúdo |
 | --- | --- |
-| `ADMIN_USERNAME` | usuário do painel |
-| `ADMIN_PASSWORD_HASH` | hash da senha, gerado pelo comando abaixo |
+| `ADMIN_USERS` | lista de usuários do painel, uma entrada `usuário=hash` por pessoa, separadas por vírgula |
 | `SESSION_SECRET` | texto aleatório com 32 caracteres ou mais, por exemplo `openssl rand -base64 48` |
 
-Para gerar o hash, rode o comando abaixo, digite a senha quando pedir (ela não aparece na tela) e cole a linha impressa no `.env.local`:
+Para gerar a entrada de uma pessoa, rode o comando abaixo com o usuário dela, digite a senha quando pedir (ela não aparece na tela) e copie a linha impressa:
 
 ```bash
-node scripts/hash-password.mjs
+node scripts/hash-password.mjs multeste
 ```
 
-Se faltar qualquer uma das três, ninguém entra no painel.
+O usuário aceita letras sem acento, números e `. _ @ -`. Junte as linhas de todo mundo com vírgula, sem quebra de linha:
+
+```bash
+ADMIN_USERS=emerson=scrypt:ab12...:cd34...,multeste=scrypt:56ef...:78ab...
+```
+
+Entrada mal formada é ignorada (as outras continuam valendo); usuário repetido vale a primeira entrada. Se `ADMIN_USERS` não tiver nenhuma entrada válida ou faltar o `SESSION_SECRET`, ninguém entra no painel.
+
+Qualquer mudança em `ADMIN_USERS` (incluir ou tirar alguém, trocar uma senha) desconecta todo mundo: cada pessoa precisa entrar de novo.
+
+Antes de publicar esta mudança, crie `ADMIN_USERS` no Netlify em todos os contextos; depois `ADMIN_USERNAME` e `ADMIN_PASSWORD_HASH` podem ser apagadas. O Netlify limita as variáveis de uma função a cerca de 4 KB, o que dá uns 20 usuários.
 
 ### Se algo der errado
 

@@ -27,6 +27,9 @@ export const LoginForm = () => {
           id="login-username"
           name="username"
           autoComplete="username"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
           autoFocus
           defaultValue={loginState.username}
           aria-invalid={hasError || undefined}

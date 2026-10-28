@@ -19,7 +19,7 @@ export const loginAction = async (_previousState: LoginState, formData: FormData
 
   if (!(await verifyCredentials(username, password, process.env))) return { error: INVALID_CREDENTIALS_MESSAGE, username };
 
-  const sessionToken = await createSessionToken(process.env.SESSION_SECRET, process.env.ADMIN_PASSWORD_HASH, Date.now());
+  const sessionToken = await createSessionToken(process.env.SESSION_SECRET, process.env.ADMIN_USERS, Date.now());
   if (!sessionToken) return { error: INVALID_CREDENTIALS_MESSAGE, username };
 
   const cookieStore = await cookies();

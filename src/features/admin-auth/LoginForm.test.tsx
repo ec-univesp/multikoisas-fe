@@ -27,6 +27,15 @@ describe('LoginForm', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
+  it('turns off auto capitalization, auto correction and spell check on the username', () => {
+    render(<LoginForm />);
+
+    const usernameField = screen.getByLabelText('Usuário');
+    expect(usernameField).toHaveAttribute('autocapitalize', 'none');
+    expect(usernameField).toHaveAttribute('autocorrect', 'off');
+    expect(usernameField).toHaveAttribute('spellcheck', 'false');
+  });
+
   it('keeps the field font at 16px so mobile browsers do not zoom in', () => {
     render(<LoginForm />);
 
