@@ -165,6 +165,8 @@ Entrada mal formada é ignorada (as outras continuam valendo); usuário repetido
 
 Qualquer mudança em `ADMIN_USERS` (incluir ou tirar alguém, trocar uma senha) desconecta todo mundo: cada pessoa precisa entrar de novo.
 
+Antes de publicar esta mudança, crie `ADMIN_USERS` no Netlify em todos os contextos; depois `ADMIN_USERNAME` e `ADMIN_PASSWORD_HASH` podem ser apagadas. O Netlify limita as variáveis de uma função a cerca de 4 KB, o que dá uns 20 usuários.
+
 ### Se algo der errado
 
 **`pnpm: command not found`** — o corepack não foi habilitado. Rode `corepack enable pnpm` e abra um terminal novo.
