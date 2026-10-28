@@ -77,4 +77,10 @@ describe('VitrineFilter', () => {
     expect(screen.getByRole('button', { name: 'Todas' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByText('Varal Sanfonado')).toBeInTheDocument();
   });
+
+  it('does not offer to clear filters when the catalog is empty', () => {
+    render(<VitrineFilter products={[]} categories={[]} />);
+    expect(screen.getByText(/nenhum produto encontrado/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /limpar filtros/i })).not.toBeInTheDocument();
+  });
 });

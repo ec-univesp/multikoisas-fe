@@ -18,6 +18,7 @@ describe('SiteHeaderV2', () => {
     expect(screen.getByRole('link', { name: /^multikoisas/i })).toHaveAttribute('href', '/v2');
     expect(screen.getByText('Tudo em um só lugar')).toBeInTheDocument();
     expect(screen.getByRole('searchbox', { name: 'Buscar produto' })).toHaveClass('text-base');
+    expect(screen.getByRole('search', { name: 'Buscar no cabeçalho' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Vitrine de produtos' })).toHaveAttribute('href', '#vitrine');
     expect(screen.getByRole('link', { name: 'Sobre a MultiKoisas' })).toHaveAttribute('href', '#sobre');
   });
@@ -70,6 +71,44 @@ describe('SiteHeaderV2', () => {
     expect(whatsapp).toHaveAttribute('href', 'https://wa.me/5500000000000');
     expect(whatsapp).toHaveAttribute('target', '_blank');
     expect(whatsapp).toHaveAttribute('rel', 'noopener noreferrer');
+  });
+
+  it('recognizes whatsapp by its address whatever the network is called', async () => {
+    server.use(
+      http.get('*/socialnetwork', () =>
+        HttpResponse.json([
+          { id: 4, descricao: 'Contato', link: 'https://api.whatsapp.com/send?phone=5500000000000' },
+        ]),
+      ),
+    );
+    await renderHeader();
+    expect(screen.getByRole('link', { name: 'Falar no WhatsApp' })).toHaveAttribute(
+      'href',
+      'https://api.whatsapp.com/send?phone=5500000000000',
+    );
+  });
+
+  it('ignores a network named whatsapp that points somewhere else', async () => {
+    server.use(
+      http.get('*/socialnetwork', () =>
+        HttpResponse.json([{ id: 3, descricao: 'WhatsApp', link: 'https://example.com/wa.me/5500000000000' }]),
+      ),
+    );
+    await renderHeader();
+    expect(screen.queryByRole('link', { name: 'Falar no WhatsApp' })).not.toBeInTheDocument();
+  });
+
+  it('ignores a whatsapp address that is not a valid https link', async () => {
+    server.use(
+      http.get('*/socialnetwork', () =>
+        HttpResponse.json([
+          { id: 3, descricao: 'WhatsApp', link: 'wa.me/5500000000000' },
+          { id: 5, descricao: 'WhatsApp', link: 'http://wa.me/5500000000000' },
+        ]),
+      ),
+    );
+    await renderHeader();
+    expect(screen.queryByRole('link', { name: 'Falar no WhatsApp' })).not.toBeInTheDocument();
   });
 
   it('keeps the header up when the social networks cannot be read', async () => {

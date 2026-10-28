@@ -23,14 +23,17 @@ export const useVitrineSearch = (): VitrineSearch => {
 
 const scrollToShowcase = (event: FormEvent<HTMLFormElement>) => {
   event.preventDefault();
-  document.getElementById('vitrine')?.scrollIntoView({ behavior: 'smooth' });
+  const showcase = document.getElementById('vitrine');
+  showcase?.scrollIntoView({ behavior: 'smooth' });
+  if (showcase?.contains(event.currentTarget)) return;
+  showcase?.querySelector<HTMLElement>('h2')?.focus({ preventScroll: true });
 };
 
-export const VitrineSearchField = ({ id }: { id: string }) => {
+export const VitrineSearchField = ({ id, label }: { id: string; label: string }) => {
   const { searchTerm, setSearchTerm } = useVitrineSearch();
 
   return (
-    <form role="search" onSubmit={scrollToShowcase} className="flex w-full items-center gap-1 rounded-lg bg-white p-1">
+    <form role="search" aria-label={label} onSubmit={scrollToShowcase} className="flex w-full items-center gap-1 rounded-lg bg-white p-1">
       <label htmlFor={id} className="sr-only">
         Buscar produto
       </label>

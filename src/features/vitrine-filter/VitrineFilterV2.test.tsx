@@ -29,7 +29,7 @@ const renderFilter = () =>
   render(
     <VitrineSearchProvider>
       <header>
-        <VitrineSearchField id="header-search" />
+        <VitrineSearchField id="header-search" label="Buscar no cabeçalho" />
       </header>
       <VitrineFilterV2 products={products} categories={categories} />
     </VitrineSearchProvider>,
@@ -43,6 +43,7 @@ describe('VitrineFilterV2', () => {
     expect(screen.getByRole('button', { name: 'Todas as categorias' })).toHaveAttribute('aria-pressed', 'true');
     expect(productNames()).toEqual(['Garrafa Térmica', 'Balde 12L', 'Panela']);
     expect(screen.getByText('3 itens exibidos')).toBeInTheDocument();
+    expect(screen.getByRole('search', { name: 'Buscar na vitrine' })).toBeInTheDocument();
   });
 
   it('keeps the chips inside their own horizontal scroll strip', () => {
@@ -83,5 +84,15 @@ describe('VitrineFilterV2', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Limpar filtros' }));
     expect(productNames()).toHaveLength(3);
     expect(screen.getAllByRole('searchbox')[0]).toHaveValue('');
+  });
+
+  it('does not offer to clear filters when the catalog is empty', () => {
+    render(
+      <VitrineSearchProvider>
+        <VitrineFilterV2 products={[]} categories={[]} />
+      </VitrineSearchProvider>,
+    );
+    expect(screen.getByText('Nenhum produto encontrado.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Limpar filtros' })).not.toBeInTheDocument();
   });
 });

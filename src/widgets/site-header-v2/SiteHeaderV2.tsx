@@ -1,21 +1,16 @@
 import { MessageCircle } from 'lucide-react';
 import Link from 'next/link';
-import { fetchProducts, STORE_PRESENTATION, type Product } from '@/entities/product';
+import { fetchProducts, toStoresPhrase, type Product } from '@/entities/product';
 import { fetchSocialNetworks, type SocialNetwork } from '@/entities/social-network';
 import { VitrineSearchField } from '@/features/vitrine-filter';
 
 const loadProducts = (): Promise<Product[]> => fetchProducts().catch(() => []);
 const loadSocialNetworks = (): Promise<SocialNetwork[]> => fetchSocialNetworks().catch(() => []);
 
-const isWhatsApp = (socialNetwork: SocialNetwork): boolean =>
-  /whatsapp|wa\.me/i.test(`${socialNetwork.name} ${socialNetwork.url}`);
+const WHATSAPP_HOSTS = new Set(['wa.me', 'api.whatsapp.com', 'whatsapp.com']);
 
-const storeStripLabel = (products: readonly Product[]): string | null => {
-  const stores = [...new Set(products.flatMap((product) => product.storeLinks.map((storeLink) => storeLink.store)))];
-  if (stores.length === 0) return null;
-  const storesWithArticle = stores.map((store) => STORE_PRESENTATION[store].purchaseLabel.replace(/^Comprar /, ''));
-  return `Compre ${new Intl.ListFormat('pt-BR', { type: 'disjunction' }).format(storesWithArticle)}`;
-};
+const isWhatsApp = (socialNetwork: SocialNetwork): boolean =>
+  WHATSAPP_HOSTS.has(new URL(socialNetwork.url).hostname.replace(/^www\./, ''));
 
 const navLinkClassName =
   'flex h-11 shrink-0 items-center rounded-lg px-3 text-sm font-semibold text-gray-700 hover:bg-white hover:text-store-navy';
@@ -23,7 +18,7 @@ const navLinkClassName =
 export const SiteHeaderV2 = async () => {
   const [products, socialNetworks] = await Promise.all([loadProducts(), loadSocialNetworks()]);
   const whatsApp = socialNetworks.find(isWhatsApp);
-  const storeStrip = storeStripLabel(products);
+  const storesPhrase = toStoresPhrase(products);
 
   return (
     <header>
@@ -58,7 +53,7 @@ export const SiteHeaderV2 = async () => {
             </a>
           )}
           <div className="w-full lg:w-auto lg:max-w-xl lg:flex-1">
-            <VitrineSearchField id="site-header-search" />
+            <VitrineSearchField id="site-header-search" label="Buscar no cabeçalho" />
           </div>
         </div>
       </div>
@@ -72,7 +67,9 @@ export const SiteHeaderV2 = async () => {
               Sobre a MultiKoisas
             </a>
           </nav>
-          {storeStrip && <p className="px-3 text-sm font-medium text-gray-600 md:px-0">{storeStrip}</p>}
+          {storesPhrase && (
+            <p className="px-3 text-sm font-medium text-gray-600 md:px-0">{`Compre ${storesPhrase}`}</p>
+          )}
         </div>
       </div>
     </header>

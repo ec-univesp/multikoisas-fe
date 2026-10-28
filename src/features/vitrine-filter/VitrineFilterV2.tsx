@@ -1,9 +1,8 @@
 'use client';
 
-import { useState } from 'react';
 import { ProductCardV2 } from '@/entities/product';
 import type { Product } from '@/entities/product';
-import { filterProducts } from './filterProducts';
+import { useProductFilter } from './useProductFilter';
 import { useVitrineSearch, VitrineSearchField } from './VitrineSearch';
 
 const PRIORITY_IMAGE_COUNT = 4;
@@ -21,20 +20,15 @@ const chipClassName = (isActive: boolean): string =>
 const itemCountLabel = (count: number): string => (count === 1 ? '1 item exibido' : `${count} itens exibidos`);
 
 export const VitrineFilterV2 = ({ products, categories }: VitrineFilterV2Props) => {
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
-  const { searchTerm, setSearchTerm } = useVitrineSearch();
-
-  const visibleProducts = filterProducts(products, { category: activeCategory, searchTerm });
-
-  const clearFilters = () => {
-    setActiveCategory(null);
-    setSearchTerm('');
-  };
+  const { activeCategory, setActiveCategory, visibleProducts, isCatalogEmpty, clearFilters } = useProductFilter(
+    products,
+    useVitrineSearch(),
+  );
 
   return (
     <div>
       <div className="flex flex-col gap-3 rounded-xl bg-white p-3 shadow-theme-xs md:flex-row md:items-center">
-        <VitrineSearchField id="vitrine-search" />
+        <VitrineSearchField id="vitrine-search" label="Buscar na vitrine" />
         <p aria-live="polite" className="shrink-0 rounded-lg bg-gray-100 px-3 py-2 text-sm font-semibold text-store-navy">
           {itemCountLabel(visibleProducts.length)}
         </p>
@@ -65,13 +59,15 @@ export const VitrineFilterV2 = ({ products, categories }: VitrineFilterV2Props) 
       {visibleProducts.length === 0 ? (
         <div className="mt-8 flex flex-col items-center gap-4 text-center">
           <p className="text-gray-500">Nenhum produto encontrado.</p>
-          <button
-            type="button"
-            onClick={clearFilters}
-            className="flex h-11 items-center justify-center rounded-lg border border-gray-200 bg-white px-4 text-sm font-medium text-gray-700 hover:bg-gray-50"
-          >
-            Limpar filtros
-          </button>
+          {!isCatalogEmpty && (
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="flex h-11 items-center justify-center rounded-lg border border-gray-200 bg-white px-4 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Limpar filtros
+            </button>
+          )}
         </div>
       ) : (
         <ul className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
