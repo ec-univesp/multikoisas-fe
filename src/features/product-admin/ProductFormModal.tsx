@@ -9,7 +9,8 @@ import Select from '@/components/form/Select';
 import TextArea from '@/components/form/input/TextArea';
 import type { Category, Product } from '@/entities/product';
 import { hasProductFormErrors, validateProductForm } from './validateProductForm';
-import type { ProductFormErrors, ProductFormValues } from './types';
+import { ProductPhotosField, type NewPhoto } from './ProductPhotosField';
+import type { PhotoChanges, ProductFormErrors, ProductFormValues } from './types';
 
 const buildInitialFormValues = (product?: Product): ProductFormValues => ({
   name: product?.name ?? '',
@@ -22,7 +23,7 @@ type ProductFormModalProps = {
   onClose: () => void;
   existingProduct?: Product;
   categories: readonly Category[];
-  onSave: (values: ProductFormValues) => Promise<void>;
+  onSave: (values: ProductFormValues, photoChanges: PhotoChanges) => Promise<number>;
 };
 
 export const ProductFormModal = ({
@@ -38,12 +39,29 @@ export const ProductFormModal = ({
   const [errors, setErrors] = useState<ProductFormErrors>({});
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [newPhotos, setNewPhotos] = useState<NewPhoto[]>([]);
 
   const updateField = (field: keyof ProductFormValues, value: string) =>
     setValues((previousValues) => ({ ...previousValues, [field]: value }));
 
+  const addPhotos = (files: File[]) =>
+    setNewPhotos((previousPhotos) => [
+      ...previousPhotos,
+      ...files.map((file) => ({ file, previewUrl: URL.createObjectURL(file) })),
+    ]);
+
+  const discardNewPhoto = (photo: NewPhoto) => {
+    URL.revokeObjectURL(photo.previewUrl);
+    setNewPhotos((previousPhotos) => previousPhotos.filter((candidate) => candidate !== photo));
+  };
+
+  const releasePreviewsAndClose = () => {
+    newPhotos.forEach((photo) => URL.revokeObjectURL(photo.previewUrl));
+    onClose();
+  };
+
   const closeUnlessSaving = () => {
-    if (!isSaving) onClose();
+    if (!isSaving) releasePreviewsAndClose();
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -55,8 +73,8 @@ export const ProductFormModal = ({
     setIsSaving(true);
     setSaveError(null);
     try {
-      await onSave(values);
-      onClose();
+      await onSave(values, { removedPhotoIds: [], newFiles: newPhotos.map((photo) => photo.file) });
+      releasePreviewsAndClose();
     } catch {
       setSaveError('Não foi possível salvar o produto. Tente de novo.');
       setIsSaving(false);
@@ -121,6 +139,8 @@ export const ProductFormModal = ({
                 className="text-base"
               />
             </div>
+
+            <ProductPhotosField newPhotos={newPhotos} onAddFiles={addPhotos} onDiscardNewPhoto={discardNewPhoto} />
           </div>
 
           {saveError && (

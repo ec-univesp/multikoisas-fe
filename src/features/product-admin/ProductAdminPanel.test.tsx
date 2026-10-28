@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { delay, http, HttpResponse } from 'msw';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProductAdminPanel } from './ProductAdminPanel';
 import type { Category, Product } from '@/entities/product';
 import { apiDatabase } from '@/test/msw/apiDatabase';
@@ -36,6 +36,12 @@ const respondWith = (method: 'post' | 'delete', path: string, status: number) =>
 
 const hang = (method: 'get' | 'post', path: string) =>
   server.use(http[method](path, () => delay('infinite')));
+
+const photo = (name: string, type = 'image/png', size = 3) =>
+  new File(['x'.repeat(size)], name, { type });
+
+const photoIdsOf = (produtoId: number) =>
+  apiDatabase.imagens.filter((imagem) => imagem.produtoId === produtoId).map((imagem) => imagem.id);
 
 const linksOf = (produtoId: number) =>
   apiDatabase.categoriaProduto.filter((link) => link.produtoId === produtoId);
@@ -363,5 +369,68 @@ describe('ProductAdminPanel', () => {
       await screen.findByText('Não foi possível apagar o produto. Recarregue a página e tente de novo.'),
     ).toBeInTheDocument();
     expect(screen.getByText('Garrafa Térmica 1L', { selector: 'a' })).toBeInTheDocument();
+  });
+
+  describe('photos of a new product', () => {
+    it('creates the product and then uploads the chosen photos in order', async () => {
+      const user = userEvent.setup();
+      renderPanel([]);
+
+      await user.click(screen.getByRole('button', { name: 'Novo produto' }));
+      await fillProductForm(user, { name: 'Vassoura', categoryId: '2', description: 'Macia.' });
+      expect(screen.getByText('JPG, PNG ou WebP, até 1 MB cada.')).toBeInTheDocument();
+      await user.upload(screen.getByLabelText('Fotos'), [photo('frente.png'), photo('lado.webp', 'image/webp')]);
+      expect(screen.getByAltText('Foto 1')).toHaveAttribute('src', expect.stringMatching(/^blob:/));
+      expect(screen.getByAltText('Foto 2')).toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+      expect(await screen.findByAltText('Vassoura')).toHaveAttribute(
+        'src',
+        expect.stringContaining('upload-101'),
+      );
+      expect(apiRequests).toEqual([
+        'POST /api/produto',
+        'POST /api/categoriaproduto',
+        'POST /api/imagem',
+        'POST /api/imagem',
+      ]);
+      expect(photoIdsOf(100)).toEqual([101, 102]);
+      expect(screen.queryByLabelText('Fotos')).not.toBeInTheDocument();
+    });
+
+    it('lets a chosen photo be dropped before saving and releases its preview', async () => {
+      const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL');
+      const user = userEvent.setup();
+      renderPanel([]);
+
+      await user.click(screen.getByRole('button', { name: 'Novo produto' }));
+      await fillProductForm(user, { name: 'Vassoura', categoryId: '2', description: 'Macia.' });
+      await user.upload(screen.getByLabelText('Fotos'), [photo('frente.png'), photo('lado.png')]);
+      const droppedPreview = screen.getByAltText('Foto 1').getAttribute('src');
+      await user.click(screen.getByRole('button', { name: 'Remover foto 1' }));
+
+      expect(revokeObjectURL).toHaveBeenCalledWith(droppedPreview);
+      expect(screen.queryByAltText('Foto 2')).not.toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+      expect(await screen.findByAltText('Vassoura')).toBeInTheDocument();
+      expect(apiRequests.filter((request) => request === 'POST /api/imagem')).toHaveLength(1);
+      expect(photoIdsOf(100)).toEqual([101]);
+    });
+
+    it('discards the chosen photos and their previews when the form is cancelled', async () => {
+      const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL');
+      const user = userEvent.setup();
+      renderPanel([]);
+
+      await user.click(screen.getByRole('button', { name: 'Novo produto' }));
+      await user.upload(screen.getByLabelText('Fotos'), [photo('frente.png'), photo('lado.png')]);
+      await user.click(screen.getByRole('button', { name: 'Cancelar' }));
+
+      expect(revokeObjectURL).toHaveBeenCalledTimes(2);
+      await user.click(screen.getByRole('button', { name: 'Novo produto' }));
+      expect(screen.queryByAltText('Foto 1')).not.toBeInTheDocument();
+      expect(apiRequests).toEqual([]);
+    });
   });
 });

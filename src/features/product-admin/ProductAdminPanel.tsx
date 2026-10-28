@@ -13,9 +13,11 @@ import {
   createProduct,
   deleteProduct,
   loadProductForEdit,
+  type EditableProduct,
+  syncProductImages,
   updateProduct,
 } from './productApi';
-import type { ProductFormValues } from './types';
+import type { PhotoChanges, ProductFormValues } from './types';
 
 type ProductAdminPanelProps = {
   initialProducts: readonly Product[];
@@ -24,7 +26,7 @@ type ProductAdminPanelProps = {
 
 export const ProductAdminPanel = ({ initialProducts, categories }: ProductAdminPanelProps) => {
   const [products, setProducts] = useState<Product[]>([...initialProducts]);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editingProduct, setEditingProduct] = useState<EditableProduct | null>(null);
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isLoadingProduct, setIsLoadingProduct] = useState(false);
@@ -61,7 +63,7 @@ export const ProductAdminPanel = ({ initialProducts, categories }: ProductAdminP
         return;
       }
       showSavedProduct(editableProduct.product);
-      setEditingProduct(editableProduct.product);
+      setEditingProduct(editableProduct);
       formModal.openModal();
     } catch {
       setFeedbackMessage('Não foi possível carregar o produto. Tente de novo.');
@@ -76,19 +78,28 @@ export const ProductAdminPanel = ({ initialProducts, categories }: ProductAdminP
     deleteModal.openModal();
   };
 
-  const saveProduct = async (values: ProductFormValues) => {
-    setFeedbackMessage(null);
+  const saveProductData = async (values: ProductFormValues): Promise<Product> => {
     try {
-      showSavedProduct(
-        editingProduct
-          ? await updateProduct(editingProduct, values, categories)
-          : await createProduct(values, categories),
-      );
+      return editingProduct
+        ? await updateProduct(editingProduct.product, values, categories)
+        : await createProduct(values, categories);
     } catch (error) {
       if (!(error instanceof CategoryLinkError)) throw error;
-      showSavedProduct(error.product);
       setFeedbackMessage('Produto salvo, mas sem categoria. Edite o produto para escolher de novo.');
+      return error.product;
     }
+  };
+
+  const saveProduct = async (values: ProductFormValues, photoChanges: PhotoChanges) => {
+    setFeedbackMessage(null);
+    const savedProduct = await saveProductData(values);
+    const { product, failedPhotoCount } = await syncProductImages(
+      savedProduct,
+      editingProduct ? editingProduct.photos : [],
+      photoChanges,
+    );
+    showSavedProduct(product);
+    return failedPhotoCount;
   };
 
   const confirmDeleteProduct = async () => {
@@ -132,7 +143,7 @@ export const ProductAdminPanel = ({ initialProducts, categories }: ProductAdminP
         <ProductFormModal
           isOpen
           onClose={formModal.closeModal}
-          existingProduct={editingProduct ?? undefined}
+          existingProduct={editingProduct?.product}
           categories={categories}
           onSave={saveProduct}
         />
