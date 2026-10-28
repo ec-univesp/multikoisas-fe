@@ -1,4 +1,5 @@
 import React, { FC } from "react";
+import { twMerge } from "tailwind-merge";
 
 interface InputProps {
   type?: "text" | "number" | "email" | "password" | "date" | "time" | string;
@@ -66,7 +67,7 @@ const Input: FC<InputProps> = ({
         max={max}
         step={step}
         disabled={disabled}
-        className={inputClasses}
+        className={twMerge(inputClasses)}
       />
 
       {/* Optional Hint Text */}

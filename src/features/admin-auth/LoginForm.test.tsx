@@ -27,6 +27,15 @@ describe('LoginForm', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
+  it('keeps the field font at 16px so mobile browsers do not zoom in', () => {
+    render(<LoginForm />);
+
+    for (const field of [screen.getByLabelText('Usuário'), screen.getByLabelText('Senha')]) {
+      expect(field).toHaveClass('text-base');
+      expect(field).not.toHaveClass('text-sm');
+    }
+  });
+
   it('toggles the password visibility without submitting the form', async () => {
     const user = userEvent.setup();
     render(<LoginForm />);
