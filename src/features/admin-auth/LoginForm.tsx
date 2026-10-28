@@ -8,10 +8,12 @@ import { EyeCloseIcon, EyeIcon } from '@/icons';
 import { loginAction, type LoginState } from './actions';
 
 const initialLoginState: LoginState = { error: null };
+const ERROR_MESSAGE_ID = 'login-error';
 
 export const LoginForm = () => {
   const [loginState, formAction, isPending] = useActionState(loginAction, initialLoginState);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const hasError = Boolean(loginState.error);
 
   return (
     <form action={formAction} className="w-full max-w-sm">
@@ -20,7 +22,17 @@ export const LoginForm = () => {
 
       <div className="mt-8">
         <Label htmlFor="login-username">Usuário</Label>
-        <Input id="login-username" name="username" autoComplete="username" autoFocus className="text-base" />
+        <Input
+          key={loginState.username}
+          id="login-username"
+          name="username"
+          autoComplete="username"
+          autoFocus
+          defaultValue={loginState.username}
+          aria-invalid={hasError || undefined}
+          aria-describedby={hasError ? ERROR_MESSAGE_ID : undefined}
+          className="text-base"
+        />
       </div>
 
       <div className="mt-5">
@@ -31,6 +43,8 @@ export const LoginForm = () => {
             name="password"
             type={isPasswordVisible ? 'text' : 'password'}
             autoComplete="current-password"
+            aria-invalid={hasError || undefined}
+            aria-describedby={hasError ? ERROR_MESSAGE_ID : undefined}
             className="pr-12 text-base"
           />
           <button
@@ -50,6 +64,7 @@ export const LoginForm = () => {
 
       {loginState.error && (
         <p
+          id={ERROR_MESSAGE_ID}
           role="alert"
           className="mt-5 rounded-lg border border-error-200 bg-error-50 px-4 py-3 text-sm text-error-600"
         >

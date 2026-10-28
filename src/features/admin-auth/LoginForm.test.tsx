@@ -49,7 +49,7 @@ describe('LoginForm', () => {
   });
 
   it('sends the credentials and shows the error returned by the action', async () => {
-    loginAction.mockResolvedValue({ error: 'Usuário ou senha incorretos.' });
+    loginAction.mockResolvedValue({ error: 'Usuário ou senha incorretos.', username: 'loja' });
     const user = userEvent.setup();
     render(<LoginForm />);
 
@@ -61,6 +61,39 @@ describe('LoginForm', () => {
     const formData = loginAction.mock.calls[0][1];
     expect(formData.get('username')).toBe('loja');
     expect(formData.get('password')).toBe('errada');
+  });
+
+  it('keeps the typed username after a failed attempt', async () => {
+    loginAction.mockResolvedValue({ error: 'Usuário ou senha incorretos.', username: 'loja' });
+    const user = userEvent.setup();
+    render(<LoginForm />);
+
+    await user.type(screen.getByLabelText('Usuário'), 'loja');
+    await user.type(screen.getByLabelText('Senha'), 'errada');
+    await user.click(screen.getByRole('button', { name: 'Entrar' }));
+
+    await screen.findByRole('alert');
+    expect(screen.getByLabelText('Usuário')).toHaveValue('loja');
+  });
+
+  it('links both fields to the error message for screen readers', async () => {
+    loginAction.mockResolvedValue({ error: 'Usuário ou senha incorretos.', username: 'loja' });
+    const user = userEvent.setup();
+    render(<LoginForm />);
+
+    for (const field of [screen.getByLabelText('Usuário'), screen.getByLabelText('Senha')]) {
+      expect(field).not.toHaveAttribute('aria-invalid');
+      expect(field).not.toHaveAttribute('aria-describedby');
+    }
+
+    await user.click(screen.getByRole('button', { name: 'Entrar' }));
+
+    const alert = await screen.findByRole('alert');
+    for (const field of [screen.getByLabelText('Usuário'), screen.getByLabelText('Senha')]) {
+      expect(field).toHaveAttribute('aria-invalid', 'true');
+      expect(field).toHaveAttribute('aria-describedby', alert.id);
+      expect(field).toHaveAccessibleDescription('Usuário ou senha incorretos.');
+    }
   });
 
   it('disables the submit button while the action is pending', async () => {
