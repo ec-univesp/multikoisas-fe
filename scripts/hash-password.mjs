@@ -15,16 +15,26 @@ const readHiddenLine = (prompt) =>
     });
   });
 
+const USAGE = 'Uso: node scripts/hash-password.mjs <usuário> (digite a senha quando pedir, ou envie pela entrada padrão)';
+
+const username = process.argv[2];
+
+if (!username || !/^[A-Za-z0-9._@-]+$/.test(username)) {
+  console.error(USAGE);
+  console.error('O usuário aceita só letras sem acento, números e . _ @ -');
+  process.exit(1);
+}
+
 const readPipedPassword = async () => (await text(process.stdin)).replace(/\r?\n$/, '');
 
 const password = process.stdin.isTTY ? await readHiddenLine('Senha: ') : await readPipedPassword();
 
 if (!password) {
-  console.error('Uso: node scripts/hash-password.mjs (digite a senha quando pedir, ou envie pela entrada padrão)');
+  console.error(USAGE);
   process.exit(1);
 }
 
 const salt = randomBytes(16);
 const hash = scryptSync(password, salt, 64);
 
-console.log(`ADMIN_PASSWORD_HASH=scrypt:${salt.toString('hex')}:${hash.toString('hex')}`);
+console.log(`${username}=scrypt:${salt.toString('hex')}:${hash.toString('hex')}`);
