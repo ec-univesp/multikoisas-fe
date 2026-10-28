@@ -7,8 +7,8 @@ const TOKEN_PATTERN = /^(\d+)\.([A-Za-z0-9_-]+)$/;
 const hasValidSecret = (secret: string | undefined): secret is string =>
   secret !== undefined && secret.length >= MINIMUM_SECRET_LENGTH;
 
-const importSigningKey = (secret: string, passwordHash: string) =>
-  crypto.subtle.importKey('raw', new TextEncoder().encode(`${secret}:${passwordHash}`), { name: 'HMAC', hash: 'SHA-256' }, false, [
+const importSigningKey = (secret: string, credentialsFingerprint: string) =>
+  crypto.subtle.importKey('raw', new TextEncoder().encode(`${secret}:${credentialsFingerprint}`), { name: 'HMAC', hash: 'SHA-256' }, false, [
     'sign',
     'verify',
   ]);
@@ -30,15 +30,15 @@ const fromBase64Url = (text: string) => {
 
 export const createSessionToken = async (
   secret: string | undefined,
-  passwordHash: string | undefined,
+  credentialsFingerprint: string | undefined,
   now: number,
 ): Promise<string | null> => {
-  if (!hasValidSecret(secret) || !passwordHash) return null;
+  if (!hasValidSecret(secret) || !credentialsFingerprint) return null;
 
   const expiresAt = String(now + SESSION_DURATION_SECONDS * 1000);
   const signature = await crypto.subtle.sign(
     'HMAC',
-    await importSigningKey(secret, passwordHash),
+    await importSigningKey(secret, credentialsFingerprint),
     new TextEncoder().encode(expiresAt),
   );
   return `${expiresAt}.${toBase64Url(signature)}`;
@@ -47,10 +47,10 @@ export const createSessionToken = async (
 export const verifySessionToken = async (
   token: string | undefined,
   secret: string | undefined,
-  passwordHash: string | undefined,
+  credentialsFingerprint: string | undefined,
   now: number,
 ): Promise<boolean> => {
-  if (!token || !hasValidSecret(secret) || !passwordHash) return false;
+  if (!token || !hasValidSecret(secret) || !credentialsFingerprint) return false;
 
   const match = TOKEN_PATTERN.exec(token);
   if (!match) return false;
@@ -61,7 +61,7 @@ export const verifySessionToken = async (
 
   const signatureMatches = await crypto.subtle.verify(
     'HMAC',
-    await importSigningKey(secret, passwordHash),
+    await importSigningKey(secret, credentialsFingerprint),
     signature,
     new TextEncoder().encode(expiresAt),
   );

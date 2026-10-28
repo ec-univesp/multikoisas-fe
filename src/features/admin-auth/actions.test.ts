@@ -16,7 +16,7 @@ vi.mock('next/navigation', () => ({ redirect }));
 
 const secret = 'a-session-secret-with-at-least-32-characters';
 const salt = Buffer.from('fedcba9876543210fedcba9876543210', 'hex');
-const passwordHash = `scrypt:${salt.toString('hex')}:${scryptSync('senha-da-loja', salt, 64).toString('hex')}`;
+const adminUsers = `loja=scrypt:${salt.toString('hex')}:${scryptSync('senha-da-loja', salt, 64).toString('hex')}`;
 const initialState = { error: null };
 
 const buildFormData = (username: string, password: string) => {
@@ -28,8 +28,7 @@ const buildFormData = (username: string, password: string) => {
 
 describe('loginAction', () => {
   beforeEach(() => {
-    vi.stubEnv('ADMIN_USERNAME', 'loja');
-    vi.stubEnv('ADMIN_PASSWORD_HASH', passwordHash);
+    vi.stubEnv('ADMIN_USERS', adminUsers);
     vi.stubEnv('SESSION_SECRET', secret);
   });
 
@@ -89,7 +88,7 @@ describe('loginAction', () => {
       maxAge: 8 * 60 * 60,
     });
     const [, token] = cookieStore.set.mock.calls[0];
-    expect(await verifySessionToken(token, secret, passwordHash, Date.now())).toBe(true);
+    expect(await verifySessionToken(token, secret, adminUsers, Date.now())).toBe(true);
   });
 
   it('marks the cookie as secure in production', async () => {
