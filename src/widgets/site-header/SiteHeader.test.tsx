@@ -12,8 +12,9 @@ describe('SiteHeader', () => {
     render(<SiteHeader />);
     expect(screen.getByRole('link', { name: /sobre/i })).toHaveAttribute('href', '#sobre');
   });
-  it('links to the admin panel', () => {
+
+  it('does not link to the admin panel', () => {
     render(<SiteHeader />);
-    expect(screen.getByRole('link', { name: 'Painel' })).toHaveAttribute('href', '/admin');
+    expect(screen.queryByRole('link', { name: 'Painel' })).not.toBeInTheDocument();
   });
 });
