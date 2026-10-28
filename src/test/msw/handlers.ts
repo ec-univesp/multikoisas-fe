@@ -127,6 +127,8 @@ export const handlers = [
 
   http.get('*/canalvenda', () => HttpResponse.json(apiDatabase.canaisVenda)),
 
+  http.get('*/canalvendaproduto', () => HttpResponse.json(apiDatabase.canalVendaProduto)),
+
   // A API exige o id no corpo: ela não gera o id do canal.
   http.post<never, CanalVendaBody>('*/canalvenda', async ({ request }) => {
     const { id, nome } = await request.json();

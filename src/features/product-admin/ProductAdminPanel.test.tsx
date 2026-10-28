@@ -117,6 +117,20 @@ describe('ProductAdminPanel', () => {
     );
   });
 
+  it('keeps the store links of a product after editing it', async () => {
+    const user = userEvent.setup();
+    renderPanel([buildProduct({ storeLinks: [{ store: 'shopee', url: 'https://shopee.com.br/garrafa-termica' }] })]);
+
+    await user.click(screen.getByRole('button', { name: 'Editar Garrafa Térmica 1L' }));
+    const nameInput = await screen.findByLabelText('Nome do produto');
+    await user.clear(nameInput);
+    await user.type(nameInput, 'Garrafa Inox');
+    await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+    expect(await screen.findByText('Garrafa Inox', { selector: 'a' })).toBeInTheDocument();
+    expect(screen.getByText('Shopee')).toBeInTheDocument();
+  });
+
   it('opens the edit with the photos it already had when the api photos fail', async () => {
     server.use(http.get('*/imagem/:produtoId', () => new HttpResponse(null, { status: 500 })));
     const user = userEvent.setup();

@@ -19,6 +19,8 @@ describe('ProductAdminScreen', () => {
     expect(await screen.findByText('Garrafa Térmica 1L')).toBeInTheDocument();
     expect(screen.getByText('3 produtos cadastrados')).toBeInTheDocument();
     expect([...apiRequests].sort()).toEqual([
+      'GET /api/canalvenda',
+      'GET /api/canalvendaproduto',
       'GET /api/categoria',
       'GET /api/categoriaproduto',
       'GET /api/imagem',

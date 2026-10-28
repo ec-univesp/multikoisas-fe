@@ -1,4 +1,4 @@
-export type StoreSlug = 'mercado-livre' | 'shopee' | 'aliexpress';
+export type StoreSlug = 'mercado-livre' | 'shopee' | 'aliexpress' | 'magalu';
 
 type StorePresentation = {
   name: string;
@@ -31,6 +31,13 @@ export const STORE_PRESENTATION: Record<StoreSlug, StorePresentation> = {
     purchaseLabel: 'Comprar no AliExpress',
     purchaseButtonClassName: 'bg-[#C92704] text-white hover:bg-[#AC2103]',
     brandColor: '#C92704',
+    brandTextColor: '#FFFFFF',
+  },
+  magalu: {
+    name: 'Magalu',
+    purchaseLabel: 'Comprar na Magalu',
+    purchaseButtonClassName: 'bg-[#0068D1] text-white hover:bg-[#0057AF]',
+    brandColor: '#0068D1',
     brandTextColor: '#FFFFFF',
   },
 };
