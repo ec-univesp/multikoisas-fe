@@ -11,6 +11,7 @@ export const proxy = async (request: NextRequest) => {
   const hasValidSession = await verifySessionToken(
     request.cookies.get(SESSION_COOKIE_NAME)?.value,
     process.env.SESSION_SECRET,
+    process.env.ADMIN_PASSWORD_HASH,
     Date.now(),
   );
 

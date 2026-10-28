@@ -5,16 +5,20 @@ import { createSessionToken, SESSION_COOKIE_NAME } from '@/features/admin-auth/s
 import { config, proxy } from './proxy';
 
 const secret = 'a-session-secret-with-at-least-32-characters';
+const passwordHash = `scrypt:${'ab'.repeat(16)}:${'cd'.repeat(64)}`;
 
 const buildRequest = (path: string, sessionToken?: string) =>
   new NextRequest(`http://localhost:3000${path}`, {
     headers: sessionToken ? { cookie: `${SESSION_COOKIE_NAME}=${sessionToken}` } : {},
   });
 
-const validToken = async () => (await createSessionToken(secret, Date.now())) ?? '';
+const validToken = async () => (await createSessionToken(secret, passwordHash, Date.now())) ?? '';
 
 describe('proxy', () => {
-  beforeEach(() => vi.stubEnv('SESSION_SECRET', secret));
+  beforeEach(() => {
+    vi.stubEnv('SESSION_SECRET', secret);
+    vi.stubEnv('ADMIN_PASSWORD_HASH', passwordHash);
+  });
   afterEach(() => vi.unstubAllEnvs());
 
   it('runs only on the admin pages and the login page', () => {
@@ -39,6 +43,15 @@ describe('proxy', () => {
 
     expect(response.headers.get('location')).toBeNull();
     expect(response.headers.get('x-middleware-next')).toBe('1');
+  });
+
+  it('redirects to the login page after the password hash changes', async () => {
+    const token = await validToken();
+    vi.stubEnv('ADMIN_PASSWORD_HASH', `scrypt:${'ef'.repeat(16)}:${'01'.repeat(64)}`);
+
+    const response = await proxy(buildRequest('/admin/produtos', token));
+
+    expect(response.headers.get('location')).toBe('http://localhost:3000/panel');
   });
 
   it('redirects the login page to the products panel with a valid session', async () => {

@@ -45,12 +45,13 @@ describe('loginAction', () => {
   ])('asks for username and password when a field is empty (%j, %j)', async (username, password) => {
     expect(await loginAction(initialState, buildFormData(username, password))).toEqual({
       error: 'Informe usuário e senha.',
+      username,
     });
     expect(cookieStore.set).not.toHaveBeenCalled();
   });
 
   it('asks for username and password when the fields are absent', async () => {
-    expect(await loginAction(initialState, new FormData())).toEqual({ error: 'Informe usuário e senha.' });
+    expect(await loginAction(initialState, new FormData())).toEqual({ error: 'Informe usuário e senha.', username: '' });
   });
 
   it.each([
@@ -59,6 +60,7 @@ describe('loginAction', () => {
   ])('returns the same message for a wrong username or password (%j, %j)', async (username, password) => {
     expect(await loginAction(initialState, buildFormData(username, password))).toEqual({
       error: 'Usuário ou senha incorretos.',
+      username,
     });
     expect(cookieStore.set).not.toHaveBeenCalled();
     expect(redirect).not.toHaveBeenCalled();
@@ -69,6 +71,7 @@ describe('loginAction', () => {
 
     expect(await loginAction(initialState, buildFormData('loja', 'senha-da-loja'))).toEqual({
       error: 'Usuário ou senha incorretos.',
+      username: 'loja',
     });
     expect(cookieStore.set).not.toHaveBeenCalled();
   });
@@ -86,7 +89,7 @@ describe('loginAction', () => {
       maxAge: 8 * 60 * 60,
     });
     const [, token] = cookieStore.set.mock.calls[0];
-    expect(await verifySessionToken(token, secret, Date.now())).toBe(true);
+    expect(await verifySessionToken(token, secret, passwordHash, Date.now())).toBe(true);
   });
 
   it('marks the cookie as secure in production', async () => {
