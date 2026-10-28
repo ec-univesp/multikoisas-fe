@@ -1,35 +1,41 @@
 import {
-  BadgeCheck,
-  CreditCard,
-  Gift,
-  Heart,
+  Bath,
+  CookingPot,
+  Drill,
+  Hammer,
+  Lightbulb,
   Package,
-  Percent,
-  Receipt,
-  ShoppingBag,
-  ShoppingCart,
-  Star,
-  Store,
-  Tag,
-  Tags,
-  Truck,
+  PaintRoller,
+  Plug,
+  Ruler,
+  Shovel,
+  ShowerHead,
+  SprayCan,
+  Sprout,
+  Toilet,
+  Tv,
+  Utensils,
+  Wrench,
 } from 'lucide-react';
 
 const PANEL_ICON_KINDS = [
-  ShoppingBag,
-  ShoppingCart,
-  Tag,
-  Tags,
+  Hammer,
+  Wrench,
+  Drill,
+  Ruler,
+  PaintRoller,
+  CookingPot,
+  Utensils,
+  Lightbulb,
+  ShowerHead,
+  Bath,
+  Toilet,
+  Sprout,
+  Shovel,
+  Tv,
+  Plug,
   Package,
-  Gift,
-  Store,
-  Truck,
-  Percent,
-  Star,
-  Receipt,
-  CreditCard,
-  Heart,
-  BadgeCheck,
+  SprayCan,
 ] as const;
 
 const PANEL_ICON_GRID_ROWS = 7;
@@ -59,6 +65,7 @@ const PANEL_ICONS = Array.from({ length: PANEL_ICON_GRID_ROWS }).flatMap((_row, 
     const inTextZone =
       left >= TEXT_ZONE.minLeft && left <= TEXT_ZONE.maxLeft && top >= TEXT_ZONE.minTop && top <= TEXT_ZONE.maxTop;
     const tier = inTextZone ? PANEL_ICON_TIERS[2] : PANEL_ICON_TIERS[index % 3];
+    const isYellowAccent = tier === PANEL_ICON_TIERS[0] && index % 2 === 0;
 
     return {
       id: `panel-icon-${index}`,
@@ -67,9 +74,10 @@ const PANEL_ICONS = Array.from({ length: PANEL_ICON_GRID_ROWS }).flatMap((_row, 
       left,
       size: tier.minSize + ((index * 7) % tier.sizeRange),
       rotation: (hashUnit(index, 3266489917) - 0.5) * 2 * PANEL_ICON_MAX_ROTATION,
-      opacity: tier.minOpacity + ((index * 3) % 5) * (tier.opacityRange / 5),
+      opacity: (tier.minOpacity + ((index * 3) % 5) * (tier.opacityRange / 5)) * (isYellowAccent ? 2.5 : 1),
       strokeWidth: tier.strokeWidth,
       delay: `${(index % 6) * 1.4}s`,
+      colorClassName: isYellowAccent ? 'text-store-yellow' : 'text-white',
     };
   }),
 );
@@ -77,7 +85,7 @@ const PANEL_ICONS = Array.from({ length: PANEL_ICON_GRID_ROWS }).flatMap((_row, 
 export default function AuthLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <div className="grid min-h-screen grid-rows-[auto_1fr] bg-white lg:grid-cols-[1.05fr_1fr] lg:grid-rows-1">
-      <aside className="relative isolate flex h-44 flex-col justify-end overflow-hidden bg-brand-950 px-6 pb-7 sm:h-52 sm:px-10 lg:h-auto lg:justify-center lg:px-16 lg:py-20">
+      <aside className="relative isolate flex h-44 flex-col justify-end overflow-hidden bg-store-navy-950 px-6 pb-7 sm:h-52 sm:px-10 lg:h-auto lg:justify-center lg:px-16 lg:py-20">
         <style>{`
           @keyframes auth-panel-drift {
             0%, 100% { transform: translateY(0); }
@@ -92,15 +100,15 @@ export default function AuthLayout({ children }: Readonly<{ children: React.Reac
           <div className="absolute inset-[13%] rounded-full border border-white/10" />
           <div className="absolute inset-[27%] rounded-full border border-white/[0.07]" />
           <div className="absolute inset-[41%] rounded-full border border-white/[0.05]" />
-          <div className="absolute inset-0 animate-spin rounded-full bg-[conic-gradient(from_0deg,transparent_240deg,var(--color-brand-500)_360deg)] opacity-25 [animation-duration:9s] motion-reduce:animate-none" />
+          <div className="absolute inset-0 animate-spin rounded-full bg-[conic-gradient(from_0deg,transparent_240deg,var(--color-store-navy)_360deg)] opacity-90 [animation-duration:9s] motion-reduce:animate-none" />
         </div>
         <div
           aria-hidden
-          className="pointer-events-none absolute -bottom-32 -left-24 size-96 rounded-full bg-brand-500/20 blur-3xl"
+          className="pointer-events-none absolute -bottom-32 -left-24 size-96 rounded-full bg-store-navy blur-3xl"
         />
 
         <div aria-hidden className="pointer-events-none absolute inset-0 hidden lg:block">
-          {PANEL_ICONS.map(({ id, Icon, top, left, size, rotation, opacity, strokeWidth, delay }) => (
+          {PANEL_ICONS.map(({ id, Icon, top, left, size, rotation, opacity, strokeWidth, delay, colorClassName }) => (
             <div
               key={id}
               className="absolute"
@@ -109,7 +117,7 @@ export default function AuthLayout({ children }: Readonly<{ children: React.Reac
               <Icon
                 size={size}
                 strokeWidth={strokeWidth}
-                className="animate-[auth-panel-drift_10s_ease-in-out_infinite] text-white motion-reduce:animate-none"
+                className={`animate-[auth-panel-drift_10s_ease-in-out_infinite] motion-reduce:animate-none ${colorClassName}`}
                 style={{ opacity, animationDelay: delay }}
               />
             </div>
@@ -117,8 +125,10 @@ export default function AuthLayout({ children }: Readonly<{ children: React.Reac
         </div>
 
         <div className="relative max-w-md">
-          <span className="text-2xl font-semibold tracking-tight text-white sm:text-3xl lg:text-5xl">multikoisas</span>
-          <p className="mt-1 text-sm font-medium text-brand-200 lg:text-base">Painel da loja</p>
+          <span className="text-2xl font-semibold tracking-tight text-white sm:text-3xl lg:text-5xl">
+            multi<span className="text-store-yellow">koisas</span>
+          </span>
+          <p className="mt-1 text-sm font-medium text-white/80 lg:text-base">Painel da loja</p>
           <p className="mt-5 hidden text-sm leading-relaxed text-white/60 lg:block lg:text-base">
             Produtos, fotos e links de compra da vitrine, tudo num lugar só.
           </p>
