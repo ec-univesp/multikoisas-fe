@@ -38,7 +38,7 @@ export const ProductCardV2 = ({ product, hasPriorityImage = false }: ProductCard
           <div className={storeButtonsLayout}>
             {product.storeLinks.map((storeLink) => (
               <a
-                key={storeLink.url}
+                key={`${storeLink.store}:${storeLink.url}`}
                 href={storeLink.url}
                 target="_blank"
                 rel="noopener noreferrer sponsored"

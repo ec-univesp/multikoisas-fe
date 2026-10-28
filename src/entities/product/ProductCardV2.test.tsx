@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { ProductCardV2 } from './ProductCardV2';
 import { STORE_PRESENTATION } from './types';
 import type { Product } from './types';
@@ -39,6 +39,24 @@ describe('ProductCardV2', () => {
     expect(shopee.className).toContain(STORE_PRESENTATION.shopee.purchaseButtonClassName);
     expect(mercadoLivre).toHaveAttribute('href', 'https://www.mercadolivre.com.br/garrafa');
     expect(shopee.parentElement?.className).toContain('sm:grid-cols-2');
+  });
+
+  it('keeps one button per store when two stores share the same link', () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    render(
+      <ProductCardV2
+        product={{
+          ...product,
+          storeLinks: [
+            { store: 'shopee', url: 'https://shopee.com.br/garrafa' },
+            { store: 'magalu', url: 'https://shopee.com.br/garrafa' },
+          ],
+        }}
+      />,
+    );
+    expect(screen.getByRole('link', { name: 'Comprar na Magalu' })).toBeInTheDocument();
+    expect(consoleError).not.toHaveBeenCalled();
+    consoleError.mockRestore();
   });
 
   it('spans a single store button across the card', () => {
