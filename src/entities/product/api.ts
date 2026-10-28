@@ -39,11 +39,15 @@ const toStoreLinks = (
   vinculos: readonly CanalVendaProdutoResponse[],
   canaisVenda: readonly CanalVendaResponse[],
 ): StoreLink[] =>
-  vinculos.flatMap((vinculo) => {
-    const canalVenda = canaisVenda.find((candidate) => candidate.id === vinculo.canalVendaId);
-    const store = canalVenda ? toBaseSlug(canalVenda.nome) : '';
-    return isStoreSlug(store) && vinculo.link ? [{ store, url: vinculo.link }] : [];
-  });
+  vinculos
+    .flatMap((vinculo) => {
+      const canalVenda = canaisVenda.find((candidate) => candidate.id === vinculo.canalVendaId);
+      const store = canalVenda ? toBaseSlug(canalVenda.nome) : '';
+      return isStoreSlug(store) && vinculo.link ? [{ store, url: vinculo.link }] : [];
+    })
+    .filter(
+      (storeLink, position, storeLinks) => storeLinks.findIndex(({ store }) => store === storeLink.store) === position,
+    );
 
 export const toProduct = (
   produto: ProdutoResponse,
