@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Label from '@/components/form/Label';
 import FileInput from '@/components/form/input/FileInput';
 import { TrashBinIcon } from '@/icons';
@@ -18,7 +19,14 @@ type ProductPhotosFieldProps = {
 
 type PhotoTile = { key: string; src: string; isMarkedForRemoval: boolean; onToggle: () => void };
 
-const ACCEPTED_PHOTO_TYPES = 'image/jpeg,image/png,image/webp';
+const ACCEPTED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const MAX_PHOTO_BYTES = 1_048_576;
+
+const rejectionOf = (file: File): string | null => {
+  if (!ACCEPTED_PHOTO_TYPES.includes(file.type)) return `${file.name}: use JPG, PNG ou WebP.`;
+  if (file.size > MAX_PHOTO_BYTES) return `${file.name}: a foto passa de 1 MB.`;
+  return null;
+};
 
 export const ProductPhotosField = ({
   existingPhotos,
@@ -43,8 +51,12 @@ export const ProductPhotosField = ({
     })),
   ];
 
+  const [rejectionMessages, setRejectionMessages] = useState<string[]>([]);
+
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    onAddFiles(Array.from(event.target.files ?? []));
+    const files = Array.from(event.target.files ?? []);
+    setRejectionMessages(files.flatMap((file) => rejectionOf(file) ?? []));
+    onAddFiles(files.filter((file) => rejectionOf(file) === null));
     event.target.value = '';
   };
 
@@ -54,7 +66,7 @@ export const ProductPhotosField = ({
       <FileInput
         id="product-photos"
         multiple
-        accept={ACCEPTED_PHOTO_TYPES}
+        accept={ACCEPTED_PHOTO_TYPES.join(',')}
         aria-describedby="product-photos-hint"
         onChange={handleChange}
         className="text-base"
@@ -62,6 +74,13 @@ export const ProductPhotosField = ({
       <p id="product-photos-hint" className="mt-1.5 text-xs text-gray-500">
         JPG, PNG ou WebP, até 1 MB cada.
       </p>
+      {rejectionMessages.length > 0 && (
+        <div role="alert" className="mt-1.5 text-xs text-error-500">
+          {rejectionMessages.map((message) => (
+            <p key={message}>{message}</p>
+          ))}
+        </div>
+      )}
       {tiles.length > 0 && (
         <ul className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-4">
           {tiles.map((tile, index) => (

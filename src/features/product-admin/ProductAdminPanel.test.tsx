@@ -502,4 +502,84 @@ describe('ProductAdminPanel', () => {
       expect(photoIdsOf(7)).toEqual([20, 21]);
     });
   });
+
+  describe('photo validation and partial failures', () => {
+    it('keeps out of the list the files that are not jpg, png or webp or pass 1 MB', async () => {
+      const user = userEvent.setup({ applyAccept: false });
+      renderPanel([]);
+
+      await user.click(screen.getByRole('button', { name: 'Novo produto' }));
+      await fillProductForm(user, { name: 'Vassoura', categoryId: '2', description: 'Macia.' });
+      await user.upload(screen.getByLabelText('Fotos'), [
+        photo('nota.pdf', 'application/pdf'),
+        photo('grande.png', 'image/png', 1_048_577),
+        photo('frente.jpg', 'image/jpeg'),
+        photo('limite.webp', 'image/webp', 1_048_576),
+      ]);
+
+      expect(screen.getByText('nota.pdf: use JPG, PNG ou WebP.')).toBeInTheDocument();
+      expect(screen.getByText('grande.png: a foto passa de 1 MB.')).toBeInTheDocument();
+      expect(screen.getByAltText('Foto 2')).toBeInTheDocument();
+      expect(screen.queryByAltText('Foto 3')).not.toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+      expect(await screen.findByAltText('Vassoura')).toBeInTheDocument();
+      expect(photoIdsOf(100)).toEqual([101, 102]);
+    });
+
+    it('does not add the same file twice', async () => {
+      const user = userEvent.setup();
+      renderPanel([]);
+      const frente = photo('frente.png');
+
+      await user.click(screen.getByRole('button', { name: 'Novo produto' }));
+      await user.upload(screen.getByLabelText('Fotos'), frente);
+      await user.upload(screen.getByLabelText('Fotos'), [frente, photo('lado.png')]);
+
+      expect(screen.getByAltText('Foto 2')).toBeInTheDocument();
+      expect(screen.queryByAltText('Foto 3')).not.toBeInTheDocument();
+    });
+
+    it('lists the new product with the photos that worked and never creates it twice', async () => {
+      server.use(http.post('*/imagem', () => new HttpResponse('erro interno do bucket', { status: 500 }), { once: true }));
+      const user = userEvent.setup();
+      renderPanel([]);
+
+      await user.click(screen.getByRole('button', { name: 'Novo produto' }));
+      await fillProductForm(user, { name: 'Vassoura', categoryId: '2', description: 'Macia.' });
+      await user.upload(screen.getByLabelText('Fotos'), [photo('frente.png'), photo('lado.png')]);
+      await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+      expect(
+        await screen.findByText('Produto salvo, mas 1 foto(s) não foram atualizadas. Tente de novo pelo Editar.'),
+      ).toBeInTheDocument();
+      expect(screen.queryByText(/bucket/)).not.toBeInTheDocument();
+      expect(screen.getByAltText('Vassoura')).toHaveAttribute('src', expect.stringContaining('upload-101'));
+      expect(screen.getByRole('button', { name: 'Salvar produto' })).toBeDisabled();
+      await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
+      expect(apiRequests.filter((request) => request === 'POST /api/produto')).toHaveLength(1);
+
+      await user.click(screen.getByRole('button', { name: 'Fechar' }));
+      expect(screen.queryByLabelText('Fotos')).not.toBeInTheDocument();
+    });
+
+    it('keeps a photo whose removal failed and warns about it', async () => {
+      respondWith('delete', '*/imagem', 500);
+      const user = userEvent.setup();
+      renderPanel();
+
+      await user.click(screen.getByRole('button', { name: 'Editar Garrafa Térmica 1L' }));
+      await user.click(await screen.findByRole('button', { name: 'Remover foto 1' }));
+      await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+      expect(
+        await screen.findByText('Produto salvo, mas 1 foto(s) não foram atualizadas. Tente de novo pelo Editar.'),
+      ).toBeInTheDocument();
+      expect(screen.getByAltText('Garrafa Térmica 1L')).toHaveAttribute(
+        'src',
+        expect.stringContaining('garrafa-frente.webp'),
+      );
+      expect(photoIdsOf(1)).toEqual([12, 10, 11]);
+    });
+  });
 });
