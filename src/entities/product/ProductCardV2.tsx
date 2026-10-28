@@ -30,7 +30,7 @@ export const ProductCardV2 = ({ product, hasPriorityImage = false }: ProductCard
           className="object-contain p-2"
         />
       </Link>
-      <span className="mt-3 text-xs font-semibold tracking-wider text-store-navy uppercase">{product.category}</span>
+      <span className="mt-3 line-clamp-1 text-xs font-semibold tracking-wider text-store-navy uppercase">{product.category}</span>
       <h3 className="mt-1 line-clamp-2 font-semibold leading-tight text-gray-800">{product.name}</h3>
       <p className="mt-1 line-clamp-2 text-sm text-gray-500">{product.shortDescription}</p>
       <div className="mt-auto flex flex-col gap-2 pt-4">
@@ -52,7 +52,7 @@ export const ProductCardV2 = ({ product, hasPriorityImage = false }: ProductCard
         )}
         <Link
           href={detailPath}
-          className="flex h-11 items-center justify-center rounded-lg bg-store-navy px-4 text-sm font-semibold text-white hover:bg-store-navy-950"
+          className="flex h-11 items-center justify-center rounded-lg bg-store-navy px-2 text-center text-sm font-semibold text-white hover:bg-store-navy-950"
         >
           Opções de compra
         </Link>
