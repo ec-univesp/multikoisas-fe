@@ -92,7 +92,7 @@ describe('ProductAdminPanel', () => {
     expect(await screen.findByLabelText('Nome do produto')).toHaveValue('Garrafa Térmica Nova');
     expect(apiRequests).toEqual([
       'GET /api/produto/1',
-      'GET /api/categoriaproduto?produto=1',
+      'GET /api/categoriaproduto?produtoId=1',
       'GET /api/imagem/1',
     ]);
   });
@@ -173,7 +173,7 @@ describe('ProductAdminPanel', () => {
     });
     expect(apiRequests).toEqual([
       'GET /api/produto/1',
-      'GET /api/categoriaproduto?produto=1',
+      'GET /api/categoriaproduto?produtoId=1',
       'GET /api/imagem/1',
       'PUT /api/produto/1',
     ]);
@@ -190,7 +190,7 @@ describe('ProductAdminPanel', () => {
     expect(await screen.findByText('Banheiros')).toBeInTheDocument();
     expect(linksOf(1)).toEqual([{ produtoId: 1, categoriaId: 3 }]);
     expect(apiRequests.slice(-3)).toEqual([
-      'GET /api/categoriaproduto?produto=1',
+      'GET /api/categoriaproduto?produtoId=1',
       'DELETE /api/categoriaproduto',
       'POST /api/categoriaproduto',
     ]);
@@ -311,12 +311,16 @@ describe('ProductAdminPanel', () => {
 
     expect(await screen.findByText('Nenhum produto cadastrado.')).toBeInTheDocument();
     expect(apiRequests).toEqual([
-      'GET /api/categoriaproduto?produto=1',
+      'GET /api/categoriaproduto?produtoId=1',
       'DELETE /api/categoriaproduto',
       'DELETE /api/produto/1',
     ]);
     expect(apiDatabase.produtos.map((produto) => produto.id)).not.toContain(1);
     expect(linksOf(1)).toEqual([]);
+    expect(linksOf(7)).toEqual([
+      { produtoId: 7, categoriaId: 2 },
+      { produtoId: 7, categoriaId: 3 },
+    ]);
   });
 
   it('deletes a product without category even though the api answers 404 for its links', async () => {
@@ -328,7 +332,7 @@ describe('ProductAdminPanel', () => {
 
     expect(await screen.findByText('Nenhum produto cadastrado.')).toBeInTheDocument();
     expect(apiRequests).toEqual([
-      'GET /api/categoriaproduto?produto=5',
+      'GET /api/categoriaproduto?produtoId=5',
       'DELETE /api/produto/5',
     ]);
   });

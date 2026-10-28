@@ -78,8 +78,8 @@ export const handlers = [
 
   http.get('*/categoriaproduto', ({ request }) => {
     const query = new URL(request.url).searchParams;
-    const produto = query.get('produto');
-    const categoria = query.get('categoria');
+    const produto = query.get('produtoId');
+    const categoria = query.get('categoriaId');
     const links = apiDatabase.categoriaProduto.filter(
       (link) =>
         (produto === null || link.produtoId === Number(produto)) &&
