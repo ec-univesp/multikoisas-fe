@@ -29,10 +29,13 @@ const parseUserEntry = (entry: string): AdminUser | null => {
 };
 
 const parseAdminUsers = (adminUsers: string | undefined) =>
-  (adminUsers ?? '')
-    .split(',')
-    .map(parseUserEntry)
-    .filter((user) => user !== null);
+  (adminUsers ?? '').split(',').flatMap((entry, index) => {
+    if (entry.trim() === '') return [];
+    const user = parseUserEntry(entry);
+    if (user) return [user];
+    console.warn(`ADMIN_USERS: entrada de índice ${index} mal formada, ignorada.`);
+    return [];
+  });
 
 const findUser = (users: AdminUser[], username: string) => users.filter((user) => textsMatch(username, user.username))[0];
 
