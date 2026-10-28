@@ -131,16 +131,33 @@ export const deleteProduct = async (product: Product): Promise<void> => {
   await callApi('DELETE', `/produto/${product.id}`);
 };
 
-const uploadProductImage = async (produtoId: number, file: File): Promise<ProductImageRecord> => {
+const uploadProductImage = async (produtoId: number, file: File): Promise<ProductImageRecord | null> => {
   const form = new FormData();
   form.append('produtoId', String(produtoId));
   form.append('file', file);
-  const imagem: ImagemResponse = await (await callApi('POST', '/imagem', form)).json();
-  return toImageRecord(imagem);
+  const response = await callApi('POST', '/imagem', form);
+  try {
+    const imagem: ImagemResponse = await response.json();
+    return toImageRecord(imagem);
+  } catch {
+    return null;
+  }
 };
 
-const deleteProductImage = (produtoId: number, imageId: number) =>
-  callApi('DELETE', '/imagem', { id: imageId, produtoId });
+const deleteProductImage = async (produtoId: number, imageId: number) => {
+  const response = await fetch('/api/imagem', { method: 'DELETE', ...toRequestBody({ id: imageId, produtoId }) });
+  if (!response.ok && response.status !== HTTP_NOT_FOUND) {
+    throw new Error(`DELETE /imagem respondeu ${response.status}`);
+  }
+};
+
+const reloadImages = async (produtoId: number, fallbackImages: string[]) => {
+  try {
+    return toImageUrlsInIdOrder(await fetchProductImageRecords(produtoId, { fresh: true, fromBrowser: true }));
+  } catch {
+    return fallbackImages;
+  }
+};
 
 export type PhotoSyncResult = { product: Product; failedPhotoCount: number };
 
@@ -164,15 +181,19 @@ export const syncProductImages = async (
     }
   }
   const uploadedPhotos: ProductImageRecord[] = [];
+  let hasUnreadableUpload = false;
   for (const file of newFiles) {
     try {
-      uploadedPhotos.push(await uploadProductImage(product.id, file));
+      const uploadedPhoto = await uploadProductImage(product.id, file);
+      if (uploadedPhoto) uploadedPhotos.push(uploadedPhoto);
+      else hasUnreadableUpload = true;
     } catch {
       failedPhotoCount += 1;
     }
   }
-  const images = currentPhotos
+  const knownImages = currentPhotos
     ? toImageUrlsInIdOrder([...keptPhotos, ...uploadedPhotos])
     : [...product.images, ...toImageUrlsInIdOrder(uploadedPhotos)];
+  const images = hasUnreadableUpload ? await reloadImages(product.id, knownImages) : knownImages;
   return { product: { ...product, images }, failedPhotoCount };
 };

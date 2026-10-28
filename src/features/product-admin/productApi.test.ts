@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Product } from '@/entities/product';
 import { apiDatabase, SUPABASE_IMAGES } from '@/test/msw/apiDatabase';
 import { recordApiRequests, server } from '@/test/msw/server';
@@ -29,6 +29,10 @@ let apiRequests: string[] = [];
 
 beforeEach(() => {
   apiRequests = recordApiRequests();
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 describe('syncProductImages', () => {
@@ -98,5 +102,89 @@ describe('syncProductImages', () => {
       `${SUPABASE_IMAGES}/garrafa-lado.webp`,
     ]);
     expect(apiRequests).toEqual([]);
+  });
+
+  it('sends each chosen file with the product id in its own upload form', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    const fileA = photo('a.png');
+    const fileB = photo('b.png');
+
+    await syncProductImages(garrafa, garrafaPhotos, { removedPhotoIds: [], newFiles: [fileA, fileB] });
+
+    const uploadForms = fetchSpy.mock.calls
+      .map(([, init]) => init?.body)
+      .filter((body): body is FormData => body instanceof FormData);
+    expect(uploadForms).toHaveLength(2);
+    expect(uploadForms[0].get('file')).toBe(fileA);
+    expect(uploadForms[1].get('file')).toBe(fileB);
+    expect(uploadForms.map((form) => form.get('produtoId'))).toEqual(['1', '1']);
+  });
+
+  it('counts as removed a photo the api no longer has', async () => {
+    server.use(http.delete('*/imagem', () => new HttpResponse(null, { status: 404 })));
+
+    const result = await syncProductImages(garrafa, garrafaPhotos, { removedPhotoIds: [10], newFiles: [] });
+
+    expect(result).toEqual({
+      product: { ...garrafa, images: [`${SUPABASE_IMAGES}/garrafa-lado.webp`] },
+      failedPhotoCount: 0,
+    });
+  });
+
+  it('does not count an upload whose answer cannot be read and reloads the photos of the product', async () => {
+    server.use(
+      http.post(
+        '*/imagem',
+        () => {
+          apiDatabase.imagens.push({ id: 90, produtoId: 1, imagemUrl: `${SUPABASE_IMAGES}/sem-resposta.png` });
+          return new HttpResponse('', { status: 201 });
+        },
+        { once: true },
+      ),
+    );
+
+    const result = await syncProductImages(garrafa, garrafaPhotos, {
+      removedPhotoIds: [],
+      newFiles: [photo('a.png'), photo('b.png')],
+    });
+
+    expect(result).toEqual({
+      product: {
+        ...garrafa,
+        images: [
+          `${SUPABASE_IMAGES}/garrafa-frente.webp`,
+          'https://avphmmvnlrbidhjrzozx.storage.supabase.co/storage/v1/object/public/imagem/garrafa-tampa.jpeg',
+          `${SUPABASE_IMAGES}/garrafa-lado.webp`,
+          `${SUPABASE_IMAGES}/sem-resposta.png`,
+          `${SUPABASE_IMAGES}/upload-100`,
+        ],
+      },
+      failedPhotoCount: 0,
+    });
+    expect(apiRequests).toEqual(['POST /api/imagem', 'POST /api/imagem', 'GET /api/imagem/1']);
+  });
+
+  it('keeps the known photos when the reload after an unreadable upload fails', async () => {
+    server.use(
+      http.post('*/imagem', () => new HttpResponse('', { status: 201 }), { once: true }),
+      http.get('*/imagem/:produtoId', () => new HttpResponse(null, { status: 500 })),
+    );
+
+    const result = await syncProductImages(garrafa, garrafaPhotos, {
+      removedPhotoIds: [],
+      newFiles: [photo('a.png'), photo('b.png')],
+    });
+
+    expect(result).toEqual({
+      product: {
+        ...garrafa,
+        images: [
+          `${SUPABASE_IMAGES}/garrafa-frente.webp`,
+          `${SUPABASE_IMAGES}/garrafa-lado.webp`,
+          `${SUPABASE_IMAGES}/upload-100`,
+        ],
+      },
+      failedPhotoCount: 0,
+    });
   });
 });
