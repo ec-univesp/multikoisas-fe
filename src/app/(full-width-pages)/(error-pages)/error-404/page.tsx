@@ -5,7 +5,7 @@ import Link from "next/link";
 import React from "react";
 
 export const metadata: Metadata = {
-  title: "Error 404 | MultiKoisas",
+  title: "Página não encontrada | MultiKoisas",
   description:
     "Página de Error 404 do painel MultiKoisas",
 };
@@ -16,7 +16,7 @@ export default function Error404() {
       <GridShape />
       <div className="mx-auto w-full max-w-[242px] text-center sm:max-w-[472px]">
         <h1 className="mb-8 font-bold text-gray-800 text-title-md dark:text-white/90 xl:text-title-2xl">
-          ERROR
+          Página não encontrada
         </h1>
 
         <Image
@@ -35,14 +35,14 @@ export default function Error404() {
         />
 
         <p className="mt-10 mb-6 text-base text-gray-700 dark:text-gray-400 sm:text-lg">
-          We can’t seem to find the page you are looking for!
+          Não encontramos a página que você procurou.
         </p>
 
         <Link
           href="/"
           className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-5 py-3.5 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200"
         >
-          Back to Home Page
+          Voltar para a vitrine
         </Link>
       </div>
       {/* <!-- Footer --> */}
