@@ -8,7 +8,7 @@ export const ProductDetail = ({ product }: { product: Product }) => {
     <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-16">
       <Link
         href="/"
-        className="flex h-11 w-fit items-center text-sm font-medium text-gray-500 hover:text-brand-500"
+        className="flex h-11 w-fit items-center text-sm font-semibold text-store-navy hover:text-store-navy-950"
       >
         Voltar para a vitrine
       </Link>
@@ -17,7 +17,7 @@ export const ProductDetail = ({ product }: { product: Product }) => {
         <ProductGallery name={product.name} images={product.images} />
 
         <div>
-          <span className="w-fit rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
+          <span className="w-fit rounded-full bg-store-yellow px-2 py-0.5 text-xs font-semibold text-store-navy-950">
             {product.category}
           </span>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight text-gray-800 sm:text-4xl">
