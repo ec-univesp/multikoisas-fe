@@ -1,86 +1,98 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { VitrineFilter } from './VitrineFilter';
 import type { Product } from '@/entities/product';
+import { VitrineFilter } from './VitrineFilter';
+import { VitrineSearchField, VitrineSearchProvider } from './VitrineSearch';
 
 const buildProduct = (overrides: Partial<Product>): Product => ({
   id: 1,
-  slug: 'x',
-  name: 'X',
-  category: 'casa',
-  categoryId: null,
-  shortDescription: 's',
-  longDescription: 'l',
-  images: ['/products/x.svg'],
-  storeLinks: [{ store: 'shopee', url: 'https://shopee.com.br/' }],
+  slug: 'produto-1',
+  name: 'Produto',
+  category: 'Banheiros',
+  categoryId: 3,
+  shortDescription: '',
+  longDescription: '',
+  images: [],
+  storeLinks: [],
   ...overrides,
 });
 
-const catalog = [
-  buildProduct({ slug: 'garrafa', name: 'Garrafa Térmica', category: 'cozinha' }),
-  buildProduct({ slug: 'balde', name: 'Balde 12L', category: 'limpeza' }),
-  buildProduct({ slug: 'varal', name: 'Varal Sanfonado', category: 'casa' }),
+const products = [
+  buildProduct({ id: 1, slug: 'garrafa-1', name: 'Garrafa Térmica', category: 'Utensílios de Cozinha' }),
+  buildProduct({ id: 2, slug: 'balde-2', name: 'Balde 12L', category: 'Banheiros' }),
+  buildProduct({ id: 3, slug: 'panela-3', name: 'Panela', category: 'Utensílios de Cozinha' }),
 ];
+const categories = ['Banheiros', 'Utensílios de Cozinha'];
+
+const renderFilter = () =>
+  render(
+    <VitrineSearchProvider>
+      <header>
+        <VitrineSearchField id="header-search" label="Buscar no cabeçalho" />
+      </header>
+      <VitrineFilter products={products} categories={categories} />
+    </VitrineSearchProvider>,
+  );
+
+const productNames = () => screen.queryAllByRole('heading', { level: 3 }).map((heading) => heading.textContent);
 
 describe('VitrineFilter', () => {
-  it('renders an all chip plus one chip per category', () => {
-    render(<VitrineFilter products={catalog} categories={['casa', 'cozinha', 'limpeza']} />);
-    expect(screen.getByRole('button', { name: 'Todas' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'casa' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'cozinha' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'limpeza' })).toBeInTheDocument();
+  it('lists every product with the all categories chip pressed and the item count', () => {
+    renderFilter();
+    expect(screen.getByRole('button', { name: 'Todas as categorias' })).toHaveAttribute('aria-pressed', 'true');
+    expect(productNames()).toEqual(['Garrafa Térmica', 'Balde 12L', 'Panela']);
+    expect(screen.getByText('3 itens exibidos')).toBeInTheDocument();
+    expect(screen.getByRole('search', { name: 'Buscar na vitrine' })).toBeInTheDocument();
   });
 
-  it('starts with the all chip selected', () => {
-    render(<VitrineFilter products={catalog} categories={['casa', 'cozinha', 'limpeza']} />);
-    expect(screen.getByRole('button', { name: 'Todas' })).toHaveAttribute('aria-pressed', 'true');
+  it('keeps the chips inside their own horizontal scroll strip', () => {
+    renderFilter();
+    const chipStrip = screen.getByRole('group', { name: 'Categorias' });
+    expect(chipStrip).toHaveClass('overflow-x-auto');
+    expect(within(chipStrip).getAllByRole('button')).toHaveLength(3);
   });
 
-  it('filters the grid when a category chip is clicked', async () => {
-    render(<VitrineFilter products={catalog} categories={['casa', 'cozinha', 'limpeza']} />);
-    await userEvent.click(screen.getByRole('button', { name: 'limpeza' }));
-    expect(screen.getByRole('button', { name: 'limpeza' })).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByText('Balde 12L')).toBeInTheDocument();
-    expect(screen.queryByText('Garrafa Térmica')).not.toBeInTheDocument();
+  it('narrows the grid to the pressed category chip', async () => {
+    renderFilter();
+    await userEvent.click(screen.getByRole('button', { name: 'Banheiros' }));
+    expect(screen.getByRole('button', { name: 'Banheiros' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Todas as categorias' })).toHaveAttribute('aria-pressed', 'false');
+    expect(productNames()).toEqual(['Balde 12L']);
+    expect(screen.getByText('1 item exibido')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Todas as categorias' }));
+    expect(productNames()).toHaveLength(3);
   });
 
-  it('filters the grid as the visitor types', async () => {
-    render(<VitrineFilter products={catalog} categories={['casa', 'cozinha', 'limpeza']} />);
-    await userEvent.type(screen.getByRole('searchbox', { name: /buscar produto/i }), 'termica');
-    expect(screen.getByText('Garrafa Térmica')).toBeInTheDocument();
-    expect(screen.queryByText('Balde 12L')).not.toBeInTheDocument();
+  it('filters by the search typed in the showcase or in the header', async () => {
+    renderFilter();
+    const [headerSearch, showcaseSearch] = screen.getAllByRole('searchbox', { name: 'Buscar produto' });
+    await userEvent.type(showcaseSearch, 'panela');
+    expect(productNames()).toEqual(['Panela']);
+    await userEvent.clear(headerSearch);
+    await userEvent.type(headerSearch, 'termica');
+    expect(productNames()).toEqual(['Garrafa Térmica']);
+    expect(showcaseSearch).toHaveValue('termica');
   });
 
-  it('offers to clear filters when nothing matches', async () => {
-    render(<VitrineFilter products={catalog} categories={['casa', 'cozinha', 'limpeza']} />);
-    await userEvent.type(screen.getByRole('searchbox', { name: /buscar produto/i }), 'inexistente');
-    expect(screen.getByText(/nenhum produto encontrado/i)).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: /limpar filtros/i }));
-    expect(screen.getByText('Garrafa Térmica')).toBeInTheDocument();
-  });
-
-  it('shows every product again when the all chip is clicked', async () => {
-    render(<VitrineFilter products={catalog} categories={['casa', 'cozinha', 'limpeza']} />);
-    await userEvent.click(screen.getByRole('button', { name: 'limpeza' }));
-    expect(screen.queryByText('Garrafa Térmica')).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Todas' }));
-    expect(screen.getByText('Garrafa Térmica')).toBeInTheDocument();
-    expect(screen.getByText('Balde 12L')).toBeInTheDocument();
-  });
-
-  it('clearing filters also resets the selected category', async () => {
-    render(<VitrineFilter products={catalog} categories={['casa', 'cozinha', 'limpeza']} />);
-    await userEvent.click(screen.getByRole('button', { name: 'limpeza' }));
-    await userEvent.type(screen.getByRole('searchbox', { name: /buscar produto/i }), 'inexistente');
-    await userEvent.click(screen.getByRole('button', { name: /limpar filtros/i }));
-    expect(screen.getByRole('button', { name: 'Todas' })).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByText('Varal Sanfonado')).toBeInTheDocument();
+  it('offers to clear the filters when nothing matches', async () => {
+    renderFilter();
+    await userEvent.click(screen.getByRole('button', { name: 'Banheiros' }));
+    await userEvent.type(screen.getAllByRole('searchbox')[1], 'panela');
+    expect(screen.getByText('Nenhum produto encontrado.')).toBeInTheDocument();
+    expect(screen.getByText('0 itens exibidos')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Limpar filtros' }));
+    expect(productNames()).toHaveLength(3);
+    expect(screen.getAllByRole('searchbox')[0]).toHaveValue('');
   });
 
   it('does not offer to clear filters when the catalog is empty', () => {
-    render(<VitrineFilter products={[]} categories={[]} />);
-    expect(screen.getByText(/nenhum produto encontrado/i)).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /limpar filtros/i })).not.toBeInTheDocument();
+    render(
+      <VitrineSearchProvider>
+        <VitrineFilter products={[]} categories={[]} />
+      </VitrineSearchProvider>,
+    );
+    expect(screen.getByText('Nenhum produto encontrado.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Limpar filtros' })).not.toBeInTheDocument();
   });
 });
