@@ -3,19 +3,34 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { useVitrineSearch, VitrineSearchField, VitrineSearchProvider } from './VitrineSearch';
 
+const push = vi.hoisted(() => vi.fn());
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }));
+
 const SearchTermProbe = () => <output>{useVitrineSearch().searchTerm}</output>;
+
+const HEADER_LABEL = 'Buscar produto no cabeçalho';
+const SHOWCASE_LABEL = 'Buscar produto na vitrine';
+
+const Showcase = ({ children }: { children?: React.ReactNode }) => (
+  <section>
+    <h2 id="vitrine" tabIndex={-1}>
+      Vitrine de produtos
+    </h2>
+    {children}
+  </section>
+);
 
 describe('VitrineSearch', () => {
   it('shares what the visitor types with the rest of the page', async () => {
     render(
       <VitrineSearchProvider>
-        <VitrineSearchField id="header-search" label="Buscar no cabeçalho" />
+        <VitrineSearchField id="header-search" label={HEADER_LABEL} />
         <SearchTermProbe />
       </VitrineSearchProvider>,
     );
-    const input = screen.getByRole('searchbox', { name: 'Buscar produto' });
+    const input = screen.getByRole('searchbox', { name: HEADER_LABEL });
     expect(input).toHaveClass('text-base');
-    expect(screen.getByRole('search', { name: 'Buscar no cabeçalho' })).toContainElement(input);
+    expect(screen.getByRole('search', { name: HEADER_LABEL })).toContainElement(input);
     await userEvent.type(input, 'balde');
     expect(screen.getByRole('status')).toHaveTextContent('balde');
   });
@@ -25,27 +40,37 @@ describe('VitrineSearch', () => {
     Element.prototype.scrollIntoView = scrollIntoView;
     render(
       <VitrineSearchProvider>
-        <VitrineSearchField id="header-search" label="Buscar no cabeçalho" />
-        <section id="vitrine" />
+        <VitrineSearchField id="header-search" label={HEADER_LABEL} />
+        <Showcase />
       </VitrineSearchProvider>,
     );
-    await userEvent.type(screen.getByRole('searchbox', { name: 'Buscar produto' }), 'balde{Enter}');
+    await userEvent.type(screen.getByRole('searchbox', { name: HEADER_LABEL }), 'balde{Enter}');
     expect(scrollIntoView).toHaveBeenCalled();
     await userEvent.click(screen.getByRole('button', { name: 'Buscar' }));
     expect(scrollIntoView).toHaveBeenCalledTimes(2);
+  });
+
+  it('takes the visitor to the showcase with the term when the page has no showcase', async () => {
+    render(
+      <VitrineSearchProvider>
+        <VitrineSearchField id="header-search" label={HEADER_LABEL} />
+        <SearchTermProbe />
+      </VitrineSearchProvider>,
+    );
+    await userEvent.type(screen.getByRole('searchbox', { name: HEADER_LABEL }), 'balde{Enter}');
+    expect(push).toHaveBeenCalledWith('/#vitrine');
+    expect(screen.getByRole('status')).toHaveTextContent('balde');
   });
 
   it('moves the focus to the showcase heading after a header search', async () => {
     Element.prototype.scrollIntoView = vi.fn();
     render(
       <VitrineSearchProvider>
-        <VitrineSearchField id="header-search" label="Buscar no cabeçalho" />
-        <section id="vitrine">
-          <h2 tabIndex={-1}>Vitrine de produtos</h2>
-        </section>
+        <VitrineSearchField id="header-search" label={HEADER_LABEL} />
+        <Showcase />
       </VitrineSearchProvider>,
     );
-    await userEvent.type(screen.getByRole('searchbox', { name: 'Buscar produto' }), 'balde{Enter}');
+    await userEvent.type(screen.getByRole('searchbox', { name: HEADER_LABEL }), 'balde{Enter}');
     expect(screen.getByRole('heading', { name: 'Vitrine de produtos' })).toHaveFocus();
   });
 
@@ -53,13 +78,12 @@ describe('VitrineSearch', () => {
     Element.prototype.scrollIntoView = vi.fn();
     render(
       <VitrineSearchProvider>
-        <section id="vitrine">
-          <h2 tabIndex={-1}>Vitrine de produtos</h2>
-          <VitrineSearchField id="vitrine-search" label="Buscar na vitrine" />
-        </section>
+        <Showcase>
+          <VitrineSearchField id="vitrine-search" label={SHOWCASE_LABEL} />
+        </Showcase>
       </VitrineSearchProvider>,
     );
-    const input = screen.getByRole('searchbox', { name: 'Buscar produto' });
+    const input = screen.getByRole('searchbox', { name: SHOWCASE_LABEL });
     await userEvent.type(input, 'balde{Enter}');
     expect(input).toHaveFocus();
   });

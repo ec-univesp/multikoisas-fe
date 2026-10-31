@@ -94,7 +94,7 @@ export const ProductGallery = ({ name, images }: ProductGalleryProps) => {
                 aria-label={`Ver foto ${index + 1} de ${images.length}`}
                 aria-pressed={index === selectedIndex}
                 onClick={() => setSelectedIndex(index)}
-                className={`relative block aspect-square min-h-11 w-full overflow-hidden rounded-xl bg-gray-100 ring-2 ${index === selectedIndex ? 'ring-brand-500' : 'ring-transparent'}`}
+                className={`relative block aspect-square min-h-11 w-full overflow-hidden rounded-xl bg-gray-100 ring-2 ${index === selectedIndex ? 'ring-store-navy' : 'ring-transparent'}`}
               >
                 <ProductImage src={image} alt="" fill loading="lazy" sizes="(max-width: 768px) 25vw, 12vw" className="object-cover" />
               </button>

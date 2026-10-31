@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
 import { ProductCard } from '@/entities/product';
 import type { Product } from '@/entities/product';
 import { useProductFilter } from './useProductFilter';
+import { useVitrineSearch, VitrineSearchField } from './VitrineSearch';
 
 const PRIORITY_IMAGE_COUNT = 4;
 
@@ -13,29 +13,35 @@ type VitrineFilterProps = {
 };
 
 const chipClassName = (isActive: boolean): string =>
-  `flex h-11 items-center rounded-full border px-4 text-sm font-medium ${
-    isActive
-      ? 'border-brand-500 bg-brand-500 text-white'
-      : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+  `flex h-11 shrink-0 items-center rounded-full px-4 text-sm font-semibold whitespace-nowrap shadow-theme-xs ${
+    isActive ? 'bg-store-navy text-white' : 'bg-white text-gray-700 hover:bg-gray-100'
   }`;
 
+const itemCountLabel = (count: number): string => (count === 1 ? '1 item exibido' : `${count} itens exibidos`);
+
 export const VitrineFilter = ({ products, categories }: VitrineFilterProps) => {
-  const [searchTerm, setSearchTerm] = useState('');
   const { activeCategory, setActiveCategory, visibleProducts, isCatalogEmpty, clearFilters } = useProductFilter(
     products,
-    { searchTerm, setSearchTerm },
+    useVitrineSearch(),
   );
 
   return (
     <div>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-col gap-3 rounded-xl bg-white p-3 shadow-theme-xs md:flex-row md:items-center">
+        <VitrineSearchField id="vitrine-search" label="Buscar produto na vitrine" />
+        <p aria-live="polite" className="shrink-0 rounded-lg bg-gray-100 px-3 py-2 text-sm font-semibold text-store-navy">
+          {itemCountLabel(visibleProducts.length)}
+        </p>
+      </div>
+
+      <div role="group" aria-label="Categorias" className="mt-4 flex gap-2 overflow-x-auto pb-1">
         <button
           type="button"
           aria-pressed={activeCategory === null}
           className={chipClassName(activeCategory === null)}
           onClick={() => setActiveCategory(null)}
         >
-          Todas
+          Todas as categorias
         </button>
         {categories.map((category) => (
           <button
@@ -50,20 +56,6 @@ export const VitrineFilter = ({ products, categories }: VitrineFilterProps) => {
         ))}
       </div>
 
-      <div className="mt-4">
-        <label htmlFor="vitrine-search" className="sr-only">
-          Buscar produto
-        </label>
-        <input
-          id="vitrine-search"
-          type="search"
-          value={searchTerm}
-          onChange={(event) => setSearchTerm(event.target.value)}
-          placeholder="Buscar produto"
-          className="h-11 w-full rounded-lg border border-gray-200 px-4 text-base text-gray-800"
-        />
-      </div>
-
       {visibleProducts.length === 0 ? (
         <div className="mt-8 flex flex-col items-center gap-4 text-center">
           <p className="text-gray-500">Nenhum produto encontrado.</p>
@@ -71,14 +63,14 @@ export const VitrineFilter = ({ products, categories }: VitrineFilterProps) => {
             <button
               type="button"
               onClick={clearFilters}
-              className="flex h-11 items-center justify-center rounded-lg border border-gray-200 px-4 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="flex h-11 items-center justify-center rounded-lg border border-gray-200 bg-white px-4 text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
               Limpar filtros
             </button>
           )}
         </div>
       ) : (
-        <ul className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
+        <ul className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
           {visibleProducts.map((product, position) => (
             <li key={product.slug}>
               <ProductCard product={product} hasPriorityImage={position < PRIORITY_IMAGE_COUNT} />
