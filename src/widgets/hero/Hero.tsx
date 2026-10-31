@@ -48,10 +48,10 @@ export const Hero = async () => {
                 {position + 1}
               </span>
               <div>
-                <h2 className="flex items-center gap-1.5 font-bold text-store-navy">
+                <h3 className="flex items-center gap-1.5 font-bold text-store-navy">
                   <Icon aria-hidden className="size-4" />
                   {title}
-                </h2>
+                </h3>
                 <p className="mt-1 text-sm text-gray-600">{description}</p>
               </div>
             </li>

@@ -17,7 +17,7 @@ describe('Hero', () => {
 
   it('walks through the three purchase steps in order, below the single page title', async () => {
     await renderHero();
-    const steps = within(screen.getByRole('list', { name: 'Como comprar' })).getAllByRole('heading', { level: 2 });
+    const steps = within(screen.getByRole('list', { name: 'Como comprar' })).getAllByRole('heading', { level: 3 });
     expect(steps.map((step) => step.textContent)).toEqual([
       'Escolha o produto',
       'Sua plataforma favorita',
