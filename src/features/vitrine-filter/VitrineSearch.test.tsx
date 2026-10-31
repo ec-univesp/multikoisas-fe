@@ -3,6 +3,9 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { useVitrineSearch, VitrineSearchField, VitrineSearchProvider } from './VitrineSearch';
 
+const push = vi.hoisted(() => vi.fn());
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }));
+
 const SearchTermProbe = () => <output>{useVitrineSearch().searchTerm}</output>;
 
 describe('VitrineSearch', () => {
@@ -33,6 +36,18 @@ describe('VitrineSearch', () => {
     expect(scrollIntoView).toHaveBeenCalled();
     await userEvent.click(screen.getByRole('button', { name: 'Buscar' }));
     expect(scrollIntoView).toHaveBeenCalledTimes(2);
+  });
+
+  it('takes the visitor to the showcase with the term when the page has no showcase', async () => {
+    render(
+      <VitrineSearchProvider>
+        <VitrineSearchField id="header-search" label="Buscar no cabeçalho" />
+        <SearchTermProbe />
+      </VitrineSearchProvider>,
+    );
+    await userEvent.type(screen.getByRole('searchbox', { name: 'Buscar produto' }), 'balde{Enter}');
+    expect(push).toHaveBeenCalledWith('/#vitrine');
+    expect(screen.getByRole('status')).toHaveTextContent('balde');
   });
 
   it('moves the focus to the showcase heading after a header search', async () => {

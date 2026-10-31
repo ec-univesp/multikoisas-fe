@@ -1,6 +1,7 @@
 'use client';
 
 import { Search } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { createContext, useContext, useState, type FormEvent, type ReactNode } from 'react';
 
 type VitrineSearch = {
@@ -21,16 +22,21 @@ export const useVitrineSearch = (): VitrineSearch => {
   return vitrineSearch;
 };
 
-const scrollToShowcase = (event: FormEvent<HTMLFormElement>) => {
-  event.preventDefault();
-  const showcase = document.getElementById('vitrine');
-  showcase?.scrollIntoView({ behavior: 'smooth' });
-  if (showcase?.contains(event.currentTarget)) return;
-  showcase?.querySelector<HTMLElement>('h2')?.focus({ preventScroll: true });
-};
-
 export const VitrineSearchField = ({ id, label }: { id: string; label: string }) => {
   const { searchTerm, setSearchTerm } = useVitrineSearch();
+  const router = useRouter();
+
+  const scrollToShowcase = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const showcase = document.getElementById('vitrine');
+    if (!showcase) {
+      router.push('/#vitrine');
+      return;
+    }
+    showcase.scrollIntoView({ behavior: 'smooth' });
+    if (showcase.contains(event.currentTarget)) return;
+    showcase.querySelector<HTMLElement>('h2')?.focus({ preventScroll: true });
+  };
 
   return (
     <form role="search" aria-label={label} onSubmit={scrollToShowcase} className="flex w-full items-center gap-1 rounded-lg bg-white p-1">

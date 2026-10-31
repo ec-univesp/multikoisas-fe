@@ -1,9 +1,11 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { Product } from '@/entities/product';
 import { VitrineFilter } from './VitrineFilter';
 import { VitrineSearchField, VitrineSearchProvider } from './VitrineSearch';
+
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
 const buildProduct = (overrides: Partial<Product>): Product => ({
   id: 1,

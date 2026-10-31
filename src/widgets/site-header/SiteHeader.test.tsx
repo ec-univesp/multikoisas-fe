@@ -1,9 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { VitrineSearchProvider } from '@/features/vitrine-filter';
 import { server } from '@/test/msw/server';
 import { SiteHeader } from './SiteHeader';
+
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
 const renderHeader = async () => render(<VitrineSearchProvider>{await SiteHeader()}</VitrineSearchProvider>);
 
@@ -15,12 +17,12 @@ describe('SiteHeader', () => {
         'Vitrine oficial MultiKoisas: escolha aqui e conclua a compra com segurança na loja parceira.',
       ),
     ).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /^multikoisas/i })).toHaveAttribute('href', '/v2');
+    expect(screen.getByRole('link', { name: /^multikoisas/i })).toHaveAttribute('href', '/');
     expect(screen.getByText('Tudo em um só lugar')).toBeInTheDocument();
     expect(screen.getByRole('searchbox', { name: 'Buscar produto' })).toHaveClass('text-base');
     expect(screen.getByRole('search', { name: 'Buscar no cabeçalho' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Vitrine de produtos' })).toHaveAttribute('href', '#vitrine');
-    expect(screen.getByRole('link', { name: 'Sobre a MultiKoisas' })).toHaveAttribute('href', '#sobre');
+    expect(screen.getByRole('link', { name: 'Vitrine de produtos' })).toHaveAttribute('href', '/#vitrine');
+    expect(screen.getByRole('link', { name: 'Sobre a MultiKoisas' })).toHaveAttribute('href', '/#sobre');
   });
 
   it('names only the stores that appear in the catalog links', async () => {

@@ -27,7 +27,7 @@ export const SiteHeader = async () => {
       </p>
       <div className="bg-store-navy px-4 py-3 lg:px-8">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3">
-          <Link href="/v2" className="flex min-h-11 items-center gap-3">
+          <Link href="/" className="flex min-h-11 items-center gap-3">
             <span
               aria-hidden
               className="flex size-10 items-center justify-center rounded-lg bg-store-yellow text-xl font-extrabold text-store-navy-950"
@@ -60,12 +60,12 @@ export const SiteHeader = async () => {
       <div className="bg-gray-100 px-4 py-2 lg:px-8">
         <div className="mx-auto flex max-w-7xl flex-col gap-1 md:flex-row-reverse md:items-center md:justify-between">
           <nav aria-label="Seções da vitrine" className="flex gap-1">
-            <a href="#vitrine" className={navLinkClassName}>
+            <Link href="/#vitrine" className={navLinkClassName}>
               Vitrine de produtos
-            </a>
-            <a href="#sobre" className={navLinkClassName}>
+            </Link>
+            <Link href="/#sobre" className={navLinkClassName}>
               Sobre a MultiKoisas
-            </a>
+            </Link>
           </nav>
           {storesPhrase && (
             <p className="px-3 text-sm font-medium text-gray-600 md:px-0">{`Compre ${storesPhrase}`}</p>
