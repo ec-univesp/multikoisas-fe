@@ -28,7 +28,7 @@ export const ProductDetail = ({ product }: { product: Product }) => {
           <div className="mt-8">
             <h2 className="text-sm font-semibold text-gray-800">Onde comprar</h2>
             {product.storeLinks.length === 0 && (
-              <p className="mt-3 text-sm text-gray-500">Links de compra em breve.</p>
+              <p className="mt-3 text-sm text-gray-500">Este produto ainda não tem link de compra.</p>
             )}
             <div className="mt-3 flex flex-col gap-2">
               {product.storeLinks.map((storeLink) => (
