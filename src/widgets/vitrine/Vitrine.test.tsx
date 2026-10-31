@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
+import { http, HttpResponse } from 'msw';
 import { describe, expect, it, vi } from 'vitest';
 import { VitrineSearchProvider } from '@/features/vitrine-filter';
+import { server } from '@/test/msw/server';
 import { Vitrine } from './Vitrine';
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }));
@@ -10,8 +12,9 @@ const renderVitrine = async () => render(<VitrineSearchProvider>{await Vitrine()
 describe('Vitrine', () => {
   it('anchors the product grid and lists the api products', async () => {
     const { container } = await renderVitrine();
-    expect(container.querySelector('section#vitrine')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Vitrine de produtos' })).toHaveAttribute('tabindex', '-1');
+    const showcaseHeading = screen.getByRole('heading', { name: 'Vitrine de produtos' });
+    expect(container.querySelector('#vitrine')).toBe(showcaseHeading);
+    expect(showcaseHeading).toHaveAttribute('tabindex', '-1');
     expect(screen.getByRole('heading', { name: 'Garrafa Térmica 1L' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Balde 12L' })).toBeInTheDocument();
   });
@@ -28,5 +31,12 @@ describe('Vitrine', () => {
     expect(screen.getAllByRole('link', { name: /^Comprar na Shopee: / })).toHaveLength(2);
     expect(screen.queryByRole('link', { name: /instagram/i })).not.toBeInTheDocument();
     expect(screen.getAllByRole('link', { name: /^Opções de compra: / })).toHaveLength(3);
+  });
+
+  it('shows the empty showcase instead of breaking the page when the catalog cannot be read', async () => {
+    server.use(http.get('*/produto', () => new HttpResponse(null, { status: 500 })));
+    await renderVitrine();
+    expect(screen.getByRole('heading', { name: 'Vitrine de produtos' })).toBeInTheDocument();
+    expect(screen.getByText('Nenhum produto encontrado.')).toBeInTheDocument();
   });
 });
