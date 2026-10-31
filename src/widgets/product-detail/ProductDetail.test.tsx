@@ -155,7 +155,7 @@ describe('ProductDetail', () => {
 
   it('tells the visitor purchase links are coming when none exist', () => {
     render(<ProductDetail product={{ ...product, images: [], storeLinks: [] }} />);
-    expect(screen.getByText('Links de compra em breve.')).toBeInTheDocument();
+    expect(screen.getByText('Este produto ainda não tem link de compra.')).toBeInTheDocument();
     expect(screen.getByAltText(product.name)).toHaveAttribute('src', expect.stringContaining('placeholder'));
   });
 });
