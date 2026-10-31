@@ -2,7 +2,7 @@ import { MessageCircle } from 'lucide-react';
 import Link from 'next/link';
 import { fetchProducts, toStoresPhrase, type Product } from '@/entities/product';
 import { fetchSocialNetworks, type SocialNetwork } from '@/entities/social-network';
-import { VitrineSearchField } from '@/features/vitrine-filter';
+import { VitrineLink, VitrineSearchField } from '@/features/vitrine-filter';
 import { BrandMark } from '@/shared/ui/BrandMark';
 
 const loadProducts = (): Promise<Product[]> => fetchProducts().catch(() => []);
@@ -53,9 +53,7 @@ export const SiteHeader = async () => {
       <div className="bg-gray-100 px-4 py-2 lg:px-8">
         <div className="mx-auto flex max-w-7xl flex-col gap-1 md:flex-row-reverse md:items-center md:justify-between">
           <nav aria-label="Seções da vitrine" className="flex gap-1">
-            <Link href="/#vitrine" className={navLinkClassName}>
-              Vitrine de produtos
-            </Link>
+            <VitrineLink className={navLinkClassName} />
             <Link href="/#sobre" className={navLinkClassName}>
               Sobre a MultiKoisas
             </Link>
