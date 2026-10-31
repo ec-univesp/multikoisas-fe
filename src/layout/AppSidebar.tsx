@@ -290,7 +290,7 @@ const AppSidebar: React.FC = () => {
                 }`}
               >
                 {isExpanded || isHovered || isMobileOpen ? (
-                  "Menu"
+                  "Gestão da loja"
                 ) : (
                   <HorizontaLDots />
                 )}
