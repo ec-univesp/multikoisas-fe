@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useRef, useState,useCallback } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import { BrandMark } from "@/shared/ui/BrandMark";
 import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
 import {
@@ -261,21 +261,7 @@ const AppSidebar: React.FC = () => {
         }`}
       >
         <Link href="/admin">
-          {isExpanded || isHovered || isMobileOpen ? (
-            <Image
-              src="/images/logo/logo.svg"
-              alt="MultiKoisas"
-              width={180}
-              height={40}
-            />
-          ) : (
-            <Image
-              src="/images/logo/logo-icon.svg"
-              alt="MultiKoisas"
-              width={32}
-              height={32}
-            />
-          )}
+          <BrandMark compact={!isExpanded && !isHovered && !isMobileOpen} />
         </Link>
       </div>
       <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">

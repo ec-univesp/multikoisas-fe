@@ -2,8 +2,8 @@
 import NotificationDropdown from "@/components/header/NotificationDropdown";
 import UserDropdown from "@/components/header/UserDropdown";
 import { useSidebar } from "@/context/SidebarContext";
-import Image from "next/image";
 import Link from "next/link";
+import { BrandMark } from "@/shared/ui/BrandMark";
 import React, { useState ,useEffect,useRef} from "react";
 
 const AppHeader: React.FC = () => {
@@ -83,12 +83,7 @@ const AppHeader: React.FC = () => {
           </button>
 
           <Link href="/admin" className="lg:hidden">
-            <Image
-              width={180}
-              height={32}
-              src="./images/logo/logo.svg"
-              alt="MultiKoisas"
-            />
+            <BrandMark />
           </Link>
 
           <button
