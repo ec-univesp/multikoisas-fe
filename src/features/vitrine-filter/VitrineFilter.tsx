@@ -28,7 +28,7 @@ export const VitrineFilter = ({ products, categories }: VitrineFilterProps) => {
   return (
     <div>
       <div className="flex flex-col gap-3 rounded-xl bg-white p-3 shadow-theme-xs md:flex-row md:items-center">
-        <VitrineSearchField id="vitrine-search" label="Buscar na vitrine" />
+        <VitrineSearchField id="vitrine-search" label="Buscar produto na vitrine" />
         <p aria-live="polite" className="shrink-0 rounded-lg bg-gray-100 px-3 py-2 text-sm font-semibold text-store-navy">
           {itemCountLabel(visibleProducts.length)}
         </p>

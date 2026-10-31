@@ -31,7 +31,7 @@ const renderFilter = () =>
   render(
     <VitrineSearchProvider>
       <header>
-        <VitrineSearchField id="header-search" label="Buscar no cabeçalho" />
+        <VitrineSearchField id="header-search" label="Buscar produto no cabeçalho" />
       </header>
       <VitrineFilter products={products} categories={categories} />
     </VitrineSearchProvider>,
@@ -45,7 +45,7 @@ describe('VitrineFilter', () => {
     expect(screen.getByRole('button', { name: 'Todas as categorias' })).toHaveAttribute('aria-pressed', 'true');
     expect(productNames()).toEqual(['Garrafa Térmica', 'Balde 12L', 'Panela']);
     expect(screen.getByText('3 itens exibidos')).toBeInTheDocument();
-    expect(screen.getByRole('search', { name: 'Buscar na vitrine' })).toBeInTheDocument();
+    expect(screen.getByRole('search', { name: 'Buscar produto na vitrine' })).toBeInTheDocument();
   });
 
   it('keeps the chips inside their own horizontal scroll strip', () => {
@@ -68,7 +68,8 @@ describe('VitrineFilter', () => {
 
   it('filters by the search typed in the showcase or in the header', async () => {
     renderFilter();
-    const [headerSearch, showcaseSearch] = screen.getAllByRole('searchbox', { name: 'Buscar produto' });
+    const headerSearch = screen.getByRole('searchbox', { name: 'Buscar produto no cabeçalho' });
+    const showcaseSearch = screen.getByRole('searchbox', { name: 'Buscar produto na vitrine' });
     await userEvent.type(showcaseSearch, 'panela');
     expect(productNames()).toEqual(['Panela']);
     await userEvent.clear(headerSearch);
@@ -96,5 +97,20 @@ describe('VitrineFilter', () => {
     );
     expect(screen.getByText('Nenhum produto encontrado.')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Limpar filtros' })).not.toBeInTheDocument();
+  });
+
+  it('keeps the category and the search when the showcase comes back under the same provider', async () => {
+    const { rerender } = renderFilter();
+    await userEvent.click(screen.getByRole('button', { name: 'Utensílios de Cozinha' }));
+    await userEvent.type(screen.getByRole('searchbox', { name: 'Buscar produto na vitrine' }), 'panela');
+    rerender(<VitrineSearchProvider />);
+    rerender(
+      <VitrineSearchProvider>
+        <VitrineFilter products={products} categories={categories} />
+      </VitrineSearchProvider>,
+    );
+    expect(screen.getByRole('button', { name: 'Utensílios de Cozinha' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('searchbox', { name: 'Buscar produto na vitrine' })).toHaveValue('panela');
+    expect(productNames()).toEqual(['Panela']);
   });
 });

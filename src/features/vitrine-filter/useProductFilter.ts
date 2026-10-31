@@ -1,14 +1,15 @@
-import { useState } from 'react';
 import type { Product } from '@/entities/product';
 import { filterProducts } from './filterProducts';
 
-type SearchState = {
+type FilterState = {
   searchTerm: string;
   setSearchTerm: (searchTerm: string) => void;
+  activeCategory: string | null;
+  setActiveCategory: (category: string | null) => void;
 };
 
-export const useProductFilter = (products: readonly Product[], { searchTerm, setSearchTerm }: SearchState) => {
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+export const useProductFilter = (products: readonly Product[], filterState: FilterState) => {
+  const { searchTerm, setSearchTerm, activeCategory, setActiveCategory } = filterState;
 
   const clearFilters = () => {
     setActiveCategory(null);
