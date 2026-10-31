@@ -1,4 +1,4 @@
-import { fetchSocialNetworks, type SocialNetwork } from '@/entities/social-network';
+import { fetchSocialNetworks, SocialNetworkLinks, type SocialNetwork } from '@/entities/social-network';
 
 const loadSocialNetworks = (): Promise<SocialNetwork[]> => fetchSocialNetworks().catch(() => []);
 
@@ -12,20 +12,11 @@ export const SiteFooter = async () => {
             <h2 id="site-footer-social" className="font-medium text-gray-700">
               Siga a MultiKoisas
             </h2>
-            <ul className="mt-2 flex flex-wrap gap-2">
-              {socialNetworks.map((socialNetwork) => (
-                <li key={socialNetwork.id}>
-                  <a
-                    href={socialNetwork.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex min-h-11 items-center rounded-lg border border-gray-200 px-4 text-gray-700 hover:border-brand-500 hover:text-brand-500"
-                  >
-                    {socialNetwork.name}
-                  </a>
-                </li>
-              ))}
-            </ul>
+            <SocialNetworkLinks
+              socialNetworks={socialNetworks}
+              className="mt-2"
+              linkClassName="border border-gray-200 text-gray-700 hover:border-brand-500 hover:text-brand-500"
+            />
           </nav>
         )}
         <p>

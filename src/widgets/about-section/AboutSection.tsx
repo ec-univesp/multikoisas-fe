@@ -1,4 +1,4 @@
-import { fetchSocialNetworks, type SocialNetwork } from '@/entities/social-network';
+import { fetchSocialNetworks, SocialNetworkLinks, type SocialNetwork } from '@/entities/social-network';
 
 const loadSocialNetworks = (): Promise<SocialNetwork[]> => fetchSocialNetworks().catch(() => []);
 
@@ -26,20 +26,11 @@ export const AboutSection = async () => {
             preferência.
           </p>
           {socialNetworks.length > 0 && (
-            <ul className="mt-4 flex flex-wrap gap-2">
-              {socialNetworks.map((socialNetwork) => (
-                <li key={socialNetwork.id}>
-                  <a
-                    href={socialNetwork.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex min-h-11 items-center rounded-lg bg-gray-100 px-4 text-sm font-bold text-store-navy hover:bg-store-navy hover:text-white"
-                  >
-                    {socialNetwork.name}
-                  </a>
-                </li>
-              ))}
-            </ul>
+            <SocialNetworkLinks
+              socialNetworks={socialNetworks}
+              className="mt-4"
+              linkClassName="bg-gray-100 text-sm font-bold text-store-navy hover:bg-store-navy hover:text-white"
+            />
           )}
         </div>
         <div className="rounded-xl bg-gray-50 p-5 lg:col-span-5">
