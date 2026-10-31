@@ -19,8 +19,11 @@ describe('SiteHeader', () => {
     ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /^multikoisas/i })).toHaveAttribute('href', '/');
     expect(screen.getByText('Tudo em um só lugar')).toBeInTheDocument();
-    expect(screen.getByRole('searchbox', { name: 'Buscar produto' })).toHaveClass('text-base');
-    expect(screen.getByRole('search', { name: 'Buscar no cabeçalho' })).toBeInTheDocument();
+    expect(screen.getByText('Multi')).toHaveClass('text-white');
+    expect(screen.getByText('Koisas')).toHaveClass('text-store-yellow');
+    expect(screen.getByText('Koisas').parentElement).not.toHaveTextContent('Tudo em um só lugar');
+    expect(screen.getByRole('searchbox', { name: 'Buscar produto no cabeçalho' })).toHaveClass('text-base');
+    expect(screen.getByRole('search', { name: 'Buscar produto no cabeçalho' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Vitrine de produtos' })).toHaveAttribute('href', '/#vitrine');
     expect(screen.getByRole('link', { name: 'Sobre a MultiKoisas' })).toHaveAttribute('href', '/#sobre');
   });
@@ -54,7 +57,7 @@ describe('SiteHeader', () => {
     server.use(http.get('*/produto', () => new HttpResponse(null, { status: 500 })));
     await renderHeader();
     expect(screen.queryByText(/^Compre /)).not.toBeInTheDocument();
-    expect(screen.getByRole('searchbox', { name: 'Buscar produto' })).toBeInTheDocument();
+    expect(screen.getByRole('searchbox', { name: 'Buscar produto no cabeçalho' })).toBeInTheDocument();
   });
 
   it('offers whatsapp only when the store has it among its social networks', async () => {

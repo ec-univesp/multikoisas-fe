@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { fetchProducts, toStoresPhrase, type Product } from '@/entities/product';
 import { fetchSocialNetworks, type SocialNetwork } from '@/entities/social-network';
 import { VitrineSearchField } from '@/features/vitrine-filter';
+import { BrandMark } from '@/shared/ui/BrandMark';
 
 const loadProducts = (): Promise<Product[]> => fetchProducts().catch(() => []);
 const loadSocialNetworks = (): Promise<SocialNetwork[]> => fetchSocialNetworks().catch(() => []);
@@ -27,18 +28,10 @@ export const SiteHeader = async () => {
       </p>
       <div className="bg-store-navy px-4 py-3 lg:px-8">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3">
-          <Link href="/" className="flex min-h-11 items-center gap-3">
-            <span
-              aria-hidden
-              className="flex size-10 items-center justify-center rounded-lg bg-store-yellow text-xl font-extrabold text-store-navy-950"
-            >
-              M
-            </span>
-            <span className="flex flex-col">
-              <span className="text-xl leading-tight font-extrabold text-white">
-                Multi<span className="text-store-yellow">Koisas</span>
-              </span>
-              <span className="text-xs font-semibold tracking-wider text-blue-100 uppercase">Tudo em um só lugar</span>
+          <Link href="/" className="flex flex-col">
+            <BrandMark tone="onDark" />
+            <span className="-mt-1.5 ml-13 text-xs font-semibold tracking-wider text-blue-100 uppercase">
+              Tudo em um só lugar
             </span>
           </Link>
           {whatsApp && (
@@ -53,7 +46,7 @@ export const SiteHeader = async () => {
             </a>
           )}
           <div className="w-full lg:w-auto lg:max-w-xl lg:flex-1">
-            <VitrineSearchField id="site-header-search" label="Buscar no cabeçalho" />
+            <VitrineSearchField id="site-header-search" label="Buscar produto no cabeçalho" />
           </div>
         </div>
       </div>
