@@ -1,31 +1,42 @@
 import { render, screen } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { VitrineSearchProvider } from '@/features/vitrine-filter';
 import { server } from '@/test/msw/server';
 import { Vitrine } from './Vitrine';
 
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }));
+
+const renderVitrine = async () => render(<VitrineSearchProvider>{await Vitrine()}</VitrineSearchProvider>);
+
 describe('Vitrine', () => {
-  it('renders the section heading, the api products and their categories', async () => {
-    render(await Vitrine());
-    expect(screen.getByRole('heading', { name: 'Produtos' })).toBeInTheDocument();
-    expect(screen.getByText('Garrafa Térmica 1L')).toBeInTheDocument();
-    expect(screen.getByText('Balde 12L')).toBeInTheDocument();
+  it('anchors the product grid and lists the api products', async () => {
+    const { container } = await renderVitrine();
+    const showcaseHeading = screen.getByRole('heading', { name: 'Vitrine de produtos' });
+    expect(container.querySelector('#vitrine')).toBe(showcaseHeading);
+    expect(showcaseHeading).toHaveAttribute('tabindex', '-1');
+    expect(screen.getByRole('heading', { name: 'Garrafa Térmica 1L' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Balde 12L' })).toBeInTheDocument();
+  });
+
+  it('offers a chip per real product category', async () => {
+    await renderVitrine();
+    expect(screen.getByRole('button', { name: 'Todas as categorias' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Utensílios de Cozinha' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Sem categoria' })).toBeInTheDocument();
   });
 
-  it('shows the first api photo of each product and the placeholder when it has none', async () => {
-    render(await Vitrine());
-    expect(screen.getByAltText('Garrafa Térmica 1L')).toHaveAttribute(
-      'src',
-      expect.stringContaining('garrafa-frente.webp'),
-    );
-    expect(screen.getByAltText('Balde 12L')).toHaveAttribute('src', expect.stringContaining('placeholder'));
+  it('turns only real store links into buy buttons', async () => {
+    await renderVitrine();
+    expect(screen.getAllByRole('link', { name: /^Comprar na Shopee: / })).toHaveLength(2);
+    expect(screen.queryByRole('link', { name: /instagram/i })).not.toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: /^Opções de compra: / })).toHaveLength(3);
   });
 
-  it('keeps the products on screen with the placeholder when the image list fails', async () => {
-    server.use(http.get('*/imagem', () => new HttpResponse(null, { status: 500 })));
-    render(await Vitrine());
-    expect(screen.getByAltText('Garrafa Térmica 1L')).toHaveAttribute('src', expect.stringContaining('placeholder'));
-    expect(screen.getByText('Balde 12L')).toBeInTheDocument();
+  it('shows the empty showcase instead of breaking the page when the catalog cannot be read', async () => {
+    server.use(http.get('*/produto', () => new HttpResponse(null, { status: 500 })));
+    await renderVitrine();
+    expect(screen.getByRole('heading', { name: 'Vitrine de produtos' })).toBeInTheDocument();
+    expect(screen.getByText('Nenhum produto encontrado.')).toBeInTheDocument();
   });
 });

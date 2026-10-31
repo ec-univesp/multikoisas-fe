@@ -38,18 +38,18 @@
   --color-white: #ffffff;
   --color-black: #101828;
 
-  --color-brand-25: #f2f7ff;
-  --color-brand-50: #ecf3ff;
-  --color-brand-100: #dde9ff;
-  --color-brand-200: #c2d6ff;
-  --color-brand-300: #9cb9ff;
-  --color-brand-400: #7592ff;
-  --color-brand-500: #465fff;
-  --color-brand-600: #3641f5;
-  --color-brand-700: #2a31d8;
-  --color-brand-800: #252dae;
-  --color-brand-900: #262e89;
-  --color-brand-950: #161950;
+  --color-brand-25: #f5f8fe;
+  --color-brand-50: #eef3fc;
+  --color-brand-100: #dce6f9;
+  --color-brand-200: #bccdf2;
+  --color-brand-300: #8eaae6;
+  --color-brand-400: #4f73c9;
+  --color-brand-500: var(--color-store-navy);
+  --color-brand-600: var(--color-store-navy-950);
+  --color-brand-700: #13204a;
+  --color-brand-800: #101a3d;
+  --color-brand-900: #0c1430;
+  --color-brand-950: #080d21;
 
   --color-store-navy: #1e3a8a;
   --color-store-navy-950: #172554;
@@ -201,7 +201,7 @@
 }
 
 @utility menu-item-active {
-  @apply bg-brand-50 text-brand-500 dark:bg-brand-500/[0.12] dark:text-brand-400;
+  @apply bg-brand-50 text-brand-500 shadow-[inset_3px_0_0_var(--color-store-yellow)] dark:bg-brand-500/[0.12] dark:text-brand-400;
 }
 
 @utility menu-item-inactive {

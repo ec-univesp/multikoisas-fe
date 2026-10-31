@@ -51,6 +51,13 @@ describe('ProductDetail', () => {
     expect(screen.getByRole('link', { name: /voltar para a vitrine/i })).toHaveAttribute('href', '/');
   });
 
+  it('dresses its own controls in the store palette', () => {
+    render(<ProductDetail product={product} />);
+    expect(screen.getByRole('link', { name: /voltar para a vitrine/i })).toHaveClass('text-store-navy');
+    expect(screen.getByText(product.category)).toHaveClass('bg-store-yellow', 'text-store-navy-950');
+    expect(screen.getByRole('button', { name: 'Ver foto 1 de 2' })).toHaveClass('ring-store-navy');
+  });
+
   it('never shows a price', () => {
     render(<ProductDetail product={product} />);
     expect(screen.queryByText(/R\$/)).not.toBeInTheDocument();
@@ -155,7 +162,7 @@ describe('ProductDetail', () => {
 
   it('tells the visitor purchase links are coming when none exist', () => {
     render(<ProductDetail product={{ ...product, images: [], storeLinks: [] }} />);
-    expect(screen.getByText('Links de compra em breve.')).toBeInTheDocument();
+    expect(screen.getByText('Este produto ainda não tem link de compra.')).toBeInTheDocument();
     expect(screen.getByAltText(product.name)).toHaveAttribute('src', expect.stringContaining('placeholder'));
   });
 });
