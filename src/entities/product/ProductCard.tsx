@@ -30,7 +30,7 @@ export const ProductCard = ({
           src={coverImage}
           alt={product.name}
           fill
-          priority={hasPriorityImage}
+          preload={hasPriorityImage}
           sizes={imageSizes}
           className="object-contain p-2"
         />

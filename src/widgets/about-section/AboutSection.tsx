@@ -32,7 +32,7 @@ const StorePicture = ({ storePhoto }: { storePhoto: StorePhoto | null }) => {
         src={storePhoto.src}
         alt={storePhoto.alt}
         fill
-        priority
+        preload
         sizes="(max-width: 1024px) 100vw, 50vw"
         className="object-cover"
       />
