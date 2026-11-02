@@ -32,6 +32,13 @@ describe('ProductCard', () => {
     expect(screen.getByAltText('Garrafa Térmica 1L')).toHaveAttribute('src', expect.stringContaining('garrafa.webp'));
   });
 
+  it('keeps the default image sizes and accepts the ones the layout passes', () => {
+    const { rerender } = render(<ProductCard product={product} />);
+    expect(screen.getByAltText('Garrafa Térmica 1L')).toHaveAttribute('sizes', '(max-width: 768px) 50vw, (max-width: 1280px) 33vw, 25vw');
+    rerender(<ProductCard product={product} imageSizes="80vw" />);
+    expect(screen.getByAltText('Garrafa Térmica 1L')).toHaveAttribute('sizes', '80vw');
+  });
+
   it('opens one sponsored new tab link per real store, side by side, in the store colors', () => {
     render(<ProductCard product={product} />);
     const shopee = screen.getByRole('link', { name: 'Comprar na Shopee: Garrafa Térmica 1L' });

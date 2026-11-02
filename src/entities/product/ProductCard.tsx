@@ -6,9 +6,14 @@ import type { Product } from './types';
 type ProductCardProps = {
   product: Product;
   hasPriorityImage?: boolean;
+  imageSizes?: string;
 };
 
-export const ProductCard = ({ product, hasPriorityImage = false }: ProductCardProps) => {
+export const ProductCard = ({
+  product,
+  hasPriorityImage = false,
+  imageSizes = '(max-width: 768px) 50vw, (max-width: 1280px) 33vw, 25vw',
+}: ProductCardProps) => {
   const coverImage = product.images[0] ?? PRODUCT_IMAGE_PLACEHOLDER;
   const detailPath = `/produto/${product.slug}`;
   const storeButtonsLayout = product.storeLinks.length > 1 ? 'grid gap-2 sm:grid-cols-2' : 'grid gap-2';
@@ -26,7 +31,7 @@ export const ProductCard = ({ product, hasPriorityImage = false }: ProductCardPr
           alt={product.name}
           fill
           priority={hasPriorityImage}
-          sizes="(max-width: 768px) 50vw, (max-width: 1280px) 33vw, 25vw"
+          sizes={imageSizes}
           className="object-contain p-2"
         />
       </Link>
