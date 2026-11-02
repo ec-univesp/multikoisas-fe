@@ -72,7 +72,7 @@ export const ProductCarousel = ({ products }: { products: readonly Product[] }) 
           </button>
         </div>
       </div>
-      <ul ref={listRef} onScroll={updateScrollEdges} className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2">
+      <ul ref={listRef} onScroll={updateScrollEdges} className="no-scrollbar flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2">
         {products.map((product) => (
           <li key={product.slug} className={cardClassName}>
             <ProductCard product={product} imageSizes={CAROUSEL_IMAGE_SIZES} />

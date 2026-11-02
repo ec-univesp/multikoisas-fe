@@ -59,7 +59,7 @@ describe('ProductCarousel', () => {
   it('shows every product card in a horizontal scroll strip that snaps to each card', () => {
     const { list } = renderCarousel();
     expect(within(list).getAllByRole('listitem')).toHaveLength(5);
-    expect(list).toHaveClass('overflow-x-auto', 'snap-x');
+    expect(list).toHaveClass('overflow-x-auto', 'snap-x', 'no-scrollbar');
     expect(within(list).getByRole('heading', { name: 'Produto 1' })).toBeInTheDocument();
   });
 

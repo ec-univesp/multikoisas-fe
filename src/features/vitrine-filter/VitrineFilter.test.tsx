@@ -51,7 +51,7 @@ describe('VitrineFilter', () => {
   it('keeps the chips inside their own horizontal scroll strip', () => {
     renderFilter();
     const chipStrip = screen.getByRole('group', { name: 'Categorias' });
-    expect(chipStrip).toHaveClass('overflow-x-auto');
+    expect(chipStrip).toHaveClass('overflow-x-auto', 'no-scrollbar');
     expect(within(chipStrip).getAllByRole('button')).toHaveLength(3);
   });
 
