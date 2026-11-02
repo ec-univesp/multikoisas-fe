@@ -14,7 +14,9 @@ const readScrollEdges = (list: HTMLUListElement): ScrollEdges => ({
 });
 
 const arrowButtonClassName =
-  'flex size-11 items-center justify-center rounded-full bg-white text-store-navy shadow-theme-xs hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40';
+  'flex size-11 items-center justify-center rounded-full bg-white text-store-navy shadow-theme-xs hover:bg-gray-100 aria-disabled:cursor-not-allowed aria-disabled:opacity-40 aria-disabled:hover:bg-white';
+
+const CAROUSEL_IMAGE_SIZES = '(max-width: 640px) 80vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw';
 
 const cardClassName =
   'w-[80%] shrink-0 snap-start sm:w-[calc((100%-0.75rem)/2)] md:w-[calc((100%-1.5rem)/3)] lg:w-[calc((100%-2.25rem)/4)]';
@@ -39,7 +41,8 @@ export const ProductCarousel = ({ products }: { products: readonly Product[] }) 
   const scrollByOneCard = (direction: 1 | -1) => {
     const list = listRef.current;
     const cardWidth = list?.querySelector('li')?.offsetWidth ?? 0;
-    list?.scrollBy({ left: direction * cardWidth, behavior: 'smooth' });
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    list?.scrollBy({ left: direction * cardWidth, behavior: prefersReducedMotion ? 'auto' : 'smooth' });
   };
 
   return (
@@ -52,8 +55,8 @@ export const ProductCarousel = ({ products }: { products: readonly Product[] }) 
           <button
             type="button"
             aria-label="Ver produtos anteriores"
-            disabled={!scrollEdges.canScrollPrevious}
-            onClick={() => scrollByOneCard(-1)}
+            aria-disabled={!scrollEdges.canScrollPrevious}
+            onClick={() => scrollEdges.canScrollPrevious && scrollByOneCard(-1)}
             className={arrowButtonClassName}
           >
             <ChevronLeftIcon />
@@ -61,8 +64,8 @@ export const ProductCarousel = ({ products }: { products: readonly Product[] }) 
           <button
             type="button"
             aria-label="Ver próximos produtos"
-            disabled={!scrollEdges.canScrollNext}
-            onClick={() => scrollByOneCard(1)}
+            aria-disabled={!scrollEdges.canScrollNext}
+            onClick={() => scrollEdges.canScrollNext && scrollByOneCard(1)}
             className={arrowButtonClassName}
           >
             <ChevronLeftIcon className="rotate-180" />
@@ -72,7 +75,7 @@ export const ProductCarousel = ({ products }: { products: readonly Product[] }) 
       <ul ref={listRef} onScroll={updateScrollEdges} className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2">
         {products.map((product) => (
           <li key={product.slug} className={cardClassName}>
-            <ProductCard product={product} />
+            <ProductCard product={product} imageSizes={CAROUSEL_IMAGE_SIZES} />
           </li>
         ))}
       </ul>
