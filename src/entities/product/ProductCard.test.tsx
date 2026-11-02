@@ -28,8 +28,15 @@ describe('ProductCard', () => {
       'href',
       '/produto/garrafa-termica-1l-1',
     );
-    expect(screen.getByText('Mantém a temperatura.')).toBeInTheDocument();
+    expect(screen.getByText('Mantém a temperatura.')).toHaveClass('line-clamp-3');
     expect(screen.getByAltText('Garrafa Térmica 1L')).toHaveAttribute('src', expect.stringContaining('garrafa.webp'));
+  });
+
+  it('keeps the default image sizes and accepts the ones the layout passes', () => {
+    const { rerender } = render(<ProductCard product={product} />);
+    expect(screen.getByAltText('Garrafa Térmica 1L')).toHaveAttribute('sizes', '(max-width: 768px) 50vw, (max-width: 1280px) 33vw, 25vw');
+    rerender(<ProductCard product={product} imageSizes="80vw" />);
+    expect(screen.getByAltText('Garrafa Térmica 1L')).toHaveAttribute('sizes', '80vw');
   });
 
   it('opens one sponsored new tab link per real store, side by side, in the store colors', () => {

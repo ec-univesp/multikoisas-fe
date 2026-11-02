@@ -50,7 +50,7 @@ describe('VitrineSearch', () => {
     expect(scrollIntoView).toHaveBeenCalledTimes(2);
   });
 
-  it('takes the visitor to the showcase with the term when the page has no showcase', async () => {
+  it('takes the visitor to the showcase page with the term when the page has no showcase', async () => {
     render(
       <VitrineSearchProvider>
         <VitrineSearchField id="header-search" label={HEADER_LABEL} />
@@ -58,7 +58,7 @@ describe('VitrineSearch', () => {
       </VitrineSearchProvider>,
     );
     await userEvent.type(screen.getByRole('searchbox', { name: HEADER_LABEL }), 'balde{Enter}');
-    expect(push).toHaveBeenCalledWith('/#vitrine');
+    expect(push).toHaveBeenCalledWith('/vitrine#vitrine');
     expect(screen.getByRole('status')).toHaveTextContent('balde');
   });
 

@@ -6,9 +6,14 @@ import type { Product } from './types';
 type ProductCardProps = {
   product: Product;
   hasPriorityImage?: boolean;
+  imageSizes?: string;
 };
 
-export const ProductCard = ({ product, hasPriorityImage = false }: ProductCardProps) => {
+export const ProductCard = ({
+  product,
+  hasPriorityImage = false,
+  imageSizes = '(max-width: 768px) 50vw, (max-width: 1280px) 33vw, 25vw',
+}: ProductCardProps) => {
   const coverImage = product.images[0] ?? PRODUCT_IMAGE_PLACEHOLDER;
   const detailPath = `/produto/${product.slug}`;
   const storeButtonsLayout = product.storeLinks.length > 1 ? 'grid gap-2 sm:grid-cols-2' : 'grid gap-2';
@@ -25,8 +30,8 @@ export const ProductCard = ({ product, hasPriorityImage = false }: ProductCardPr
           src={coverImage}
           alt={product.name}
           fill
-          priority={hasPriorityImage}
-          sizes="(max-width: 768px) 50vw, (max-width: 1280px) 33vw, 25vw"
+          preload={hasPriorityImage}
+          sizes={imageSizes}
           className="object-contain p-2"
         />
       </Link>
@@ -36,7 +41,7 @@ export const ProductCard = ({ product, hasPriorityImage = false }: ProductCardPr
           {product.name}
         </Link>
       </h3>
-      <p className="mt-1 line-clamp-2 text-sm text-gray-500">{product.shortDescription}</p>
+      <p className="mt-1 line-clamp-3 text-sm text-gray-500">{product.shortDescription}</p>
       <div className="mt-auto flex flex-col gap-2 pt-4">
         {product.storeLinks.length > 0 && (
           <div className={storeButtonsLayout}>

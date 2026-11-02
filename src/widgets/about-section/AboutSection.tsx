@@ -1,23 +1,57 @@
-import { fetchSocialNetworks, SocialNetworkLinks, type SocialNetwork } from '@/entities/social-network';
+import Image from 'next/image';
+import {
+  fetchSocialNetworks,
+  isWhatsApp,
+  SocialNetworkLinks,
+  WhatsAppLink,
+  type SocialNetwork,
+} from '@/entities/social-network';
+import { BrandMark } from '@/shared/ui/BrandMark';
+import { STORE_PHOTO, type StorePhoto } from './storePhoto';
 
 const loadSocialNetworks = (): Promise<SocialNetwork[]> => fetchSocialNetworks().catch(() => []);
 
-const PURCHASE_FACTS = [
-  'Você escolhe o produto aqui na vitrine.',
-  'O pagamento é feito na loja parceira escolhida.',
-  'A entrega e o acompanhamento do pedido ficam com a loja parceira.',
-];
-
-export const AboutSection = async () => {
-  const socialNetworks = await loadSocialNetworks();
+const StorePicture = ({ storePhoto }: { storePhoto: StorePhoto | null }) => {
+  if (!storePhoto) {
+    return (
+      <div
+        role="img"
+        aria-label="MultiKoisas"
+        className="flex aspect-[4/3] items-center justify-center rounded-xl bg-store-navy"
+      >
+        <div className="scale-150 sm:scale-200">
+          <BrandMark tone="onDark" />
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <section id="sobre" className="mx-auto max-w-7xl scroll-mt-4 px-4 pb-12 lg:px-8">
-      <div className="grid gap-6 rounded-xl bg-white p-5 shadow-theme-xs lg:grid-cols-12 lg:items-center lg:p-10">
-        <div className="lg:col-span-7">
-          <h2 className="text-2xl font-extrabold tracking-tight text-store-navy">
-            Sobre a MultiKoisas e nossas lojas parceiras
-          </h2>
+    <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-gray-100">
+      <Image
+        src={storePhoto.src}
+        alt={storePhoto.alt}
+        fill
+        preload
+        sizes="(max-width: 1024px) 100vw, 50vw"
+        className="object-cover"
+      />
+    </div>
+  );
+};
+
+export const AboutSection = async ({ storePhoto = STORE_PHOTO }: { storePhoto?: StorePhoto | null } = {}) => {
+  const socialNetworks = await loadSocialNetworks();
+  const whatsApp = socialNetworks.find(isWhatsApp);
+  const otherNetworks = socialNetworks.filter((socialNetwork) => socialNetwork !== whatsApp);
+
+  return (
+    <section id="sobre" className="mx-auto max-w-7xl scroll-mt-4 px-4 py-6 lg:px-8">
+      <div className="grid gap-6 rounded-xl bg-white p-5 shadow-theme-xs lg:grid-cols-2 lg:items-center lg:p-10">
+        <div>
+          <h1 className="text-2xl font-extrabold tracking-tight text-store-navy sm:text-3xl">
+            MultiKoisas: utilidades para casa, cozinha, limpeza e organização
+          </h1>
           <p className="mt-3 text-gray-700">
             A MultiKoisas é uma loja de utilidades para casa, cozinha, limpeza, ferragens e organização.
           </p>
@@ -25,24 +59,16 @@ export const AboutSection = async () => {
             Aqui na vitrine você encontra o produto certo e conclui a compra direto na loja parceira da sua
             preferência.
           </p>
-          {socialNetworks.length > 0 && (
+          {whatsApp && <WhatsAppLink url={whatsApp.url} className="mt-4" />}
+          {otherNetworks.length > 0 && (
             <SocialNetworkLinks
-              socialNetworks={socialNetworks}
+              socialNetworks={otherNetworks}
               className="mt-4"
               linkClassName="bg-gray-100 text-sm font-bold text-store-navy hover:bg-store-navy hover:text-white"
             />
           )}
         </div>
-        <div className="rounded-xl bg-gray-50 p-5 lg:col-span-5">
-          <h3 id="como-funciona-a-compra" className="font-bold text-store-navy">
-            Como funciona a compra
-          </h3>
-          <ul aria-labelledby="como-funciona-a-compra" className="mt-3 list-disc space-y-2 pl-5 text-sm text-gray-600">
-            {PURCHASE_FACTS.map((fact) => (
-              <li key={fact}>{fact}</li>
-            ))}
-          </ul>
-        </div>
+        <StorePicture storePhoto={storePhoto} />
       </div>
     </section>
   );

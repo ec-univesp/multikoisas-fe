@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it, vi } from 'vitest';
 import { VitrineSearchProvider } from '@/features/vitrine-filter';
@@ -24,8 +24,12 @@ describe('SiteHeader', () => {
     expect(screen.getByText('Koisas').parentElement).not.toHaveTextContent('Tudo em um só lugar');
     expect(screen.getByRole('searchbox', { name: 'Buscar produto no cabeçalho' })).toHaveClass('text-base');
     expect(screen.getByRole('search', { name: 'Buscar produto no cabeçalho' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Vitrine de produtos' })).toHaveAttribute('href', '/#vitrine');
-    expect(screen.getByRole('link', { name: 'Sobre a MultiKoisas' })).toHaveAttribute('href', '/#sobre');
+    const sectionLinks = within(screen.getByRole('navigation', { name: 'Seções do site' })).getAllByRole('link');
+    expect(sectionLinks.map((link) => [link.textContent, link.getAttribute('href')])).toEqual([
+      ['Início', '/'],
+      ['Vitrine de produtos', '/vitrine'],
+      ['A loja', '/#sobre'],
+    ]);
   });
 
   it('names only the stores that appear in the catalog links', async () => {

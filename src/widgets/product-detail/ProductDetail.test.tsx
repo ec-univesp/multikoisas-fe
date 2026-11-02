@@ -25,6 +25,11 @@ describe('ProductDetail', () => {
     expect(screen.getByRole('heading', { level: 1, name: product.name })).toBeInTheDocument();
   });
 
+  it('goes back to the showcase page', () => {
+    render(<ProductDetail product={product} />);
+    expect(screen.getByRole('link', { name: 'Voltar para a vitrine' })).toHaveAttribute('href', '/vitrine');
+  });
+
   it('shows the full description', () => {
     render(<ProductDetail product={product} />);
     expect(screen.getByText(product.longDescription)).toBeInTheDocument();
@@ -44,11 +49,6 @@ describe('ProductDetail', () => {
     expect(shopeeLink).toHaveAttribute('target', '_blank');
     expect(shopeeLink).toHaveAttribute('rel', expect.stringContaining('noopener'));
     expect(shopeeLink).toHaveAttribute('rel', expect.stringContaining('sponsored'));
-  });
-
-  it('links back to the storefront', () => {
-    render(<ProductDetail product={product} />);
-    expect(screen.getByRole('link', { name: /voltar para a vitrine/i })).toHaveAttribute('href', '/');
   });
 
   it('dresses its own controls in the store palette', () => {
