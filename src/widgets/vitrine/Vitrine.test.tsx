@@ -10,9 +10,11 @@ vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }));
 const renderVitrine = async () => render(<VitrineSearchProvider>{await Vitrine()}</VitrineSearchProvider>);
 
 describe('Vitrine', () => {
-  it('anchors the product grid and lists the api products', async () => {
+  it('titles the page with the focusable showcase heading and lists the api products', async () => {
     const { container } = await renderVitrine();
-    const showcaseHeading = screen.getByRole('heading', { name: 'Vitrine de produtos' });
+    const showcaseHeading = screen.getByRole('heading', { level: 1, name: 'Vitrine de produtos' });
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+    expect(screen.getByRole('search', { name: 'Buscar produto na vitrine' })).toBeInTheDocument();
     expect(container.querySelector('#vitrine')).toBe(showcaseHeading);
     expect(showcaseHeading).toHaveAttribute('tabindex', '-1');
     expect(screen.getByRole('heading', { name: 'Garrafa Térmica 1L' })).toBeInTheDocument();

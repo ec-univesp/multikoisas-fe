@@ -6,15 +6,17 @@ import { VitrineHeading, VitrineLink } from './VitrineAnchor';
 afterEach(() => window.history.replaceState(null, '', '/'));
 
 describe('VitrineHeading', () => {
-  it('takes the focus when the visitor arrives at the showcase anchor', () => {
-    window.history.replaceState(null, '', '/#vitrine');
+  it('is the visible page title and takes the focus when the visitor arrives from a header search', () => {
+    window.history.replaceState(null, '', '/vitrine#vitrine');
     render(<VitrineHeading />);
-    const heading = screen.getByRole('heading', { level: 2, name: 'Vitrine de produtos' });
+    const heading = screen.getByRole('heading', { level: 1, name: 'Vitrine de produtos' });
     expect(heading).toHaveAttribute('id', 'vitrine');
+    expect(heading).not.toHaveClass('sr-only');
     expect(heading).toHaveFocus();
   });
 
-  it('leaves the focus alone on a plain visit to the home page', () => {
+  it('leaves the focus alone on a plain visit to the showcase page', () => {
+    window.history.replaceState(null, '', '/vitrine');
     render(<VitrineHeading />);
     expect(screen.getByRole('heading', { name: 'Vitrine de produtos' })).not.toHaveFocus();
   });
@@ -29,7 +31,7 @@ describe('VitrineLink', () => {
       </>,
     );
     const link = screen.getByRole('link', { name: 'Vitrine de produtos' });
-    expect(link).toHaveAttribute('href', '/#vitrine');
+    expect(link).toHaveAttribute('href', '/vitrine');
     expect(link).toHaveClass('nav-link');
     await userEvent.click(link);
     expect(screen.getByRole('heading', { name: 'Vitrine de produtos' })).toHaveFocus();

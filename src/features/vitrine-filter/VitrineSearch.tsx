@@ -37,7 +37,7 @@ export const VitrineSearchField = ({ id, label }: { id: string; label: string })
     event.preventDefault();
     const showcaseHeading = document.getElementById('vitrine');
     if (!showcaseHeading) {
-      router.push('/#vitrine');
+      router.push('/vitrine#vitrine');
       return;
     }
     showcaseHeading.scrollIntoView({ behavior: 'smooth' });

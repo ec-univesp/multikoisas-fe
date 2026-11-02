@@ -36,7 +36,7 @@ export const ProductCard = ({ product, hasPriorityImage = false }: ProductCardPr
           {product.name}
         </Link>
       </h3>
-      <p className="mt-1 line-clamp-2 text-sm text-gray-500">{product.shortDescription}</p>
+      <p className="mt-1 line-clamp-3 text-sm text-gray-500">{product.shortDescription}</p>
       <div className="mt-auto flex flex-col gap-2 pt-4">
         {product.storeLinks.length > 0 && (
           <div className={storeButtonsLayout}>

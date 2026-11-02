@@ -28,7 +28,7 @@ describe('ProductCard', () => {
       'href',
       '/produto/garrafa-termica-1l-1',
     );
-    expect(screen.getByText('Mantém a temperatura.')).toBeInTheDocument();
+    expect(screen.getByText('Mantém a temperatura.')).toHaveClass('line-clamp-3');
     expect(screen.getByAltText('Garrafa Térmica 1L')).toHaveAttribute('src', expect.stringContaining('garrafa.webp'));
   });
 

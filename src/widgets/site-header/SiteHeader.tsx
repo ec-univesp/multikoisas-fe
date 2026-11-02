@@ -52,10 +52,13 @@ export const SiteHeader = async () => {
       </div>
       <div className="bg-gray-100 px-4 py-2 lg:px-8">
         <div className="mx-auto flex max-w-7xl flex-col gap-1 md:flex-row-reverse md:items-center md:justify-between">
-          <nav aria-label="Seções da vitrine" className="flex gap-1">
+          <nav aria-label="Seções do site" className="flex gap-1">
+            <Link href="/" className={navLinkClassName}>
+              Início
+            </Link>
             <VitrineLink className={navLinkClassName} />
             <Link href="/#sobre" className={navLinkClassName}>
-              Sobre a MultiKoisas
+              A loja
             </Link>
           </nav>
           {storesPhrase && (
