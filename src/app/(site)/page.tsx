@@ -1,12 +1,12 @@
 import { AboutSection } from '@/widgets/about-section';
-import { Hero } from '@/widgets/hero';
-import { Vitrine } from '@/widgets/vitrine';
+import { FeaturedProducts } from '@/widgets/featured-products';
+import { HowToBuy } from '@/widgets/how-to-buy';
 
 const HomePage = () => (
   <>
-    <Hero />
-    <Vitrine />
     <AboutSection />
+    <FeaturedProducts />
+    <HowToBuy />
   </>
 );
 

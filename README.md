@@ -225,7 +225,7 @@ Para acrescentar uma loja parceira nova (Amazon, por exemplo), basta uma entrada
 - **Mobile primeiro.** Projete em 375px de largura antes de pensar no desktop, com alvos de toque de pelo menos 44 pixels.
 - **Tema claro.** Não há modo escuro em nenhuma das duas superfícies.
 - **Textos em português**, sempre.
-- **Testes junto com o código**, com cobertura mínima de 90%.
+- **Testes na pasta `tests/` de cada módulo**, separados em `unit/` (função ou componente isolado) e `integration/` (tela com a API simulada pelo MSW), com cobertura mínima de 90%.
 - **O front não altera o back-end.** Problema encontrado na API vira tarefa no santi para o time do back-end.
 
 ## Publicação

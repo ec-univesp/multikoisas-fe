@@ -34,7 +34,7 @@ export const VitrineFilter = ({ products, categories }: VitrineFilterProps) => {
         </p>
       </div>
 
-      <div role="group" aria-label="Categorias" className="mt-4 flex gap-2 overflow-x-auto pb-1">
+      <div role="group" aria-label="Categorias" className="no-scrollbar mt-4 flex gap-2 overflow-x-auto pb-1">
         <button
           type="button"
           aria-pressed={activeCategory === null}

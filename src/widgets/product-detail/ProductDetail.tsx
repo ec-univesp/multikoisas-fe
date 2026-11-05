@@ -7,7 +7,7 @@ export const ProductDetail = ({ product }: { product: Product }) => {
   return (
     <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-16">
       <Link
-        href="/"
+        href="/vitrine"
         className="flex h-11 w-fit items-center text-sm font-semibold text-store-navy hover:text-store-navy-950"
       >
         Voltar para a vitrine

@@ -1,0 +1,1 @@
+export { HowToBuy } from './HowToBuy';
