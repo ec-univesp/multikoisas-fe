@@ -2,6 +2,7 @@
 
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { resolveAuthEnvironment } from './authEnvironment';
 import { verifyCredentials } from './credentials';
 import { createSessionToken, SESSION_COOKIE_NAME, SESSION_DURATION_SECONDS } from './session';
 
@@ -17,9 +18,10 @@ export const loginAction = async (_previousState: LoginState, formData: FormData
     return { error: MISSING_FIELDS_MESSAGE, username: typeof username === 'string' ? username : '' };
   }
 
-  if (!(await verifyCredentials(username, password, process.env))) return { error: INVALID_CREDENTIALS_MESSAGE, username };
+  const environment = resolveAuthEnvironment(process.env);
+  if (!(await verifyCredentials(username, password, environment))) return { error: INVALID_CREDENTIALS_MESSAGE, username };
 
-  const sessionToken = await createSessionToken(process.env.SESSION_SECRET, process.env.ADMIN_USERS, Date.now());
+  const sessionToken = await createSessionToken(environment.SESSION_SECRET, environment.ADMIN_USERS, Date.now());
   if (!sessionToken) return { error: INVALID_CREDENTIALS_MESSAGE, username };
 
   const cookieStore = await cookies();

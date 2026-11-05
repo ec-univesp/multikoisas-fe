@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { resolveAuthEnvironment } from '@/features/admin-auth/authEnvironment';
 import { SESSION_COOKIE_NAME, verifySessionToken } from '@/features/admin-auth/session';
 
 const LOGIN_PATH = '/panel';
@@ -8,10 +9,11 @@ const isAdminPath = (pathname: string) => pathname === '/admin' || pathname.star
 
 export const proxy = async (request: NextRequest) => {
   const { pathname } = request.nextUrl;
+  const environment = resolveAuthEnvironment(process.env);
   const hasValidSession = await verifySessionToken(
     request.cookies.get(SESSION_COOKIE_NAME)?.value,
-    process.env.SESSION_SECRET,
-    process.env.ADMIN_USERS,
+    environment.SESSION_SECRET,
+    environment.ADMIN_USERS,
     Date.now(),
   );
 
