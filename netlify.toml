@@ -4,6 +4,8 @@
 
 [build.environment]
   NODE_VERSION = "22"
+  # O cache do Turbopack guarda o valor das variaveis de ambiente e nao e publicado.
+  SECRETS_SCAN_OMIT_PATHS = ".netlify/.next/cache/**,.next/cache/**"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
