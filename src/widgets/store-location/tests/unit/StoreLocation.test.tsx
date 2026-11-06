@@ -24,9 +24,12 @@ describe('StoreLocation', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('renders nothing with the default settings', () => {
-    const { container } = render(<StoreLocation />);
-    expect(container).toBeEmptyDOMElement();
+  it('points to the store with the default settings', () => {
+    render(<StoreLocation />);
+    expect(screen.getByRole('link', { name: /Como chegar/ })).toHaveAttribute(
+      'href',
+      expect.stringContaining('destination=Av.%20Prof.%20Luiz%20In%C3%A1cio%20de%20Anhaia%20Melo%2C%202085'),
+    );
   });
 
   it('shows the written address under the where we are heading', () => {

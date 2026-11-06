@@ -76,7 +76,11 @@ describe('SiteFooter', () => {
   });
 
   it('leaves out the address when none is registered', async () => {
-    render(await SiteFooter());
+    render(
+      await SiteFooter({
+        settings: { address: null, googleReviewsUrl: null, googleRating: null, googleReviewCount: null },
+      }),
+    );
     expect(screen.getByRole('contentinfo').querySelector('address')).not.toBeInTheDocument();
   });
 

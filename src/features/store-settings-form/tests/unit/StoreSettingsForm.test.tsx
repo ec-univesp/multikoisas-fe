@@ -18,7 +18,11 @@ const fillAndLeave = async (label: string, value: string) => {
 
 describe('StoreSettingsForm', () => {
   it('starts empty while the store has no settings', () => {
-    render(<StoreSettingsForm />);
+    render(
+      <StoreSettingsForm
+        settings={{ address: null, googleReviewsUrl: null, googleRating: null, googleReviewCount: null }}
+      />,
+    );
     expect(screen.getByLabelText('Endereço')).toHaveValue('');
     expect(screen.getByLabelText('Link das avaliações no Google')).toHaveValue('');
     expect(screen.getByLabelText('Nota no Google')).toHaveValue(null);
