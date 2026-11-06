@@ -17,17 +17,17 @@ const navItems: NavItem[] = [
   {
     icon: <TableIcon />,
     name: 'Produtos',
-    path: '/admin/produtos',
+    path: '/admin/products',
   },
   {
     icon: <FolderIcon />,
     name: 'Categorias',
-    path: '/admin/categorias',
+    path: '/admin/categories',
   },
   {
     icon: <PlugInIcon />,
     name: 'Canais de venda',
-    path: '/admin/canais',
+    path: '/admin/sales-channels',
   },
 ];
 

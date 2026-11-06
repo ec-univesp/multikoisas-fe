@@ -14,7 +14,7 @@ beforeEach(() => {
 
 describe('SocialNetworkAdminScreen', () => {
   it('loads every social network through the site proxy, including links the storefront hides', async () => {
-    apiDatabase.redesSociais.push({ id: 3, descricao: 'WhatsApp', link: 'wa.me/5511999999999' });
+    apiDatabase.socialNetworks.push({ id: 3, descricao: 'WhatsApp', link: 'wa.me/5511999999999' });
     render(<SocialNetworkAdminScreen />);
 
     expect(screen.getByText('Carregando redes sociais...')).toBeInTheDocument();
@@ -25,7 +25,7 @@ describe('SocialNetworkAdminScreen', () => {
   });
 
   it('shows the empty state when the api answers the empty list with 404', async () => {
-    apiDatabase.redesSociais = [];
+    apiDatabase.socialNetworks = [];
     render(<SocialNetworkAdminScreen />);
 
     expect(await screen.findByText('Nenhuma rede cadastrada.')).toBeInTheDocument();

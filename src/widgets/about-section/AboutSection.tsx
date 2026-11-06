@@ -46,7 +46,7 @@ export const AboutSection = async ({ storePhoto = STORE_PHOTO }: { storePhoto?: 
   const otherNetworks = socialNetworks.filter((socialNetwork) => socialNetwork !== whatsApp);
 
   return (
-    <section id="sobre" className="mx-auto max-w-7xl scroll-mt-4 px-4 py-6 lg:px-8">
+    <section id="about" className="mx-auto max-w-7xl scroll-mt-4 px-4 py-6 lg:px-8">
       <div className="grid gap-6 rounded-xl bg-white p-5 shadow-theme-xs lg:grid-cols-2 lg:items-center lg:p-10">
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight text-store-navy sm:text-3xl">

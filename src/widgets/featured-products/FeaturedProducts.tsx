@@ -14,7 +14,7 @@ export const FeaturedProducts = async () => {
     <section className="mx-auto max-w-7xl px-4 pb-6 lg:px-8">
       <ProductCarousel products={featuredProducts} />
       <Link
-        href="/vitrine"
+        href="/showcase"
         className="mt-4 flex h-11 w-full items-center justify-center rounded-lg bg-store-navy px-5 text-sm font-semibold text-white hover:bg-store-navy-950 sm:w-fit"
       >
         Ver todos os produtos

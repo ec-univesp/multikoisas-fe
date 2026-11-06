@@ -50,7 +50,7 @@ export const SocialNetworkAdminPanel = ({ initialSocialNetworks }: SocialNetwork
     return reloadedSocialNetworks;
   };
 
-  // A API responde 409 a todo cadastro (bug do back): só a lista recarregada diz se a rede foi criada.
+  // The API answers 409 to every create (back-end bug): only the reloaded list tells whether the network was created.
   const handleRefusedCreation = async (values: SocialNetworkValues) => {
     const reloadedSocialNetworks = await reloadSocialNetworks();
     if (reloadedSocialNetworks.some((socialNetwork) => socialNetwork.name === values.name)) return;

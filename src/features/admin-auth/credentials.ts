@@ -33,7 +33,7 @@ const parseAdminUsers = (adminUsers: string | undefined) =>
     if (entry.trim() === '') return [];
     const user = parseUserEntry(entry);
     if (user) return [user];
-    console.warn(`ADMIN_USERS: entrada de índice ${index} mal formada, ignorada.`);
+    console.warn(`ADMIN_USERS: entry at index ${index} is malformed and was ignored.`);
     return [];
   });
 

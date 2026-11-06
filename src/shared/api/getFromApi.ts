@@ -3,7 +3,7 @@ export type FetchOptions = { fresh?: boolean; fromBrowser?: boolean };
 export const API_URL = process.env.MULTIKOISAS_API_URL ?? 'https://multikoisas-univesp.onrender.com';
 const REVALIDATE_SECONDS = 300;
 
-// A API responde lista vazia com 404 sem corpo (/canalvendaproduto, com 204).
+// The API answers an empty list with a bodiless 404 (/canalvendaproduto, with 204).
 const EMPTY_LIST_STATUSES = new Set([204, 404]);
 
 export const getFromApi = async <Item>(
@@ -14,6 +14,6 @@ export const getFromApi = async <Item>(
   const baseUrl = fromBrowser ? '/api' : API_URL;
   const response = await fetch(`${baseUrl}${path}`, cachePolicy);
   if (EMPTY_LIST_STATUSES.has(response.status)) return [];
-  if (!response.ok) throw new Error(`API ${path} respondeu ${response.status}`);
+  if (!response.ok) throw new Error(`API ${path} responded ${response.status}`);
   return response.json();
 };
