@@ -1,35 +1,38 @@
 // @vitest-environment node
 import { NextRequest } from 'next/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { forgetApiToken } from '@/features/admin-auth/apiToken';
-import { createSessionToken, SESSION_COOKIE_NAME } from '@/features/admin-auth/session';
-import { TEST_API_CREDENTIALS } from '@/test/msw/handlers';
+import { API_TOKEN_COOKIE_NAME, createSessionToken, SESSION_COOKIE_NAME } from '@/features/admin-auth/session';
 import { recordApiRequests } from '@/test/msw/server';
 import { config, proxy } from '../../proxy';
 
 const secret = 'a-session-secret-with-at-least-32-characters';
-const adminUsers = `emerson=scrypt:${'ab'.repeat(16)}:${'cd'.repeat(64)}`;
+const apiToken = 'jwt-guardado-no-login';
+const oneHourInMs = 60 * 60 * 1000;
 
-const buildRequest = (path: string, sessionToken?: string, method = 'GET') =>
-  new NextRequest(`http://localhost:3000${path}`, {
-    method,
-    headers: sessionToken ? { cookie: `${SESSION_COOKIE_NAME}=${sessionToken}` } : {},
-  });
+type RequestOptions = { apiToken?: string | null; authorization?: string };
+
+const buildRequest = (path: string, sessionToken?: string, method = 'GET', options: RequestOptions = {}) => {
+  const headers = new Headers();
+  const storedApiToken = options.apiToken === undefined ? apiToken : options.apiToken;
+  const cookies = [
+    sessionToken ? `${SESSION_COOKIE_NAME}=${sessionToken}` : null,
+    sessionToken && storedApiToken ? `${API_TOKEN_COOKIE_NAME}=${storedApiToken}` : null,
+  ].filter((cookie) => cookie !== null);
+  if (cookies.length > 0) headers.set('cookie', cookies.join('; '));
+  if (options.authorization) headers.set('authorization', options.authorization);
+  return new NextRequest(`http://localhost:3000${path}`, { method, headers });
+};
 
 const forwardedAuthorization = (response: Response) => response.headers.get('x-middleware-request-authorization');
 
-const validToken = async () => (await createSessionToken(secret, adminUsers, Date.now())) ?? '';
+const validToken = async () => (await createSessionToken(secret, Date.now(), Date.now() + oneHourInMs)) ?? '';
 
 describe('proxy', () => {
   beforeEach(() => {
     vi.stubEnv('SESSION_SECRET', secret);
-    vi.stubEnv('ADMIN_USERS', adminUsers);
-    vi.stubEnv('MULTIKOISAS_API_USERNAME', TEST_API_CREDENTIALS.username);
-    vi.stubEnv('MULTIKOISAS_API_PASSWORD', TEST_API_CREDENTIALS.password);
   });
   afterEach(() => {
     vi.unstubAllEnvs();
-    forgetApiToken();
   });
 
   it('runs only on the admin pages, the login page, the site settings page and the api proxy', () => {
@@ -63,12 +66,12 @@ describe('proxy', () => {
     expect(response.headers.get('x-middleware-next')).toBe('1');
   });
 
-  it('redirects to the login page after the user list changes', async () => {
-    const token = await validToken();
-    vi.stubEnv('ADMIN_USERS', `${adminUsers},multeste=scrypt:${'ef'.repeat(16)}:${'01'.repeat(64)}`);
+  it('redirects to the login page once the session expires', async () => {
+    const expiredToken = (await createSessionToken(secret, Date.now() - 2 * oneHourInMs, Date.now() - 1)) ?? '';
 
-    const response = await proxy(buildRequest('/admin/products', token));
+    const response = await proxy(buildRequest('/admin/products', expiredToken));
 
+    expect(expiredToken).not.toBe('');
     expect(response.headers.get('location')).toBe('http://localhost:3000/panel');
   });
 
@@ -113,11 +116,30 @@ describe('proxy', () => {
       },
     );
 
-    it('forwards a write with the api token of the panel account', async () => {
+    it('refuses a write without the api token cookie before reaching the api', async () => {
+      const apiRequests = recordApiRequests();
+
+      const response = await proxy(buildRequest('/api/produto', await validToken(), 'POST', { apiToken: null }));
+
+      expect(response.status).toBe(401);
+      expect(await response.json()).toEqual({ error: 'Entre no painel para salvar.' });
+      expect(forwardedAuthorization(response)).toBeNull();
+      expect(apiRequests).toEqual([]);
+    });
+
+    it('forwards a write with the api token stored at login', async () => {
       const response = await proxy(buildRequest('/api/produto', await validToken(), 'POST'));
 
       expect(response.headers.get('x-middleware-next')).toBe('1');
-      expect(forwardedAuthorization(response)).toBe(`Bearer ${TEST_API_CREDENTIALS.token}`);
+      expect(forwardedAuthorization(response)).toBe(`Bearer ${apiToken}`);
+    });
+
+    it('replaces an authorization header sent by the browser with the stored api token', async () => {
+      const response = await proxy(
+        buildRequest('/api/produto/1', await validToken(), 'PUT', { authorization: 'Bearer token-do-navegador' }),
+      );
+
+      expect(forwardedAuthorization(response)).toBe(`Bearer ${apiToken}`);
     });
 
     it.each(['/api/user', '/api/user/emerson', '/api/auth/login', '/api'])(
@@ -132,52 +154,5 @@ describe('proxy', () => {
         expect(apiRequests).toEqual([]);
       },
     );
-
-    it('logs into the api only once for writes that arrive together', async () => {
-      const apiRequests = recordApiRequests();
-      const token = await validToken();
-
-      await Promise.all([
-        proxy(buildRequest('/api/produto', token, 'POST')),
-        proxy(buildRequest('/api/categoria', token, 'POST')),
-      ]);
-
-      expect(apiRequests).toEqual(['POST /auth/login']);
-    });
-
-    it('logs into the api once and reuses the token on the next writes', async () => {
-      const apiRequests = recordApiRequests();
-      const token = await validToken();
-
-      await proxy(buildRequest('/api/produto', token, 'POST'));
-      const secondWrite = await proxy(buildRequest('/api/categoria', token, 'POST'));
-
-      expect(forwardedAuthorization(secondWrite)).toBe(`Bearer ${TEST_API_CREDENTIALS.token}`);
-      expect(apiRequests).toEqual(['POST /auth/login']);
-    });
-
-    it('logs into the api again once the token is close to expiring', async () => {
-      vi.useFakeTimers({ toFake: ['Date'] });
-      const apiRequests = recordApiRequests();
-
-      await proxy(buildRequest('/api/produto', await validToken(), 'POST'));
-      vi.setSystemTime(Date.now() + 11 * 60 * 1000);
-      await proxy(buildRequest('/api/produto', await validToken(), 'POST'));
-
-      expect(apiRequests).toEqual(['POST /auth/login', 'POST /auth/login']);
-      vi.useRealTimers();
-    });
-
-    it.each([
-      ['wrong', { MULTIKOISAS_API_PASSWORD: 'errada' }],
-      ['missing', { MULTIKOISAS_API_USERNAME: '' }],
-    ])('answers 503 when the api account is %s', async (_case, environment) => {
-      for (const [name, value] of Object.entries(environment)) vi.stubEnv(name, value);
-
-      const response = await proxy(buildRequest('/api/produto', await validToken(), 'POST'));
-
-      expect(response.status).toBe(503);
-      expect(await response.json()).toEqual({ error: 'O painel não conseguiu entrar na API para salvar.' });
-    });
   });
 });
