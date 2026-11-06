@@ -1,6 +1,7 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
+import { apiDatabase } from '@/test/msw/apiDatabase';
 import { server } from '@/test/msw/server';
 import { waitForLoaded } from '@/test/waitForLoaded';
 import { AboutSection } from '../../AboutSection';
@@ -66,6 +67,15 @@ describe('AboutSection', () => {
     expect(brandTile).toHaveClass('bg-store-navy');
     expect(within(brandTile).getByText('Koisas')).toHaveClass('text-store-yellow');
     expect(container.textContent).not.toMatch(/em breve/i);
+  });
+
+  it('shows the saved store logo in place of the brand mark', async () => {
+    apiDatabase.storeSettings.logoUrl = '/local-images/5';
+    await renderAbout();
+    const brandTile = await screen.findByRole('img', { name: 'MultiKoisas' });
+    await waitFor(() => expect(brandTile.querySelector('img')).toHaveAttribute('src', '/local-images/5'));
+    expect(brandTile.querySelector('img')).toHaveClass('object-contain');
+    expect(within(brandTile).queryByText('Koisas')).not.toBeInTheDocument();
   });
 
   it('shows the store photo once it is configured', async () => {

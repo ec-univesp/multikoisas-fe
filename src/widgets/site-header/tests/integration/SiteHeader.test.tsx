@@ -49,6 +49,18 @@ describe('SiteHeader', () => {
     ]);
   });
 
+  it('lines the tagline up with the brand mark text', async () => {
+    await renderHeader();
+    expect(screen.getByText('Tudo em um só lugar')).toHaveClass('ml-13');
+  });
+
+  it('lines the tagline up with the left edge of the saved logo', async () => {
+    apiDatabase.storeSettings.logoUrl = '/local-images/5';
+    await renderHeader();
+    expect(await screen.findByRole('img', { name: 'MultiKoisas' })).toHaveAttribute('src', '/local-images/5');
+    expect(screen.getByText('Tudo em um só lugar')).not.toHaveClass('ml-13');
+  });
+
   it('names only the stores that appear in the catalog links', async () => {
     await renderHeader();
     expect(screen.getByText('Compre na Shopee')).toBeInTheDocument();
