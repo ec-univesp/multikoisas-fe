@@ -19,7 +19,7 @@ describe('WhatsAppFloatingButton', () => {
     expect(button).toHaveAttribute('href', 'https://wa.me/message/V4IAOMTCK5XHP1');
     expect(button).toHaveAttribute('target', '_blank');
     expect(button).toHaveAttribute('rel', 'noopener noreferrer');
-    expect(button).toHaveClass('fixed', 'bottom-4', 'right-4', 'size-14');
+    expect(button).toHaveClass('size-14', 'rounded-full');
     expect(button.querySelector('svg')).toHaveAttribute('data-icon', 'whatsapp');
   });
 
