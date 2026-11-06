@@ -105,10 +105,10 @@ describe('SalesChannelAdminPanel', () => {
     const user = userEvent.setup();
     renderPanel();
 
-    await submitNewSalesChannel(user, 'mercado livre');
+    await submitNewSalesChannel(user, 'Mercado Livre');
 
     expect(
-      await screen.findByText('O canal "mercado livre" já tinha sido criado. A lista foi atualizada.'),
+      await screen.findByText('O canal "Mercado Livre" já tinha sido criado. A lista foi atualizada.'),
     ).toHaveAttribute('role', 'alert');
     expect(screen.getByText('Mercado Livre')).toBeInTheDocument();
     expect(screen.queryByLabelText('Nome do canal')).not.toBeInTheDocument();
