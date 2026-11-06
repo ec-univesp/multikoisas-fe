@@ -29,4 +29,19 @@ describe('LocalApiProvider', () => {
     expect(screen.queryByText('Vitrine')).not.toBeInTheDocument();
     expect(console.error).toHaveBeenCalled();
   });
+
+  it('shows the given fallback while the local api starts and when it cannot start', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    let failStart = () => {};
+    vi.mocked(startLocalApi).mockReturnValue(new Promise<void>((_resolve, reject) => (failStart = reject)));
+    render(<LocalApiProvider fallback="Marca">Vitrine</LocalApiProvider>);
+    expect(screen.getByText('Marca')).toBeInTheDocument();
+
+    failStart();
+
+    await vi.waitFor(() => expect(console.error).toHaveBeenCalled());
+    expect(screen.getByText('Marca')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
 });
