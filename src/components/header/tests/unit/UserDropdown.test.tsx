@@ -30,12 +30,13 @@ describe('UserDropdown', () => {
     expect(logoutAction).toHaveBeenCalledTimes(1);
   });
 
-  it('offers only the sign-out action, without links to the template demo pages', async () => {
+  it('offers site settings and sign-out, without links to the template demo pages', async () => {
     const user = userEvent.setup();
     const { container } = render(<UserDropdown />);
 
     await user.click(container.querySelector('.dropdown-toggle') as HTMLButtonElement);
 
-    expect(screen.queryByRole('link')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Configurações de site' })).toHaveAttribute('href', '/store');
+    expect(screen.getAllByRole('link')).toHaveLength(1);
   });
 });

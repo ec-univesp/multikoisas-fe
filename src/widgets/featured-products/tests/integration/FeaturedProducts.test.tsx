@@ -26,7 +26,11 @@ describe('FeaturedProducts', () => {
     server.use(
       http.get('*/produto', () =>
         HttpResponse.json(
-          Array.from({ length: 15 }, (_, index) => ({ id: 100 + index, nome: `Produto ${index}`, descricaoProduto: '' })),
+          Array.from({ length: 15 }, (_, index) => ({
+            id: 100 + index,
+            nome: `Produto ${index}`,
+            descricaoProduto: '',
+          })),
         ),
       ),
     );
@@ -36,7 +40,7 @@ describe('FeaturedProducts', () => {
 
   it('leads to the full showcase page', async () => {
     await renderFeaturedProducts();
-    expect(screen.getByRole('link', { name: 'Ver todos os produtos' })).toHaveAttribute('href', '/vitrine');
+    expect(screen.getByRole('link', { name: 'Ver todos os produtos' })).toHaveAttribute('href', '/showcase');
   });
 
   it('leaves the section out when the catalog cannot be read', async () => {

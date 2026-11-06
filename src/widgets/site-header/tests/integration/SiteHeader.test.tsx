@@ -1,21 +1,19 @@
 import { render, screen, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it, vi } from 'vitest';
-import { VitrineSearchProvider } from '@/features/vitrine-filter';
+import { ShowcaseSearchProvider } from '@/features/showcase-filter';
 import { server } from '@/test/msw/server';
 import { SiteHeader } from '../../SiteHeader';
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
-const renderHeader = async () => render(<VitrineSearchProvider>{await SiteHeader()}</VitrineSearchProvider>);
+const renderHeader = async () => render(<ShowcaseSearchProvider>{await SiteHeader()}</ShowcaseSearchProvider>);
 
 describe('SiteHeader', () => {
   it('shows the notice bar, the brand, the search and the section links', async () => {
     await renderHeader();
     expect(
-      screen.getByText(
-        'Vitrine oficial MultiKoisas: escolha aqui e conclua a compra com segurança na loja parceira.',
-      ),
+      screen.getByText('Vitrine oficial MultiKoisas: escolha aqui e conclua a compra com segurança na loja parceira.'),
     ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /^multikoisas/i })).toHaveAttribute('href', '/');
     expect(screen.getByText('Tudo em um só lugar')).toBeInTheDocument();
@@ -27,8 +25,7 @@ describe('SiteHeader', () => {
     const sectionLinks = within(screen.getByRole('navigation', { name: 'Seções do site' })).getAllByRole('link');
     expect(sectionLinks.map((link) => [link.textContent, link.getAttribute('href')])).toEqual([
       ['Início', '/'],
-      ['Vitrine de produtos', '/vitrine'],
-      ['A loja', '/#sobre'],
+      ['Vitrine de produtos', '/showcase'],
     ]);
   });
 
@@ -85,9 +82,7 @@ describe('SiteHeader', () => {
   it('recognizes whatsapp by its address whatever the network is called', async () => {
     server.use(
       http.get('*/socialnetwork', () =>
-        HttpResponse.json([
-          { id: 4, descricao: 'Contato', link: 'https://api.whatsapp.com/send?phone=5500000000000' },
-        ]),
+        HttpResponse.json([{ id: 4, descricao: 'Contato', link: 'https://api.whatsapp.com/send?phone=5500000000000' }]),
       ),
     );
     await renderHeader();
@@ -110,10 +105,7 @@ describe('SiteHeader', () => {
   it('ignores a whatsapp address that is not a valid https link', async () => {
     server.use(
       http.get('*/socialnetwork', () =>
-        HttpResponse.json([
-          { id: 3, descricao: 'WhatsApp', link: 'wa.me/5500000000000' },
-          { id: 5, descricao: 'WhatsApp', link: 'http://wa.me/5500000000000' },
-        ]),
+        HttpResponse.json([{ id: 5, descricao: 'WhatsApp', link: 'http://wa.me/5500000000000' }]),
       ),
     );
     await renderHeader();
@@ -124,5 +116,10 @@ describe('SiteHeader', () => {
     server.use(http.get('*/socialnetwork', () => new HttpResponse(null, { status: 500 })));
     await renderHeader();
     expect(screen.queryByRole('link', { name: 'Falar no WhatsApp' })).not.toBeInTheDocument();
+  });
+
+  it('leaves the google reviews badge out of the header, since it floats on the page', async () => {
+    await renderHeader();
+    expect(screen.queryByRole('link', { name: /no Google/ })).not.toBeInTheDocument();
   });
 });

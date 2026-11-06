@@ -1,0 +1,1 @@
+export { GoogleReviewsBadge } from './GoogleReviewsBadge';

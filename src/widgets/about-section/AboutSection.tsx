@@ -46,7 +46,7 @@ export const AboutSection = async ({ storePhoto = STORE_PHOTO }: { storePhoto?: 
   const otherNetworks = socialNetworks.filter((socialNetwork) => socialNetwork !== whatsApp);
 
   return (
-    <section id="sobre" className="mx-auto max-w-7xl scroll-mt-4 px-4 py-6 lg:px-8">
+    <section id="about" className="mx-auto max-w-7xl scroll-mt-4 px-4 py-6 lg:px-8">
       <div className="grid gap-6 rounded-xl bg-white p-5 shadow-theme-xs lg:grid-cols-2 lg:items-center lg:p-10">
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight text-store-navy sm:text-3xl">
@@ -56,8 +56,7 @@ export const AboutSection = async ({ storePhoto = STORE_PHOTO }: { storePhoto?: 
             A MultiKoisas é uma loja de utilidades para casa, cozinha, limpeza, ferragens e organização.
           </p>
           <p className="mt-2 text-gray-600">
-            Aqui na vitrine você encontra o produto certo e conclui a compra direto na loja parceira da sua
-            preferência.
+            Aqui na vitrine você encontra o produto certo e conclui a compra direto na loja parceira da sua preferência.
           </p>
           {whatsApp && <WhatsAppLink url={whatsApp.url} className="mt-4" />}
           {otherNetworks.length > 0 && (

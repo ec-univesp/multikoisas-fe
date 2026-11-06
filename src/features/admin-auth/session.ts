@@ -1,14 +1,14 @@
 export const SESSION_COOKIE_NAME = 'multikoisas_session';
-export const SESSION_DURATION_SECONDS = 8 * 60 * 60;
+export const API_TOKEN_COOKIE_NAME = 'multikoisas_api_token';
 
 const MINIMUM_SECRET_LENGTH = 32;
 const TOKEN_PATTERN = /^(\d+)\.([A-Za-z0-9_-]+)$/;
 
-const hasValidSecret = (secret: string | undefined): secret is string =>
+export const hasValidSecret = (secret: string | undefined): secret is string =>
   secret !== undefined && secret.length >= MINIMUM_SECRET_LENGTH;
 
-const importSigningKey = (secret: string, credentialsFingerprint: string) =>
-  crypto.subtle.importKey('raw', new TextEncoder().encode(`${secret}:${credentialsFingerprint}`), { name: 'HMAC', hash: 'SHA-256' }, false, [
+const importSigningKey = (secret: string) =>
+  crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, [
     'sign',
     'verify',
   ]);
@@ -30,27 +30,26 @@ const fromBase64Url = (text: string) => {
 
 export const createSessionToken = async (
   secret: string | undefined,
-  credentialsFingerprint: string | undefined,
   now: number,
+  expiresAt: number,
 ): Promise<string | null> => {
-  if (!hasValidSecret(secret) || !credentialsFingerprint) return null;
+  if (!hasValidSecret(secret) || expiresAt <= now) return null;
 
-  const expiresAt = String(now + SESSION_DURATION_SECONDS * 1000);
+  const signedExpiry = String(expiresAt);
   const signature = await crypto.subtle.sign(
     'HMAC',
-    await importSigningKey(secret, credentialsFingerprint),
-    new TextEncoder().encode(expiresAt),
+    await importSigningKey(secret),
+    new TextEncoder().encode(signedExpiry),
   );
-  return `${expiresAt}.${toBase64Url(signature)}`;
+  return `${signedExpiry}.${toBase64Url(signature)}`;
 };
 
 export const verifySessionToken = async (
   token: string | undefined,
   secret: string | undefined,
-  credentialsFingerprint: string | undefined,
   now: number,
 ): Promise<boolean> => {
-  if (!token || !hasValidSecret(secret) || !credentialsFingerprint) return false;
+  if (!token || !hasValidSecret(secret)) return false;
 
   const match = TOKEN_PATTERN.exec(token);
   if (!match) return false;
@@ -61,7 +60,7 @@ export const verifySessionToken = async (
 
   const signatureMatches = await crypto.subtle.verify(
     'HMAC',
-    await importSigningKey(secret, credentialsFingerprint),
+    await importSigningKey(secret),
     signature,
     new TextEncoder().encode(expiresAt),
   );

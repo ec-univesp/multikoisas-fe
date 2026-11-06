@@ -4,10 +4,10 @@ type StorePresentation = {
   name: string;
   purchaseLabel: string;
   purchaseButtonClassName: string;
-  /** Mesma cor de `purchaseButtonClassName`, para gráficos e outros usos fora do CSS.
-   *  O Tailwind só gera a classe se o valor estiver escrito literalmente, por isso os dois campos. */
+  /** Same color as `purchaseButtonClassName`, for charts and other uses outside CSS.
+   *  Tailwind only generates the class when the value is written literally, hence both fields. */
   brandColor: string;
-  /** Cor de texto legível sobre `brandColor`. */
+  /** Readable text color over `brandColor`. */
   brandTextColor: string;
 };
 

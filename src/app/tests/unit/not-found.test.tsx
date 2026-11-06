@@ -9,6 +9,6 @@ describe.each([
 ])('%s page', (_name, Page) => {
   it('sends the visitor back to the showcase page', () => {
     render(<Page />);
-    expect(screen.getByRole('link', { name: 'Voltar para a vitrine' })).toHaveAttribute('href', '/vitrine');
+    expect(screen.getByRole('link', { name: 'Voltar para a vitrine' })).toHaveAttribute('href', '/showcase');
   });
 });

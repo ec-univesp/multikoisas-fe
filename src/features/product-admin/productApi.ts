@@ -3,17 +3,22 @@ import {
   toImageRecord,
   toImageUrlsInIdOrder,
   toProduct,
+  toStoreLinks,
+  type ApiPurchaseLink,
   type Category,
-  type ImagemResponse,
+  type ApiProductImage,
   type Product,
   type ProductImageRecord,
-  type ProdutoResponse,
+  type ApiProduct,
 } from '@/entities/product';
-import type { PhotoChanges, ProductFormValues } from './types';
+import { getFromApi } from '@/shared/api/getFromApi';
+import type { SalesChannel } from '@/entities/sales-channel';
+import type { PhotoChanges, ProductFormValues, PurchaseLink } from './types';
 
-type CategoriaProdutoBody = { produtoId: number; categoriaId: number };
+type ProductCategoryBody = { produtoId: number; categoriaId: number };
 
 const HTTP_NOT_FOUND = 404;
+const HTTP_CONFLICT = 409;
 
 const toRequestBody = (body: unknown): RequestInit => {
   if (body === undefined) return {};
@@ -23,58 +28,82 @@ const toRequestBody = (body: unknown): RequestInit => {
 
 const callApi = async (method: string, path: string, body?: unknown): Promise<Response> => {
   const response = await fetch(`/api${path}`, { method, ...toRequestBody(body) });
-  if (!response.ok) throw new Error(`${method} ${path} respondeu ${response.status}`);
+  if (!response.ok) throw new Error(`${method} ${path} responded ${response.status}`);
   return response;
 };
 
-const toProdutoRequest = (values: ProductFormValues) => ({
+const toProductRequest = (values: ProductFormValues) => ({
   nome: values.name.trim(),
   descricaoProduto: values.description.trim(),
 });
 
 const linkCategory = (produtoId: number, categoriaId: number) =>
-  callApi('POST', '/categoriaproduto', { produtoId, categoriaId } satisfies CategoriaProdutoBody);
+  callApi('POST', '/categoriaproduto', { produtoId, categoriaId } satisfies ProductCategoryBody);
 
 const unlinkCategory = (produtoId: number, categoriaId: number) =>
-  callApi('DELETE', '/categoriaproduto', { produtoId, categoriaId } satisfies CategoriaProdutoBody);
+  callApi('DELETE', '/categoriaproduto', { produtoId, categoriaId } satisfies ProductCategoryBody);
 
-const fetchCategoryLinks = async (produtoId: number): Promise<CategoriaProdutoBody[]> => {
-  const response = await fetch(`/api/categoriaproduto?produtoId=${produtoId}`);
-  // A API responde 404, e não [], para produto sem categoria (UNIV-28 no santi).
-  if (response.status === HTTP_NOT_FOUND) return [];
-  if (!response.ok) throw new Error(`GET /categoriaproduto respondeu ${response.status}`);
-  return response.json();
+const fetchCategoryLinks = (produtoId: number): Promise<ProductCategoryBody[]> =>
+  getFromApi<ProductCategoryBody>(`/categoriaproduto?produtoId=${produtoId}`, { fresh: true, fromBrowser: true });
+
+const toApiPurchaseLink = (produtoId: number, link: PurchaseLink): ApiPurchaseLink => ({
+  produtoId,
+  canalVendaId: link.salesChannelId,
+  link: link.url,
+});
+
+export type EditableProduct = {
+  product: Product;
+  photos: ProductImageRecord[] | null;
+  purchaseLinks: PurchaseLink[];
 };
 
-export type EditableProduct = { product: Product; photos: ProductImageRecord[] | null };
+const fetchPurchaseLinks = async (produtoId: number): Promise<PurchaseLink[]> =>
+  (
+    await getFromApi<ApiPurchaseLink>(`/canalvendaproduto?produtoId=${produtoId}`, {
+      fresh: true,
+      fromBrowser: true,
+    })
+  ).map((apiPurchaseLink) => ({ salesChannelId: apiPurchaseLink.canalVendaId, url: apiPurchaseLink.link }));
+
+const toStoreLinksOf = (
+  produtoId: number,
+  purchaseLinks: readonly PurchaseLink[],
+  salesChannels: readonly SalesChannel[],
+) =>
+  toStoreLinks(
+    purchaseLinks.map((link) => toApiPurchaseLink(produtoId, link)),
+    salesChannels.map((salesChannel) => ({ id: salesChannel.id, nome: salesChannel.name })),
+  );
 
 export const loadProductForEdit = async (
   product: Product,
   categories: readonly Category[],
+  salesChannels: readonly SalesChannel[],
 ): Promise<EditableProduct | null> => {
   const productId = product.id;
-  const response = await fetch(`/api/produto/${productId}`, { cache: 'no-store' });
-  if (response.status === HTTP_NOT_FOUND) return null;
-  if (!response.ok) throw new Error(`GET /produto/${productId} respondeu ${response.status}`);
-  const produto: ProdutoResponse = await response.json();
-  const [[firstLink], photos] = await Promise.all([
+  const [apiProduct] = await getFromApi<ApiProduct>(`/produto?id=${productId}`, { fresh: true, fromBrowser: true });
+  if (!apiProduct) return null;
+  const [[firstLink], photos, purchaseLinks] = await Promise.all([
     fetchCategoryLinks(productId),
     fetchProductImageRecords(productId, { fresh: true, fromBrowser: true }).catch(() => null),
+    fetchPurchaseLinks(productId),
   ]);
   return {
     product: toProduct(
-      produto,
+      apiProduct,
       categories.find((category) => category.id === firstLink?.categoriaId),
       photos ? toImageUrlsInIdOrder(photos) : product.images,
-      product.storeLinks,
+      salesChannels.length > 0 ? toStoreLinksOf(productId, purchaseLinks, salesChannels) : product.storeLinks,
     ),
     photos,
+    purchaseLinks,
   };
 };
 
 export class CategoryLinkError extends Error {
   constructor(readonly product: Product) {
-    super(`Produto ${product.id} salvo sem categoria`);
+    super(`Product ${product.id} saved without a category`);
   }
 }
 
@@ -89,21 +118,16 @@ const keepOnlyCategory = async (produtoId: number, categoriaId: number) => {
 const findCategory = (categories: readonly Category[], values: ProductFormValues) =>
   categories.find((category) => String(category.id) === values.categoryId);
 
-export const createProduct = async (
-  values: ProductFormValues,
-  categories: readonly Category[],
-): Promise<Product> => {
-  const produto: ProdutoResponse = await (
-    await callApi('POST', '/produto', toProdutoRequest(values))
-  ).json();
+export const createProduct = async (values: ProductFormValues, categories: readonly Category[]): Promise<Product> => {
+  const apiProduct: ApiProduct = await (await callApi('POST', '/produto', toProductRequest(values))).json();
   const category = findCategory(categories, values);
-  if (!category) return toProduct(produto, undefined);
+  if (!category) return toProduct(apiProduct, undefined);
   try {
-    await linkCategory(produto.id, category.id);
+    await linkCategory(apiProduct.id, category.id);
   } catch {
-    throw new CategoryLinkError(toProduct(produto, undefined));
+    throw new CategoryLinkError(toProduct(apiProduct, undefined));
   }
-  return toProduct(produto, category);
+  return toProduct(apiProduct, category);
 };
 
 export const updateProduct = async (
@@ -111,34 +135,37 @@ export const updateProduct = async (
   values: ProductFormValues,
   categories: readonly Category[],
 ): Promise<Product> => {
-  const produtoRequest = toProdutoRequest(values);
-  await callApi('PUT', `/produto/${product.id}`, produtoRequest);
-  const produto = { id: product.id, ...produtoRequest };
+  const productRequest = toProductRequest(values);
+  await callApi('PUT', `/produto/${product.id}`, productRequest);
+  const apiProduct = { id: product.id, ...productRequest };
   const category = findCategory(categories, values);
   if (category && category.id !== product.categoryId) {
     try {
       await keepOnlyCategory(product.id, category.id);
     } catch {
-      throw new CategoryLinkError(toProduct(produto, undefined, product.images, product.storeLinks));
+      throw new CategoryLinkError(toProduct(apiProduct, undefined, product.images, product.storeLinks));
     }
   }
-  return toProduct(produto, category, product.images, product.storeLinks);
+  return toProduct(apiProduct, category, product.images, product.storeLinks);
 };
 
+// The API deletes categories, links and photos along, but answers 409 when the category or purchase link is missing.
+export class ProductDeleteRefusedError extends Error {}
+
 export const deleteProduct = async (product: Product): Promise<void> => {
-  const links = await fetchCategoryLinks(product.id);
-  for (const link of links) await unlinkCategory(link.produtoId, link.categoriaId);
-  await callApi('DELETE', `/produto/${product.id}`);
+  const response = await fetch(`/api/produto/${product.id}`, { method: 'DELETE' });
+  if (response.status === HTTP_CONFLICT)
+    throw new ProductDeleteRefusedError(`DELETE /produto/${product.id} responded 409`);
+  if (!response.ok) throw new Error(`DELETE /produto/${product.id} responded ${response.status}`);
 };
 
 const uploadProductImage = async (produtoId: number, file: File): Promise<ProductImageRecord | null> => {
   const form = new FormData();
-  form.append('produtoId', String(produtoId));
   form.append('file', file);
-  const response = await callApi('POST', '/imagem', form);
+  const response = await callApi('POST', `/imagem?produtoId=${produtoId}`, form);
   try {
-    const imagem: ImagemResponse = await response.json();
-    return toImageRecord(imagem);
+    const apiImage: ApiProductImage = await response.json();
+    return toImageRecord(apiImage);
   } catch {
     return null;
   }
@@ -146,8 +173,9 @@ const uploadProductImage = async (produtoId: number, file: File): Promise<Produc
 
 const deleteProductImage = async (produtoId: number, imageId: number) => {
   const response = await fetch('/api/imagem', { method: 'DELETE', ...toRequestBody({ id: imageId, produtoId }) });
-  if (!response.ok && response.status !== HTTP_NOT_FOUND) {
-    throw new Error(`DELETE /imagem respondeu ${response.status}`);
+  // A photo that no longer exists answers 409 on the current API (404 on the previous one).
+  if (!response.ok && response.status !== HTTP_NOT_FOUND && response.status !== HTTP_CONFLICT) {
+    throw new Error(`DELETE /imagem responded ${response.status}`);
   }
 };
 
@@ -196,4 +224,34 @@ export const syncProductImages = async (
     : [...product.images, ...toImageUrlsInIdOrder(uploadedPhotos)];
   const images = hasUnreadableUpload ? await reloadImages(product.id, knownImages) : knownImages;
   return { product: { ...product, images }, failedPhotoCount };
+};
+
+export class PurchaseLinkError extends Error {
+  constructor(readonly product: Product) {
+    super(`Purchase links of product ${product.id} were not saved`);
+  }
+}
+
+const isSameLink = (first: PurchaseLink, second: PurchaseLink) =>
+  first.salesChannelId === second.salesChannelId && first.url === second.url;
+
+export const syncPurchaseLinks = async (
+  product: Product,
+  currentLinks: readonly PurchaseLink[],
+  desiredLinks: readonly PurchaseLink[],
+  salesChannels: readonly SalesChannel[],
+): Promise<Product> => {
+  const removedLinks = currentLinks.filter((current) => !desiredLinks.some((desired) => isSameLink(current, desired)));
+  const addedLinks = desiredLinks.filter((desired) => !currentLinks.some((current) => isSameLink(current, desired)));
+  if (removedLinks.length === 0 && addedLinks.length === 0) return product;
+  try {
+    for (const link of removedLinks) await callApi('DELETE', '/canalvendaproduto', toApiPurchaseLink(product.id, link));
+    for (const link of addedLinks) await callApi('POST', '/canalvendaproduto', toApiPurchaseLink(product.id, link));
+  } catch {
+    const keptLinks = await fetchPurchaseLinks(product.id).catch(() => null);
+    throw new PurchaseLinkError(
+      keptLinks ? { ...product, storeLinks: toStoreLinksOf(product.id, keptLinks, salesChannels) } : product,
+    );
+  }
+  return { ...product, storeLinks: toStoreLinksOf(product.id, desiredLinks, salesChannels) };
 };

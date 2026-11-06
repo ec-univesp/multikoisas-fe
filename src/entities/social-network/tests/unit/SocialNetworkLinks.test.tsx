@@ -18,4 +18,23 @@ describe('SocialNetworkLinks', () => {
     expect(instagram).toHaveClass('bg-gray-100', 'min-h-11');
     expect(screen.getByRole('link', { name: 'Shopee' })).toHaveAttribute('href', 'https://shopee.com.br/multikoisas');
   });
+
+  it('shows the brand icon of a known network and a globe for any other', () => {
+    render(
+      <SocialNetworkLinks
+        socialNetworks={[...socialNetworks, { id: 3, name: 'Blog da loja', url: 'https://blog.multikoisas.com.br' }]}
+        className=""
+        linkClassName=""
+      />,
+    );
+    expect(screen.getByRole('link', { name: 'Instagram' }).querySelector('svg')).toHaveAttribute(
+      'data-icon',
+      'instagram',
+    );
+    expect(screen.getByRole('link', { name: 'Shopee' }).querySelector('svg')).toHaveAttribute('data-icon', 'shopee');
+    expect(screen.getByRole('link', { name: 'Blog da loja' }).querySelector('svg')).toHaveAttribute(
+      'data-icon',
+      'globe',
+    );
+  });
 });

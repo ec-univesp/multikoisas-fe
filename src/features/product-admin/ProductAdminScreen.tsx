@@ -3,17 +3,18 @@
 import { useEffect, useState } from 'react';
 import Button from '@/components/ui/button/Button';
 import { fetchCatalog, type Category, type Product } from '@/entities/product';
+import type { SalesChannel } from '@/entities/sales-channel';
 import { ProductAdminPanel } from './ProductAdminPanel';
 
 type LoadState =
   | { status: 'loading' }
   | { status: 'error' }
-  | { status: 'ready'; products: Product[]; categories: Category[] };
+  | { status: 'ready'; products: Product[]; categories: Category[]; salesChannels: SalesChannel[] };
 
 const loadCatalog = async (): Promise<LoadState> => {
   try {
-    const { products, categories } = await fetchCatalog({ fresh: true, fromBrowser: true });
-    return { status: 'ready', products, categories };
+    const { products, categories, salesChannels } = await fetchCatalog({ fresh: true, fromBrowser: true });
+    return { status: 'ready', products, categories, salesChannels };
   } catch {
     return { status: 'error' };
   }
@@ -53,6 +54,10 @@ export const ProductAdminScreen = () => {
   }
 
   return (
-    <ProductAdminPanel initialProducts={loadState.products} categories={loadState.categories} />
+    <ProductAdminPanel
+      initialProducts={loadState.products}
+      categories={loadState.categories}
+      salesChannels={loadState.salesChannels}
+    />
   );
 };

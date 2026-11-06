@@ -46,9 +46,9 @@ export const ProductCarousel = ({ products }: { products: readonly Product[] }) 
   };
 
   return (
-    <div role="region" aria-roledescription="carrossel" aria-labelledby="produtos-em-destaque">
+    <div role="region" aria-roledescription="carrossel" aria-labelledby="featured-products-title">
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h2 id="produtos-em-destaque" className="text-xl font-extrabold tracking-tight text-store-navy">
+        <h2 id="featured-products-title" className="text-xl font-extrabold tracking-tight text-store-navy">
           Produtos em destaque
         </h2>
         <div className="flex gap-2">
@@ -72,7 +72,11 @@ export const ProductCarousel = ({ products }: { products: readonly Product[] }) 
           </button>
         </div>
       </div>
-      <ul ref={listRef} onScroll={updateScrollEdges} className="no-scrollbar flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2">
+      <ul
+        ref={listRef}
+        onScroll={updateScrollEdges}
+        className="no-scrollbar flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2"
+      >
         {products.map((product) => (
           <li key={product.slug} className={cardClassName}>
             <ProductCard product={product} imageSizes={CAROUSEL_IMAGE_SIZES} />

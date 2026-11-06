@@ -4,11 +4,10 @@ export const PRODUCT_IMAGE_HOSTS = [
 ] as const;
 export const PRODUCT_IMAGE_PATH = '/storage/v1/object/public/';
 
-// A API grava parte das URLs sem o /object/ (UNIV-17 no santi).
+// The API stores some URLs without /object/ (UNIV-17 on santi).
 const PATH_WITHOUT_OBJECT = '/storage/v1/public/';
 
-const isAllowedHost = (hostname: string): boolean =>
-  PRODUCT_IMAGE_HOSTS.some((host) => host === hostname);
+const isAllowedHost = (hostname: string): boolean => PRODUCT_IMAGE_HOSTS.some((host) => host === hostname);
 
 export const toDisplayableImageUrl = (url: string): string | null => {
   if (!URL.canParse(url)) return null;

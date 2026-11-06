@@ -27,7 +27,7 @@ describe('ProductDetail', () => {
 
   it('goes back to the showcase page', () => {
     render(<ProductDetail product={product} />);
-    expect(screen.getByRole('link', { name: 'Voltar para a vitrine' })).toHaveAttribute('href', '/vitrine');
+    expect(screen.getByRole('link', { name: 'Voltar para a vitrine' })).toHaveAttribute('href', '/showcase');
   });
 
   it('shows the full description', () => {

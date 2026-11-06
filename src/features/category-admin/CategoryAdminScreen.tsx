@@ -5,10 +5,7 @@ import Button from '@/components/ui/button/Button';
 import { fetchCategories, type Category } from '@/entities/product';
 import { CategoryAdminPanel } from './CategoryAdminPanel';
 
-type LoadState =
-  | { status: 'loading' }
-  | { status: 'error' }
-  | { status: 'ready'; categories: Category[] };
+type LoadState = { status: 'loading' } | { status: 'error' } | { status: 'ready'; categories: Category[] };
 
 const loadCategories = async (): Promise<LoadState> => {
   try {
