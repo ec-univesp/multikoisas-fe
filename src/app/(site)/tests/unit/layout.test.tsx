@@ -1,6 +1,6 @@
 import { Children, isValidElement, type ReactElement, type ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
-import { VitrineSearchProvider } from '@/features/vitrine-filter';
+import { ShowcaseSearchProvider } from '@/features/showcase-filter';
 import { SiteHeader } from '@/widgets/site-header';
 import SiteLayout from '../../layout';
 
@@ -17,7 +17,7 @@ const findElementByType = (node: ReactNode, type: unknown): ElementWithChildren 
 describe('SiteLayout', () => {
   it('shares the showcase search between the header and the page', () => {
     const page = <p>página</p>;
-    const provider = findElementByType(SiteLayout({ children: page }), VitrineSearchProvider);
+    const provider = findElementByType(SiteLayout({ children: page }), ShowcaseSearchProvider);
     expect(provider).toBeDefined();
     expect(findElementByType(provider, SiteHeader)).toBeDefined();
     const main = findElementByType(provider, 'main');

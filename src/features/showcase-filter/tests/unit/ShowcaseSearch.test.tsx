@@ -1,12 +1,12 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { useVitrineSearch, VitrineSearchField, VitrineSearchProvider } from '../../VitrineSearch';
+import { useShowcaseSearch, ShowcaseSearchField, ShowcaseSearchProvider } from '../../ShowcaseSearch';
 
 const push = vi.hoisted(() => vi.fn());
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }));
 
-const SearchTermProbe = () => <output>{useVitrineSearch().searchTerm}</output>;
+const SearchTermProbe = () => <output>{useShowcaseSearch().searchTerm}</output>;
 
 const HEADER_LABEL = 'Buscar produto no cabeçalho';
 const SHOWCASE_LABEL = 'Buscar produto na vitrine';
@@ -20,13 +20,13 @@ const Showcase = ({ children }: { children?: React.ReactNode }) => (
   </section>
 );
 
-describe('VitrineSearch', () => {
+describe('ShowcaseSearch', () => {
   it('shares what the visitor types with the rest of the page', async () => {
     render(
-      <VitrineSearchProvider>
-        <VitrineSearchField id="header-search" label={HEADER_LABEL} />
+      <ShowcaseSearchProvider>
+        <ShowcaseSearchField id="header-search" label={HEADER_LABEL} />
         <SearchTermProbe />
-      </VitrineSearchProvider>,
+      </ShowcaseSearchProvider>,
     );
     const input = screen.getByRole('searchbox', { name: HEADER_LABEL });
     expect(input).toHaveClass('text-base');
@@ -39,10 +39,10 @@ describe('VitrineSearch', () => {
     const scrollIntoView = vi.fn();
     Element.prototype.scrollIntoView = scrollIntoView;
     render(
-      <VitrineSearchProvider>
-        <VitrineSearchField id="header-search" label={HEADER_LABEL} />
+      <ShowcaseSearchProvider>
+        <ShowcaseSearchField id="header-search" label={HEADER_LABEL} />
         <Showcase />
-      </VitrineSearchProvider>,
+      </ShowcaseSearchProvider>,
     );
     await userEvent.type(screen.getByRole('searchbox', { name: HEADER_LABEL }), 'balde{Enter}');
     expect(scrollIntoView).toHaveBeenCalled();
@@ -52,10 +52,10 @@ describe('VitrineSearch', () => {
 
   it('takes the visitor to the showcase page with the term when the page has no showcase', async () => {
     render(
-      <VitrineSearchProvider>
-        <VitrineSearchField id="header-search" label={HEADER_LABEL} />
+      <ShowcaseSearchProvider>
+        <ShowcaseSearchField id="header-search" label={HEADER_LABEL} />
         <SearchTermProbe />
-      </VitrineSearchProvider>,
+      </ShowcaseSearchProvider>,
     );
     await userEvent.type(screen.getByRole('searchbox', { name: HEADER_LABEL }), 'balde{Enter}');
     expect(push).toHaveBeenCalledWith('/showcase#showcase');
@@ -65,10 +65,10 @@ describe('VitrineSearch', () => {
   it('moves the focus to the showcase heading after a header search', async () => {
     Element.prototype.scrollIntoView = vi.fn();
     render(
-      <VitrineSearchProvider>
-        <VitrineSearchField id="header-search" label={HEADER_LABEL} />
+      <ShowcaseSearchProvider>
+        <ShowcaseSearchField id="header-search" label={HEADER_LABEL} />
         <Showcase />
-      </VitrineSearchProvider>,
+      </ShowcaseSearchProvider>,
     );
     await userEvent.type(screen.getByRole('searchbox', { name: HEADER_LABEL }), 'balde{Enter}');
     expect(screen.getByRole('heading', { name: 'Vitrine de produtos' })).toHaveFocus();
@@ -77,11 +77,11 @@ describe('VitrineSearch', () => {
   it('keeps the focus in the showcase search when it is submitted', async () => {
     Element.prototype.scrollIntoView = vi.fn();
     render(
-      <VitrineSearchProvider>
+      <ShowcaseSearchProvider>
         <Showcase>
-          <VitrineSearchField id="vitrine-search" label={SHOWCASE_LABEL} />
+          <ShowcaseSearchField id="showcase-search" label={SHOWCASE_LABEL} />
         </Showcase>
-      </VitrineSearchProvider>,
+      </ShowcaseSearchProvider>,
     );
     const input = screen.getByRole('searchbox', { name: SHOWCASE_LABEL });
     await userEvent.type(input, 'balde{Enter}');
@@ -90,6 +90,6 @@ describe('VitrineSearch', () => {
 
   it('refuses to work outside the provider', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
-    expect(() => render(<SearchTermProbe />)).toThrow('VitrineSearchProvider');
+    expect(() => render(<SearchTermProbe />)).toThrow('ShowcaseSearchProvider');
   });
 });

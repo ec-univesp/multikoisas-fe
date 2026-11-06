@@ -1,13 +1,13 @@
 import { render, screen, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it, vi } from 'vitest';
-import { VitrineSearchProvider } from '@/features/vitrine-filter';
+import { ShowcaseSearchProvider } from '@/features/showcase-filter';
 import { server } from '@/test/msw/server';
 import { SiteHeader } from '../../SiteHeader';
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
-const renderHeader = async () => render(<VitrineSearchProvider>{await SiteHeader()}</VitrineSearchProvider>);
+const renderHeader = async () => render(<ShowcaseSearchProvider>{await SiteHeader()}</ShowcaseSearchProvider>);
 
 describe('SiteHeader', () => {
   it('shows the notice bar, the brand, the search and the section links', async () => {

@@ -4,33 +4,33 @@ import { Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createContext, useContext, useState, type FormEvent, type ReactNode } from 'react';
 
-type VitrineSearch = {
+type ShowcaseSearch = {
   searchTerm: string;
   setSearchTerm: (searchTerm: string) => void;
   activeCategory: string | null;
   setActiveCategory: (category: string | null) => void;
 };
 
-const VitrineSearchContext = createContext<VitrineSearch | null>(null);
+const ShowcaseSearchContext = createContext<ShowcaseSearch | null>(null);
 
-export const VitrineSearchProvider = ({ children }: { children?: ReactNode }) => {
+export const ShowcaseSearchProvider = ({ children }: { children?: ReactNode }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   return (
-    <VitrineSearchContext value={{ searchTerm, setSearchTerm, activeCategory, setActiveCategory }}>
+    <ShowcaseSearchContext value={{ searchTerm, setSearchTerm, activeCategory, setActiveCategory }}>
       {children}
-    </VitrineSearchContext>
+    </ShowcaseSearchContext>
   );
 };
 
-export const useVitrineSearch = (): VitrineSearch => {
-  const vitrineSearch = useContext(VitrineSearchContext);
-  if (vitrineSearch === null) throw new Error('useVitrineSearch must be used inside VitrineSearchProvider');
-  return vitrineSearch;
+export const useShowcaseSearch = (): ShowcaseSearch => {
+  const showcaseSearch = useContext(ShowcaseSearchContext);
+  if (showcaseSearch === null) throw new Error('useShowcaseSearch must be used inside ShowcaseSearchProvider');
+  return showcaseSearch;
 };
 
-export const VitrineSearchField = ({ id, label }: { id: string; label: string }) => {
-  const { searchTerm, setSearchTerm } = useVitrineSearch();
+export const ShowcaseSearchField = ({ id, label }: { id: string; label: string }) => {
+  const { searchTerm, setSearchTerm } = useShowcaseSearch();
   const router = useRouter();
 
   const scrollToShowcase = (event: FormEvent<HTMLFormElement>) => {

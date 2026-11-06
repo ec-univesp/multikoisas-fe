@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { VitrineSearchProvider } from '@/features/vitrine-filter';
+import { ShowcaseSearchProvider } from '@/features/showcase-filter';
 import { SiteFooter } from '@/widgets/site-footer';
 import { SiteHeader } from '@/widgets/site-header';
 
@@ -15,10 +15,10 @@ export default function SiteLayout({ children }: Readonly<{ children: React.Reac
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
       <script dangerouslySetInnerHTML={{ __html: forceLightTheme }} />
-      <VitrineSearchProvider>
+      <ShowcaseSearchProvider>
         <SiteHeader />
         <main className="flex-1">{children}</main>
-      </VitrineSearchProvider>
+      </ShowcaseSearchProvider>
       <SiteFooter />
     </div>
   );
