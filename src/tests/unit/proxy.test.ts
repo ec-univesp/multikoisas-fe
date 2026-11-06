@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { NextRequest } from 'next/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { resolveSessionKey } from '@/features/admin-auth/authEnvironment';
 import { createSessionToken, SESSION_COOKIE_NAME } from '@/features/admin-auth/session';
 import { recordApiRequests } from '@/test/msw/server';
 import { config, proxy } from '../../proxy';
@@ -14,11 +15,14 @@ const buildRequest = (path: string, sessionToken?: string, method = 'GET') => {
   return new NextRequest(`http://localhost:3000${path}`, { method, headers });
 };
 
-const validToken = async () => (await createSessionToken(secret, Date.now(), Date.now() + oneHourInMs)) ?? '';
+const sessionKey = () => resolveSessionKey(process.env);
+const validToken = async () => (await createSessionToken(sessionKey(), Date.now(), Date.now() + oneHourInMs)) ?? '';
 
 describe('proxy', () => {
   beforeEach(() => {
     vi.stubEnv('SESSION_SECRET', secret);
+    vi.stubEnv('PANEL_USERNAME', 'loja');
+    vi.stubEnv('PANEL_PASSWORD', 'senha-do-painel');
   });
   afterEach(() => {
     vi.unstubAllEnvs();
@@ -56,11 +60,20 @@ describe('proxy', () => {
   });
 
   it('redirects to the login page once the session expires', async () => {
-    const expiredToken = (await createSessionToken(secret, Date.now() - 2 * oneHourInMs, Date.now() - 1)) ?? '';
+    const expiredToken = (await createSessionToken(sessionKey(), Date.now() - 2 * oneHourInMs, Date.now() - 1)) ?? '';
 
     const response = await proxy(buildRequest('/admin/products', expiredToken));
 
     expect(expiredToken).not.toBe('');
+    expect(response.headers.get('location')).toBe('http://localhost:3000/panel');
+  });
+
+  it('signs everybody out when the panel password changes', async () => {
+    const tokenBeforeTheChange = await validToken();
+    vi.stubEnv('PANEL_PASSWORD', 'senha-nova');
+
+    const response = await proxy(buildRequest('/admin/products', tokenBeforeTheChange));
+
     expect(response.headers.get('location')).toBe('http://localhost:3000/panel');
   });
 

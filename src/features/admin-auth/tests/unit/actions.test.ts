@@ -2,6 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { recordApiRequests } from '@/test/msw/server';
 import { loginAction, logoutAction } from '../../actions';
+import { resolveSessionKey } from '../../authEnvironment';
 import { SESSION_COOKIE_NAME, verifySessionToken } from '../../session';
 
 const { cookieStore, redirect } = vi.hoisted(() => ({
@@ -78,8 +79,9 @@ describe('loginAction', () => {
       maxAge: eightHoursInSeconds,
     });
     const sessionToken = cookieStore.set.mock.calls[0]?.[1];
-    expect(await verifySessionToken(sessionToken, secret, now + eightHoursInSeconds * 1000 - 1)).toBe(true);
-    expect(await verifySessionToken(sessionToken, secret, now + eightHoursInSeconds * 1000)).toBe(false);
+    const key = resolveSessionKey(process.env);
+    expect(await verifySessionToken(sessionToken, key, now + eightHoursInSeconds * 1000 - 1)).toBe(true);
+    expect(await verifySessionToken(sessionToken, key, now + eightHoursInSeconds * 1000)).toBe(false);
     expect(apiRequests).toEqual([]);
   });
 
@@ -105,8 +107,17 @@ describe('loginAction', () => {
     expect(redirect).not.toHaveBeenCalled();
   });
 
-  it('ignores spaces around the username', async () => {
+  it('ignores spaces around the username, typed or configured', async () => {
+    vi.stubEnv('PANEL_USERNAME', ` ${panelUsername}\n`);
     await expect(logIn(`  ${panelUsername}  `)).rejects.toThrow('NEXT_REDIRECT /admin/products');
+  });
+
+  it('waits half a second before saying the credentials are wrong, to slow down guessing', async () => {
+    const setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout');
+
+    expect(await logIn(panelUsername, 'errada')).toEqual({ error: invalidMessage, username: panelUsername });
+
+    expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 500);
   });
 
   it.each([['PANEL_USERNAME'], ['PANEL_PASSWORD'], ['SESSION_SECRET']])(
