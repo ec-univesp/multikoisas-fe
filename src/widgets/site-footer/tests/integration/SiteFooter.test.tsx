@@ -1,6 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
+import type { StoreSettings } from '@/entities/store-settings';
 import { server } from '@/test/msw/server';
 import { SiteFooter } from '../../SiteFooter';
 
@@ -60,6 +61,23 @@ describe('SiteFooter', () => {
     render(await SiteFooter());
     expect(screen.getByRole('link', { name: 'Instagram' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Site' })).not.toBeInTheDocument();
+  });
+
+  it('shows the store address when it is registered', async () => {
+    const settings: StoreSettings = {
+      address: 'Rua das Flores, 100 - São Paulo, SP',
+      googleReviewsUrl: null,
+      googleRating: null,
+      googleReviewCount: null,
+    };
+    render(await SiteFooter({ settings }));
+    const address = within(screen.getByRole('contentinfo')).getByText('Rua das Flores, 100 - São Paulo, SP');
+    expect(address.tagName).toBe('ADDRESS');
+  });
+
+  it('leaves out the address when none is registered', async () => {
+    render(await SiteFooter());
+    expect(screen.getByRole('contentinfo').querySelector('address')).not.toBeInTheDocument();
   });
 
   it('hides the social networks block when the store has none', async () => {
