@@ -151,7 +151,7 @@ export const ProductFormModal = ({
         <p className="mb-6 text-sm text-gray-500">Esses dados aparecem no card e na página de detalhes da vitrine.</p>
 
         <form onSubmit={handleSubmit} noValidate>
-          <div className="flex custom-scrollbar max-h-[60vh] flex-col gap-5 overflow-y-auto px-1 pb-2">
+          <div className="no-scrollbar flex max-h-[60vh] flex-col gap-5 overflow-y-auto px-1 pb-2">
             <div>
               <Label htmlFor="product-name">Nome do produto</Label>
               <Input
