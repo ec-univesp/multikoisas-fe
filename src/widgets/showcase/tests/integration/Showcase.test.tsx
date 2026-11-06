@@ -3,13 +3,36 @@ import { http, HttpResponse } from 'msw';
 import { describe, expect, it, vi } from 'vitest';
 import { ShowcaseSearchProvider } from '@/features/showcase-filter';
 import { server } from '@/test/msw/server';
+import { waitForLoaded } from '@/test/waitForLoaded';
 import { Showcase } from '../../Showcase';
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
-const renderShowcase = async () => render(<ShowcaseSearchProvider>{await Showcase()}</ShowcaseSearchProvider>);
+const renderShowcase = async () => {
+  const view = render(
+    <ShowcaseSearchProvider>
+      <Showcase />
+    </ShowcaseSearchProvider>,
+  );
+  await waitForLoaded();
+  return view;
+};
 
 describe('Showcase', () => {
+  it('keeps the heading in place and announces the products while they load', () => {
+    window.location.hash = '#showcase';
+    render(
+      <ShowcaseSearchProvider>
+        <Showcase />
+      </ShowcaseSearchProvider>,
+    );
+    const showcaseHeading = screen.getByRole('heading', { level: 1, name: 'Vitrine de produtos' });
+    expect(showcaseHeading).toHaveFocus();
+    expect(screen.getByRole('status')).toHaveTextContent('Carregando produtos...');
+    expect(showcaseHeading.closest('section')).toHaveAttribute('aria-busy', 'true');
+    window.location.hash = '';
+  });
+
   it('titles the page with the focusable showcase heading and lists the api products', async () => {
     const { container } = await renderShowcase();
     const showcaseHeading = screen.getByRole('heading', { level: 1, name: 'Vitrine de produtos' });

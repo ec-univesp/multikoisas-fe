@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
 import { server } from '@/test/msw/server';
+import { waitForApiAnswers } from '@/test/waitForLoaded';
 import { WhatsAppFloatingButton } from '../../WhatsAppFloatingButton';
 
 const withSocialNetworks = (socialNetworks: { id: number; descricao: string; link: string }[]) =>
@@ -13,9 +14,9 @@ describe('WhatsAppFloatingButton', () => {
       { id: 1, descricao: 'Instagram', link: 'https://www.instagram.com/multikoisas' },
       { id: 2, descricao: 'WhatsApp', link: 'wa.me/message/V4IAOMTCK5XHP1' },
     ]);
-    render(await WhatsAppFloatingButton());
+    render(<WhatsAppFloatingButton />);
 
-    const button = screen.getByRole('link', { name: 'Falar com a MultiKoisas no WhatsApp' });
+    const button = await screen.findByRole('link', { name: 'Falar com a MultiKoisas no WhatsApp' });
     expect(button).toHaveAttribute('href', 'https://wa.me/message/V4IAOMTCK5XHP1');
     expect(button).toHaveAttribute('target', '_blank');
     expect(button).toHaveAttribute('rel', 'noopener noreferrer');
@@ -24,13 +25,23 @@ describe('WhatsAppFloatingButton', () => {
   });
 
   it('stays out of the page when the store has no WhatsApp', async () => {
-    render(<div data-testid="page">{await WhatsAppFloatingButton()}</div>);
+    render(
+      <div data-testid="page">
+        <WhatsAppFloatingButton />
+      </div>,
+    );
+    await waitForApiAnswers();
     expect(screen.getByTestId('page')).toBeEmptyDOMElement();
   });
 
   it('stays out of the page when the api fails', async () => {
     server.use(http.get('*/socialnetwork', () => new HttpResponse(null, { status: 500 })));
-    render(<div data-testid="page">{await WhatsAppFloatingButton()}</div>);
+    render(
+      <div data-testid="page">
+        <WhatsAppFloatingButton />
+      </div>,
+    );
+    await waitForApiAnswers();
     expect(screen.getByTestId('page')).toBeEmptyDOMElement();
   });
 });

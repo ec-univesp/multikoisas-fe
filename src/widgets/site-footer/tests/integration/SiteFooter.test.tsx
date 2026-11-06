@@ -3,11 +3,23 @@ import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
 import type { StoreSettings } from '@/entities/store-settings';
 import { server } from '@/test/msw/server';
+import { waitForLoaded } from '@/test/waitForLoaded';
 import { SiteFooter } from '../../SiteFooter';
 
+const renderFooter = async (props: { settings?: StoreSettings } = {}) => {
+  render(<SiteFooter {...props} />);
+  await waitForLoaded();
+};
+
 describe('SiteFooter', () => {
+  it('marks the footer busy while the social networks load', () => {
+    render(<SiteFooter />);
+    expect(screen.getByRole('contentinfo')).toHaveAttribute('aria-busy', 'true');
+    expect(screen.getByRole('navigation', { name: 'Navegue' })).toBeInTheDocument();
+  });
+
   it('presents the store with its brand, a short description, the year and the partner stores notice', async () => {
-    render(await SiteFooter());
+    await renderFooter();
     const footer = screen.getByRole('contentinfo');
     expect(within(footer).getByText('Koisas')).toBeInTheDocument();
     expect(
@@ -21,7 +33,7 @@ describe('SiteFooter', () => {
   });
 
   it('offers shortcuts to the home page and the product showcase', async () => {
-    render(await SiteFooter());
+    await renderFooter();
     const shortcuts = screen.getByRole('navigation', { name: 'Navegue' });
     expect(within(shortcuts).getByRole('link', { name: 'Início' })).toHaveAttribute('href', '/');
     expect(within(shortcuts).getByRole('link', { name: 'Vitrine de produtos' })).toHaveAttribute('href', '/showcase');
@@ -29,7 +41,7 @@ describe('SiteFooter', () => {
   });
 
   it('links each store social network in a new tab with its icon', async () => {
-    render(await SiteFooter());
+    await renderFooter();
     const socialNetworks = screen.getByRole('navigation', { name: 'Siga a MultiKoisas' });
     const instagram = within(socialNetworks).getByRole('link', { name: 'Instagram' });
     expect(instagram).toHaveAttribute('href', 'https://www.instagram.com/multikoisas');
@@ -44,7 +56,7 @@ describe('SiteFooter', () => {
 
   it('keeps the footer and its shortcuts without social networks when the api fails', async () => {
     server.use(http.get('*/socialnetwork', () => new HttpResponse(null, { status: 500 })));
-    render(await SiteFooter());
+    await renderFooter();
     expect(screen.getByRole('navigation', { name: 'Navegue' })).toBeInTheDocument();
     expect(screen.queryByRole('navigation', { name: 'Siga a MultiKoisas' })).not.toBeInTheDocument();
   });
@@ -58,7 +70,7 @@ describe('SiteFooter', () => {
         ]),
       ),
     );
-    render(await SiteFooter());
+    await renderFooter();
     expect(screen.getByRole('link', { name: 'Instagram' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Site' })).not.toBeInTheDocument();
   });
@@ -70,23 +82,21 @@ describe('SiteFooter', () => {
       googleRating: null,
       googleReviewCount: null,
     };
-    render(await SiteFooter({ settings }));
+    await renderFooter({ settings });
     const address = within(screen.getByRole('contentinfo')).getByText('Rua das Flores, 100 - São Paulo, SP');
     expect(address.tagName).toBe('ADDRESS');
   });
 
   it('leaves out the address when none is registered', async () => {
-    render(
-      await SiteFooter({
-        settings: { address: null, googleReviewsUrl: null, googleRating: null, googleReviewCount: null },
-      }),
-    );
+    await renderFooter({
+      settings: { address: null, googleReviewsUrl: null, googleRating: null, googleReviewCount: null },
+    });
     expect(screen.getByRole('contentinfo').querySelector('address')).not.toBeInTheDocument();
   });
 
   it('hides the social networks block when the store has none', async () => {
     server.use(http.get('*/socialnetwork', () => new HttpResponse(null, { status: 404 })));
-    render(await SiteFooter());
+    await renderFooter();
     expect(screen.queryByRole('navigation', { name: 'Siga a MultiKoisas' })).not.toBeInTheDocument();
   });
 });
