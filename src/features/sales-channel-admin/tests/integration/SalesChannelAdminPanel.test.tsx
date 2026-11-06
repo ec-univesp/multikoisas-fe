@@ -158,7 +158,7 @@ describe('SalesChannelAdminPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Apagar' }));
 
     expect(await screen.findByText('Nenhum canal cadastrado.')).toBeInTheDocument();
-    expect(apiDatabase.canaisVenda.map((canalVenda) => canalVenda.id)).toEqual([2, 3, 5]);
+    expect(apiDatabase.canaisVenda.map((canalVenda) => canalVenda.id)).toEqual([2, 3, 5, 8]);
     expect(apiRequests).toEqual(['DELETE /api/canalvenda/4']);
   });
 
