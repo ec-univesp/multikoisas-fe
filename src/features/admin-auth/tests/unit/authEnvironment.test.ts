@@ -1,46 +1,26 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
-import { resolveAuthEnvironment } from '../../authEnvironment';
-import { verifyCredentials } from '../../credentials';
+import { resolveSessionSecret } from '../../authEnvironment';
 
-const configuredUsers = `emerson=scrypt:${'ab'.repeat(16)}:${'cd'.repeat(64)}`;
-
-describe('resolveAuthEnvironment', () => {
-  it('keeps the environment untouched when the panel users are configured', () => {
-    const environment = { NODE_ENV: 'development', ADMIN_USERS: configuredUsers, SESSION_SECRET: 'x'.repeat(32) };
-
-    expect(resolveAuthEnvironment(environment)).toBe(environment);
+describe('resolveSessionSecret', () => {
+  it('uses the configured session secret', () => {
+    expect(resolveSessionSecret({ NODE_ENV: 'production', SESSION_SECRET: 'x'.repeat(32) })).toBe('x'.repeat(32));
   });
 
-  it('never fills in users outside development', () => {
-    const environment = { NODE_ENV: 'production' };
-
-    expect(resolveAuthEnvironment(environment)).toBe(environment);
+  it('never fills in a secret outside development', () => {
+    expect(resolveSessionSecret({ NODE_ENV: 'production' })).toBeUndefined();
   });
 
-  it('provides the admin and multeste users in development when none are configured', async () => {
-    const resolved = resolveAuthEnvironment({ NODE_ENV: 'development' });
+  it('provides a stable secret of at least 32 characters in development', () => {
+    const first = resolveSessionSecret({ NODE_ENV: 'development' });
 
-    expect(await verifyCredentials('admin', 'admin', resolved)).toBe(true);
-    expect(await verifyCredentials('multeste', 'mult1234', resolved)).toBe(true);
-    expect(await verifyCredentials('admin', 'outra', resolved)).toBe(false);
-    expect(resolved.SESSION_SECRET?.length).toBeGreaterThanOrEqual(32);
-  });
-
-  it('keeps the development values stable between calls so sessions survive', () => {
-    const first = resolveAuthEnvironment({ NODE_ENV: 'development' });
-    const second = resolveAuthEnvironment({ NODE_ENV: 'development' });
-
-    expect(second.ADMIN_USERS).toBe(first.ADMIN_USERS);
-    expect(second.SESSION_SECRET).toBe(first.SESSION_SECRET);
+    expect(first?.length).toBeGreaterThanOrEqual(32);
+    expect(resolveSessionSecret({ NODE_ENV: 'development' })).toBe(first);
   });
 
   it('keeps a session secret set by the developer', () => {
-    const resolved = resolveAuthEnvironment({
-      NODE_ENV: 'development',
-      SESSION_SECRET: 'segredo-escolhido-pelo-dev-com-32-chars!',
-    });
-
-    expect(resolved.SESSION_SECRET).toBe('segredo-escolhido-pelo-dev-com-32-chars!');
+    expect(
+      resolveSessionSecret({ NODE_ENV: 'development', SESSION_SECRET: 'segredo-escolhido-pelo-dev-com-32-chars!' }),
+    ).toBe('segredo-escolhido-pelo-dev-com-32-chars!');
   });
 });
