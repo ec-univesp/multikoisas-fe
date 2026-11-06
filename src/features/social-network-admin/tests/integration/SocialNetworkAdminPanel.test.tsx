@@ -36,6 +36,16 @@ const fillForm = async (user: User, name: string, url: string) => {
   await user.click(screen.getByRole('button', { name: 'Salvar rede' }));
 };
 
+// Caminho feliz de quando o back corrigir o POST, que hoje responde 409 a todo cadastro.
+const acceptNewSocialNetworks = () =>
+  server.use(
+    http.post<never, { descricao: string; link: string }>('*/socialnetwork', async ({ request }) => {
+      const { descricao, link } = await request.json();
+      apiDatabase.redesSociais.push({ id: apiDatabase.nextId++, descricao, link });
+      return new HttpResponse(null, { status: 201 });
+    }),
+  );
+
 const submitNewSocialNetwork = async (user: User, name: string, url: string) => {
   await user.click(screen.getByRole('button', { name: 'Nova rede' }));
   await fillForm(user, name, url);
@@ -58,6 +68,7 @@ describe('SocialNetworkAdminPanel', () => {
   });
 
   it('creates the social network and reloads the list to get its id', async () => {
+    acceptNewSocialNetworks();
     const user = userEvent.setup();
     renderPanel();
 
@@ -107,15 +118,69 @@ describe('SocialNetworkAdminPanel', () => {
     },
   );
 
-  it('warns about a repeated name when the api answers 409', async () => {
-    respondWith('post', '*/socialnetwork', 409);
+  it('says the api refused the new network when it answers 409 and the name is not in the reloaded list', async () => {
     const user = userEvent.setup();
     renderPanel();
 
     await submitNewSocialNetwork(user, 'Facebook', 'https://facebook.com/multikoisas');
 
-    expect(await screen.findByText('Já existe uma rede com esse nome.')).toBeInTheDocument();
-    expect(screen.getByLabelText('Nome da rede')).toBeInTheDocument();
+    expect(
+      await screen.findByText('A API recusou o cadastro. O time do back já foi avisado.'),
+    ).toHaveAttribute('role', 'alert');
+    expect(screen.queryByLabelText('Nome da rede')).not.toBeInTheDocument();
+    expect(screen.getByText('2 redes cadastradas')).toBeInTheDocument();
+    expect(apiRequests).toEqual(['POST /api/socialnetwork', 'GET /api/socialnetwork']);
+  });
+
+  it('treats a 409 as created when the name shows up in the reloaded list', async () => {
+    server.use(
+      http.post('*/socialnetwork', () => {
+        apiDatabase.redesSociais.push({ id: 50, descricao: 'Facebook', link: 'https://facebook.com/multikoisas' });
+        return HttpResponse.text('Esta rede social já está cadastrada.', { status: 409 });
+      }),
+    );
+    const user = userEvent.setup();
+    renderPanel();
+
+    await submitNewSocialNetwork(user, 'Facebook', 'https://facebook.com/multikoisas');
+
+    expect(await screen.findByText('3 redes cadastradas')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('keeps the form open with a generic message when the list fails to reload after a 409', async () => {
+    respondWith('get', '*/socialnetwork', 500);
+    const user = userEvent.setup();
+    renderPanel();
+
+    await submitNewSocialNetwork(user, 'Facebook', 'https://facebook.com/multikoisas');
+
+    expect(await screen.findByText('Não foi possível salvar a rede. Tente de novo.')).toBeInTheDocument();
+  });
+
+  it.each(['Loja/Online', 'Loja\\Online', '100%', 'Loja;Online', '.', '..'])(
+    'rejects the name "%s" because the api cannot find it in the address',
+    async (name) => {
+      const user = userEvent.setup();
+      renderPanel();
+
+      await submitNewSocialNetwork(user, name, 'https://facebook.com/multikoisas');
+
+      expect(screen.getByText('Use um nome sem / \\ % ; e diferente de "." ou "..".')).toHaveAttribute(
+        'role',
+        'alert',
+      );
+      expect(apiRequests).toEqual([]);
+    },
+  );
+
+  it('warns the storefront takes a few minutes to show the change', async () => {
+    const user = userEvent.setup();
+    renderPanel();
+
+    await user.click(screen.getByRole('button', { name: 'Nova rede' }));
+
+    expect(screen.getByText(/A vitrine leva alguns minutos para mostrar a mudança\./)).toBeInTheDocument();
   });
 
   it('keeps the form open with a generic message when the api fails to save', async () => {
@@ -130,6 +195,7 @@ describe('SocialNetworkAdminPanel', () => {
   });
 
   it('asks for a page reload when the network was saved but the list failed to reload', async () => {
+    acceptNewSocialNetworks();
     respondWith('get', '*/socialnetwork', 500);
     const user = userEvent.setup();
     renderPanel();
@@ -171,7 +237,26 @@ describe('SocialNetworkAdminPanel', () => {
     expect(apiRequests).toEqual(['PUT /api/socialnetwork/Minha%20Loja']);
   });
 
-  it('renames a social network', async () => {
+  it('sends only the link when the original name was kept, even with odd spacing', async () => {
+    apiDatabase.redesSociais.push({ id: 3, descricao: 'Minha  Loja', link: 'loja.com' });
+    const user = userEvent.setup();
+    renderPanel([...socialNetworks, { id: 3, name: 'Minha  Loja', url: 'loja.com' }]);
+
+    await user.click(screen.getByRole('button', { name: /Editar Minha/ }));
+    await user.clear(screen.getByLabelText('Link'));
+    await user.type(screen.getByLabelText('Link'), 'https://loja.com');
+    await user.click(screen.getByRole('button', { name: 'Salvar rede' }));
+
+    expect(await screen.findByText('https://loja.com')).toBeInTheDocument();
+    expect(apiDatabase.redesSociais).toContainEqual({ id: 3, descricao: 'Minha  Loja', link: 'https://loja.com' });
+  });
+
+  it('renames a social network when the api accepts the new name', async () => {
+    server.use(
+      http.put('*/socialnetwork/:description', () =>
+        HttpResponse.json({ id: 2, descricao: 'Shopee Oficial', link: 'https://shopee.com.br/multikoisas' }),
+      ),
+    );
     const user = userEvent.setup();
     renderPanel();
 
@@ -180,6 +265,43 @@ describe('SocialNetworkAdminPanel', () => {
 
     expect(await screen.findByText('Shopee Oficial')).toBeInTheDocument();
     expect(screen.getByText('2 redes cadastradas')).toBeInTheDocument();
+  });
+
+  it('shows a repeated name when the api refuses the rename as already registered', async () => {
+    const user = userEvent.setup();
+    renderPanel();
+
+    await user.click(screen.getByRole('button', { name: 'Editar Shopee' }));
+    await fillForm(user, 'Shopee Oficial', 'https://shopee.com.br/multikoisas');
+
+    expect(await screen.findByText('Já existe uma rede com esse nome.')).toBeInTheDocument();
+    expect(screen.getByLabelText('Nome da rede')).toBeInTheDocument();
+  });
+
+  it('reloads the list when the network was changed in another tab', async () => {
+    const user = userEvent.setup();
+    renderPanel([...socialNetworks, { id: 9, name: 'TikTok', url: 'https://tiktok.com/@multikoisas' }]);
+
+    await user.click(screen.getByRole('button', { name: 'Editar TikTok' }));
+    await fillForm(user, 'TikTok', 'https://tiktok.com/@mk');
+
+    expect(
+      await screen.findByText('Essa rede foi alterada em outra aba. Recarregue a lista.'),
+    ).toHaveAttribute('role', 'alert');
+    expect(screen.queryByLabelText('Nome da rede')).not.toBeInTheDocument();
+    expect(screen.getByText('2 redes cadastradas')).toBeInTheDocument();
+    expect(apiRequests).toEqual(['PUT /api/socialnetwork/TikTok', 'GET /api/socialnetwork']);
+  });
+
+  it('keeps the form open with a generic message on another 409 from the edit', async () => {
+    respondWith('put', '*/socialnetwork/:description', 409);
+    const user = userEvent.setup();
+    renderPanel();
+
+    await user.click(screen.getByRole('button', { name: 'Editar Shopee' }));
+    await fillForm(user, 'Shopee', 'https://shopee.com.br/loja');
+
+    expect(await screen.findByText('Não foi possível salvar a rede. Tente de novo.')).toBeInTheDocument();
   });
 
   it('keeps the social network when the deletion is cancelled', async () => {

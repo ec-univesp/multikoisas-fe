@@ -18,6 +18,15 @@ const normalizeName = (name: string): string =>
     .replace(/\p{Diacritic}/gu, '')
     .toLocaleLowerCase('pt-BR');
 
+// O nome vai no caminho do PUT e do DELETE; o firewall do Spring recusa esses caracteres e os nomes "." e "..".
+const isUnsafeInPath = (name: string): boolean => /[/\\%;]/.test(name) || ['.', '..'].includes(collapseSpaces(name));
+
+const nameErrorOf = (name: string, isRepeated: boolean): string | null => {
+  if (!name.trim()) return 'Informe o nome da rede.';
+  if (isUnsafeInPath(name)) return 'Use um nome sem / \\ % ; e diferente de "." ou "..".';
+  return isRepeated ? NAME_TAKEN_MESSAGE : null;
+};
+
 type FieldErrors = { name: string | null; url: string | null };
 
 const validate = (
@@ -28,7 +37,7 @@ const validate = (
     (socialNetwork) => normalizeName(socialNetwork.name) === normalizeName(name),
   );
   return {
-    name: !name.trim() ? 'Informe o nome da rede.' : isRepeated ? NAME_TAKEN_MESSAGE : null,
+    name: nameErrorOf(name, isRepeated),
     url: isHttpsUrl(url.trim()) ? null : 'Informe um link completo, começando com https://.',
   };
 };
@@ -66,7 +75,8 @@ export const SocialNetworkFormModal = ({
     setIsSaving(true);
     setSaveError(null);
     try {
-      await onSave({ name: collapseSpaces(name), url: url.trim() });
+      const savedName = name === editingSocialNetwork?.name ? name : collapseSpaces(name);
+      await onSave({ name: savedName, url: url.trim() });
       onClose();
     } catch (error) {
       if (error instanceof SocialNetworkNameTakenError) {
@@ -84,7 +94,9 @@ export const SocialNetworkFormModal = ({
         <h4 className="mb-1 text-2xl font-semibold text-gray-800">
           {editingSocialNetwork ? 'Editar rede' : 'Nova rede'}
         </h4>
-        <p className="mb-6 text-sm text-gray-500">Aparece como botão no rodapé da vitrine.</p>
+        <p className="mb-6 text-sm text-gray-500">
+          Aparece como botão no rodapé da vitrine. A vitrine leva alguns minutos para mostrar a mudança.
+        </p>
 
         <form onSubmit={handleSubmit} noValidate>
           <div className="space-y-4 px-1">

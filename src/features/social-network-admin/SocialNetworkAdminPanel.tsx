@@ -10,6 +10,8 @@ import { DeleteSocialNetworkModal } from './DeleteSocialNetworkModal';
 import { SocialNetworkTable } from './SocialNetworkTable';
 import {
   type SocialNetworkValues,
+  SocialNetworkChangedElsewhereError,
+  SocialNetworkNameTakenError,
   createSocialNetwork,
   deleteSocialNetwork,
   fetchAllSocialNetworks,
@@ -42,18 +44,48 @@ export const SocialNetworkAdminPanel = ({ initialSocialNetworks }: SocialNetwork
     deleteModal.openModal();
   };
 
+  const reloadSocialNetworks = async (): Promise<SocialNetwork[]> => {
+    const reloadedSocialNetworks = await fetchAllSocialNetworks();
+    setSocialNetworks(reloadedSocialNetworks);
+    return reloadedSocialNetworks;
+  };
+
+  // A API responde 409 a todo cadastro (bug do back): só a lista recarregada diz se a rede foi criada.
+  const handleRefusedCreation = async (values: SocialNetworkValues) => {
+    const reloadedSocialNetworks = await reloadSocialNetworks();
+    if (reloadedSocialNetworks.some((socialNetwork) => socialNetwork.name === values.name)) return;
+    setFeedbackMessage('A API recusou o cadastro. O time do back já foi avisado.');
+  };
+
   const addSocialNetwork = async (values: SocialNetworkValues) => {
-    await createSocialNetwork(values);
     try {
-      setSocialNetworks(await fetchAllSocialNetworks());
+      await createSocialNetwork(values);
+    } catch (error) {
+      if (error instanceof SocialNetworkNameTakenError) return handleRefusedCreation(values);
+      throw error;
+    }
+    try {
+      await reloadSocialNetworks();
     } catch {
       setFeedbackMessage('A rede foi salva, mas a lista não atualizou. Recarregue a página.');
     }
   };
 
+  const editSocialNetwork = async (socialNetwork: SocialNetwork, values: SocialNetworkValues) => {
+    try {
+      return await updateSocialNetwork(socialNetwork, values);
+    } catch (error) {
+      if (!(error instanceof SocialNetworkChangedElsewhereError)) throw error;
+      await reloadSocialNetworks();
+      setFeedbackMessage('Essa rede foi alterada em outra aba. Recarregue a lista.');
+      return null;
+    }
+  };
+
   const saveSocialNetwork = async (values: SocialNetworkValues) => {
     if (!editingSocialNetwork) return addSocialNetwork(values);
-    const updatedSocialNetwork = await updateSocialNetwork(editingSocialNetwork, values);
+    const updatedSocialNetwork = await editSocialNetwork(editingSocialNetwork, values);
+    if (!updatedSocialNetwork) return;
     setSocialNetworks((currentSocialNetworks) =>
       currentSocialNetworks.map((candidate) =>
         candidate.id === editingSocialNetwork.id ? updatedSocialNetwork : candidate,
