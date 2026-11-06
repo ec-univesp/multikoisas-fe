@@ -4,8 +4,9 @@ import { Navigation } from 'lucide-react';
 import { useStoreSettings, type StoreSettingsValues } from '@/entities/store-settings';
 
 export const StoreLocation = ({ settings }: { settings?: StoreSettingsValues } = {}) => {
-  const savedSettings = useStoreSettings().settings;
-  const address = (settings ?? savedSettings).address?.trim();
+  const savedSettings = useStoreSettings();
+  if (!settings && savedSettings.status === 'loading') return null;
+  const address = (settings ?? savedSettings.settings).address?.trim();
   if (!address) return null;
 
   const encodedAddress = encodeURIComponent(address);

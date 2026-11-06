@@ -9,10 +9,11 @@ const headingClassName = 'text-sm font-bold tracking-wider text-store-yellow upp
 const shortcutClassName = 'flex min-h-11 items-center text-blue-100 hover:text-store-yellow';
 
 export const SiteFooter = ({ settings }: { settings?: StoreSettingsValues }) => {
-  const savedSettings = useStoreSettings().settings;
+  const savedSettings = useStoreSettings();
   const socialNetworksState = useSocialNetworks();
   const socialNetworks = socialNetworksState.status === 'ready' ? socialNetworksState.data : [];
-  const address = (settings ?? savedSettings).address?.trim();
+  const isLoadingSavedSettings = !settings && savedSettings.status === 'loading';
+  const address = isLoadingSavedSettings ? null : (settings ?? savedSettings.settings).address?.trim();
   return (
     <footer aria-busy={socialNetworksState.status === 'loading'} className="bg-store-navy text-blue-100">
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 md:grid-cols-3 lg:px-8">

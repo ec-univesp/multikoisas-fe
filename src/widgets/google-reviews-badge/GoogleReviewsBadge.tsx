@@ -42,8 +42,9 @@ const accessibleNameOf = (rating: number, reviewCount: number | null): string =>
 };
 
 export const GoogleReviewsBadge = ({ settings }: { settings?: StoreSettingsValues }) => {
-  const savedSettings = useStoreSettings().settings;
-  const { googleReviewsUrl, googleRating, googleReviewCount } = settings ?? savedSettings;
+  const savedSettings = useStoreSettings();
+  if (!settings && savedSettings.status === 'loading') return null;
+  const { googleReviewsUrl, googleRating, googleReviewCount } = settings ?? savedSettings.settings;
   if (!googleReviewsUrl || !isHttpsUrl(googleReviewsUrl)) return null;
 
   const reviewsPhrase =
