@@ -5,7 +5,8 @@ import { SESSION_COOKIE_NAME, verifySessionToken } from '@/features/admin-auth/s
 const LOGIN_PATH = '/panel';
 const PANEL_HOME_PATH = '/admin/produtos';
 
-const isAdminPath = (pathname: string) => pathname === '/admin' || pathname.startsWith('/admin/');
+const isAdminPath = (pathname: string) =>
+  pathname === '/admin' || pathname.startsWith('/admin/') || pathname === '/store' || pathname.startsWith('/store/');
 
 export const proxy = async (request: NextRequest) => {
   const { pathname } = request.nextUrl;
@@ -23,5 +24,5 @@ export const proxy = async (request: NextRequest) => {
 };
 
 export const config = {
-  matcher: ['/admin/:path*', '/panel'],
+  matcher: ['/admin/:path*', '/panel', '/store'],
 };
