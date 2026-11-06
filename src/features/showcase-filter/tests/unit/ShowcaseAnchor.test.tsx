@@ -15,6 +15,12 @@ describe('ShowcaseHeading', () => {
     expect(heading).toHaveFocus();
   });
 
+  it('still takes the focus from an old shared link ending in #vitrine', () => {
+    window.history.replaceState(null, '', '/showcase#vitrine');
+    render(<ShowcaseHeading />);
+    expect(screen.getByRole('heading', { name: 'Vitrine de produtos' })).toHaveFocus();
+  });
+
   it('leaves the focus alone on a plain visit to the showcase page', () => {
     window.history.replaceState(null, '', '/showcase');
     render(<ShowcaseHeading />);
