@@ -13,14 +13,14 @@ const send = (method: string, path: string, body?: unknown) =>
   });
 
 // Vitest jsdom replaces the content of every File in FormData: the multipart body is written by hand.
-const uploadPhoto = (produtoId: number, content: string) =>
+const uploadPhoto = (produtoId: number, content: string, type = 'image/png') =>
   fetch(`/api/imagem?produtoId=${produtoId}`, {
     method: 'POST',
     headers: { 'Content-Type': 'multipart/form-data; boundary=limite' },
     body: [
       '--limite',
       'Content-Disposition: form-data; name="file"; filename="foto.png"',
-      'Content-Type: image/png',
+      `Content-Type: ${type}`,
       '',
       content,
       '--limite--',
@@ -30,7 +30,7 @@ const uploadPhoto = (produtoId: number, content: string) =>
 
 let database: ApiDatabase;
 let images: ImageStore;
-const onChange = vi.fn();
+const onChange = vi.fn(() => true);
 
 beforeEach(() => {
   database = createDatabase({
@@ -121,6 +121,49 @@ describe('local api handlers', () => {
     expect((await send('DELETE', '/api/produto/1')).status).toBe(200);
     expect(await images.get(5)).toBeUndefined();
     expect(await images.get(6)).toBeUndefined();
+  });
+
+  it('answers 507 when the browser refuses to save a write', async () => {
+    onChange.mockReturnValue(false);
+    const created = await send('POST', '/api/categoria', { nome: 'Jardim' });
+    expect(created.status).toBe(507);
+    expect(await created.text()).toBe('Espaço do navegador cheio');
+  });
+
+  it('forgets the stored photo when the browser refuses to save its upload', async () => {
+    onChange.mockReturnValue(false);
+    expect((await uploadPhoto(1, 'png-bytes')).status).toBe(507);
+    expect(await images.get(5)).toBeUndefined();
+    expect(database.productImages).toEqual([]);
+  });
+
+  it.each(['image/png', 'image/jpeg', 'image/webp', 'image/gif'])('accepts a %s photo', async (type) => {
+    expect((await uploadPhoto(1, 'bytes', type)).status).toBe(201);
+  });
+
+  it('refuses a file that is not a photo', async () => {
+    expect((await uploadPhoto(1, '<script>alert(1)</script>', 'text/html')).status).toBe(415);
+    expect(await images.get(5)).toBeUndefined();
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('serves a stored file of another type as plain bytes', async () => {
+    await images.save(9, new Blob(['<script>alert(1)</script>'], { type: 'text/html' }));
+    expect((await fetch('/local-images/9')).headers.get('content-type')).toBe('application/octet-stream');
+  });
+
+  it('deletes a product even when a stored photo cannot be removed, and leaves remote photos alone', async () => {
+    database.productImages.push({ id: 8, produtoId: 1, imagemUrl: 'https://res.cloudinary.com/mk/balde.png' });
+    await images.save(8, new Blob(['outra'], { type: 'image/png' }));
+    await uploadPhoto(1, 'frente');
+    const remove = vi.spyOn(images, 'remove');
+    remove.mockRejectedValueOnce(new Error('indexeddb closed'));
+
+    expect((await send('DELETE', '/api/produto/1')).status).toBe(200);
+    expect(remove.mock.calls).toEqual([[5]]);
+    expect(database.products).toEqual([]);
+    expect(database.productImages).toEqual([]);
+    expect(await images.get(8)).toBeDefined();
   });
 
   it('leaves page routes alone when mounted under /api', async () => {
