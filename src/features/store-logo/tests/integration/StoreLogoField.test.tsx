@@ -45,6 +45,7 @@ describe('StoreLogoField saving', () => {
     await user.click(screen.getByRole('button', { name: 'Salvar logo' }));
 
     expect(await screen.findByRole('status')).toHaveTextContent('Logo salva.');
+    expect(screen.getByRole('status')).toHaveFocus();
     expect(screen.getByRole('img', { name: 'Logo atual' })).toHaveAttribute('src', '/local-images/100');
     expect(screen.queryByAltText('Prévia da logo nova')).not.toBeInTheDocument();
     expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:logo-1');
@@ -73,6 +74,7 @@ describe('StoreLogoField saving', () => {
     await user.click(await screen.findByRole('button', { name: 'Voltar para a logo padrão' }));
 
     expect(await screen.findByRole('status')).toHaveTextContent('A vitrine voltou para a logo padrão.');
+    expect(screen.getByRole('status')).toHaveFocus();
     expect(screen.getByRole('img', { name: 'Logo atual' })).toHaveTextContent('MultiKoisas');
     expect(screen.queryByRole('button', { name: 'Voltar para a logo padrão' })).not.toBeInTheDocument();
     expect(apiDatabase.storeSettings.logoUrl).toBeNull();
