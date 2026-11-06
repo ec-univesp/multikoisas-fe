@@ -16,6 +16,11 @@ const fillAndLeave = async (label: string, value: string) => {
   return field;
 };
 
+const renderForm = async () => {
+  render(<StoreSettingsForm />);
+  await screen.findByLabelText('Endereço');
+};
+
 describe('StoreSettingsForm', () => {
   it('starts empty while the store has no settings', () => {
     render(
@@ -46,14 +51,14 @@ describe('StoreSettingsForm', () => {
     expect(screen.getByLabelText('Quantidade de avaliações')).toHaveValue(123);
   });
 
-  it('uses a 16px font on every field', () => {
-    render(<StoreSettingsForm />);
+  it('uses a 16px font on every field', async () => {
+    await renderForm();
     for (const field of screen.getAllByRole('textbox')) expect(field).toHaveClass('text-base');
     for (const field of screen.getAllByRole('spinbutton')) expect(field).toHaveClass('text-base');
   });
 
   it('asks for an https reviews link when leaving the field', async () => {
-    render(<StoreSettingsForm />);
+    await renderForm();
     const field = await fillAndLeave('Link das avaliações no Google', 'http://g.page/r/multikoisas');
     expect(screen.getByRole('alert')).toHaveTextContent(LINK_MESSAGE);
     expect(field).toHaveAttribute('aria-invalid', 'true');
@@ -65,7 +70,7 @@ describe('StoreSettingsForm', () => {
   });
 
   it('accepts a rating from 0 to 5 with one decimal place', async () => {
-    render(<StoreSettingsForm />);
+    await renderForm();
     await fillAndLeave('Nota no Google', '6');
     expect(screen.getByRole('alert')).toHaveTextContent(RATING_MESSAGE);
     await fillAndLeave('Nota no Google', '4.85');
@@ -77,7 +82,7 @@ describe('StoreSettingsForm', () => {
   });
 
   it('accepts a whole review count from 0 up', async () => {
-    render(<StoreSettingsForm />);
+    await renderForm();
     await fillAndLeave('Quantidade de avaliações', '2.5');
     expect(screen.getByRole('alert')).toHaveTextContent(COUNT_MESSAGE);
     await fillAndLeave('Quantidade de avaliações', '-3');
@@ -87,21 +92,12 @@ describe('StoreSettingsForm', () => {
   });
 
   it('accepts empty optional fields', async () => {
-    render(<StoreSettingsForm />);
+    await renderForm();
     const user = userEvent.setup();
     await user.click(screen.getByLabelText('Link das avaliações no Google'));
     await user.tab();
     await user.tab();
     await user.tab();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-  });
-
-  it('keeps saving disabled and explains why', () => {
-    render(<StoreSettingsForm />);
-    const save = screen.getByRole('button', { name: 'Salvar dados' });
-    expect(save).toBeDisabled();
-    expect(save).toHaveAccessibleDescription(
-      'Salvar os dados da loja ainda não está disponível: a API não guarda as configurações da loja.',
-    );
   });
 });

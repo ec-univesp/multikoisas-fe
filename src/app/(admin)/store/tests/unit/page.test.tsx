@@ -9,7 +9,7 @@ describe('StorePage', () => {
     expect(screen.getByRole('heading', { name: 'Configurações de site' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Logo da vitrine' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Dados da loja' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Salvar dados' })).toBeDisabled();
+    expect(await screen.findByRole('button', { name: 'Salvar dados' })).toBeEnabled();
     expect(screen.getByRole('heading', { name: 'Redes sociais' })).toBeInTheDocument();
     expect(await screen.findByText('Instagram')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Dados de exemplo' })).toBeInTheDocument();
