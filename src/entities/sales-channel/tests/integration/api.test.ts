@@ -20,7 +20,7 @@ describe('fetchSalesChannels', () => {
 
   it('reads fresh through the site proxy in the browser', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch');
-    await fetchSalesChannels({ fresh: true, fromBrowser: true });
+    await fetchSalesChannels();
     expect(fetchSpy).toHaveBeenCalledWith('/api/canalvenda', { cache: 'no-store' });
   });
 

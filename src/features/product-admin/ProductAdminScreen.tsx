@@ -13,7 +13,7 @@ type LoadState =
 
 const loadCatalog = async (): Promise<LoadState> => {
   try {
-    const { products, categories, salesChannels } = await fetchCatalog({ fresh: true, fromBrowser: true });
+    const { products, categories, salesChannels } = await fetchCatalog();
     return { status: 'ready', products, categories, salesChannels };
   } catch {
     return { status: 'error' };
