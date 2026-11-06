@@ -12,6 +12,7 @@ import {
   CategoryLinkError,
   createProduct,
   deleteProduct,
+  ProductDeleteRefusedError,
   loadProductForEdit,
   type EditableProduct,
   syncProductImages,
@@ -111,8 +112,12 @@ export const ProductAdminPanel = ({ initialProducts, categories }: ProductAdminP
         currentProducts.filter((candidate) => candidate.id !== deletingProduct.id),
       );
       setDeletingProduct(null);
-    } catch {
-      setFeedbackMessage('Não foi possível apagar o produto. Recarregue a página e tente de novo.');
+    } catch (error) {
+      setFeedbackMessage(
+        error instanceof ProductDeleteRefusedError
+          ? 'A API só apaga produto que tem categoria e link de compra. Edite o produto, complete os dois e tente de novo.'
+          : 'Não foi possível apagar o produto. Recarregue a página e tente de novo.',
+      );
     } finally {
       setIsDeleting(false);
       deleteModal.closeModal();

@@ -15,6 +15,7 @@ import type { PhotoChanges, ProductFormValues } from './types';
 type CategoriaProdutoBody = { produtoId: number; categoriaId: number };
 
 const HTTP_NOT_FOUND = 404;
+const HTTP_CONFLICT = 409;
 
 const toRequestBody = (body: unknown): RequestInit => {
   if (body === undefined) return {};
@@ -119,10 +120,13 @@ export const updateProduct = async (
   return toProduct(produto, category, product.images, product.storeLinks);
 };
 
+// A API apaga categorias, links e fotos junto, mas responde 409 se faltar categoria ou link de compra.
+export class ProductDeleteRefusedError extends Error {}
+
 export const deleteProduct = async (product: Product): Promise<void> => {
-  const links = await fetchCategoryLinks(product.id);
-  for (const link of links) await unlinkCategory(link.produtoId, link.categoriaId);
-  await callApi('DELETE', `/produto/${product.id}`);
+  const response = await fetch(`/api/produto/${product.id}`, { method: 'DELETE' });
+  if (response.status === HTTP_CONFLICT) throw new ProductDeleteRefusedError(`DELETE /produto/${product.id} respondeu 409`);
+  if (!response.ok) throw new Error(`DELETE /produto/${product.id} respondeu ${response.status}`);
 };
 
 const uploadProductImage = async (produtoId: number, file: File): Promise<ProductImageRecord | null> => {
@@ -139,7 +143,8 @@ const uploadProductImage = async (produtoId: number, file: File): Promise<Produc
 
 const deleteProductImage = async (produtoId: number, imageId: number) => {
   const response = await fetch('/api/imagem', { method: 'DELETE', ...toRequestBody({ id: imageId, produtoId }) });
-  if (!response.ok && response.status !== HTTP_NOT_FOUND) {
+  // Foto que já não existe volta 409 na API atual (404 na anterior).
+  if (!response.ok && response.status !== HTTP_NOT_FOUND && response.status !== HTTP_CONFLICT) {
     throw new Error(`DELETE /imagem respondeu ${response.status}`);
   }
 };
