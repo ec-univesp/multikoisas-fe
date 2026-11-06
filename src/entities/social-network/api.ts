@@ -3,7 +3,7 @@ import type { SocialNetwork } from './types';
 
 type SocialNetworkResponse = { id: number; descricao: string; link: string };
 
-const isHttpsUrl = (link: string): boolean => {
+export const isHttpsUrl = (link: string): boolean => {
   try {
     return new URL(link).protocol === 'https:';
   } catch {
