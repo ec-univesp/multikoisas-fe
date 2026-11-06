@@ -3,11 +3,11 @@
 import { ProductCard } from '@/entities/product';
 import type { Product } from '@/entities/product';
 import { useProductFilter } from './useProductFilter';
-import { useVitrineSearch, VitrineSearchField } from './VitrineSearch';
+import { useShowcaseSearch, ShowcaseSearchField } from './ShowcaseSearch';
 
 const PRIORITY_IMAGE_COUNT = 4;
 
-type VitrineFilterProps = {
+type ShowcaseFilterProps = {
   products: readonly Product[];
   categories: readonly string[];
 };
@@ -19,16 +19,16 @@ const chipClassName = (isActive: boolean): string =>
 
 const itemCountLabel = (count: number): string => (count === 1 ? '1 item exibido' : `${count} itens exibidos`);
 
-export const VitrineFilter = ({ products, categories }: VitrineFilterProps) => {
+export const ShowcaseFilter = ({ products, categories }: ShowcaseFilterProps) => {
   const { activeCategory, setActiveCategory, visibleProducts, isCatalogEmpty, clearFilters } = useProductFilter(
     products,
-    useVitrineSearch(),
+    useShowcaseSearch(),
   );
 
   return (
     <div>
       <div className="flex flex-col gap-3 rounded-xl bg-white p-3 shadow-theme-xs md:flex-row md:items-center">
-        <VitrineSearchField id="vitrine-search" label="Buscar produto na vitrine" />
+        <ShowcaseSearchField id="showcase-search" label="Buscar produto na vitrine" />
         <p
           aria-live="polite"
           className="shrink-0 rounded-lg bg-gray-100 px-3 py-2 text-sm font-semibold text-store-navy"
