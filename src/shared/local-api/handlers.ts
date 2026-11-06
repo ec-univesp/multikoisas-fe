@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw';
-import type { ApiDatabase, ProductCategoryRow, PurchaseLinkRow } from './database';
+import type { ApiDatabase, ProductCategoryRow, PurchaseLinkRow, StoreSettingsRow } from './database';
 import type { ImageStore } from './imageStore';
 
 export type ApiHandlerOptions = {
@@ -32,6 +32,7 @@ type NameBody = { nome?: string };
 type ProductBody = { nome?: string; descricaoProduto?: string };
 type ProductImageBody = { id?: number; produtoId?: number };
 type SocialNetworkBody = { descricao?: string; link?: string };
+type StoreSettingsBody = Partial<Record<keyof Omit<StoreSettingsRow, 'logoUrl'>, unknown>>;
 
 const SOCIAL_NETWORK_TAKEN = 'Esta rede social já está cadastrada.';
 
@@ -39,7 +40,47 @@ const MAX_UPLOAD_BYTES = 1_048_576;
 
 const PHOTO_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif']);
 
+const LOGO_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml']);
+
+const SERVED_TYPES = new Set([...PHOTO_TYPES, ...LOGO_TYPES]);
+
 const LOCAL_PHOTO_PATH = '/local-images/';
+
+const RATING_PATTERN = /^\d(\.\d)?$/;
+
+const isHttpsUrl = (link: string) => {
+  try {
+    return new URL(link).protocol === 'https:';
+  } catch {
+    return false;
+  }
+};
+
+const isOptionalText = (value: unknown) => value === undefined || value === null || typeof value === 'string';
+
+// Mirrors the store settings form: empty fields are allowed and saved as null.
+const toStoreSettings = (body: StoreSettingsBody): Omit<StoreSettingsRow, 'logoUrl'> | null => {
+  const { address, googleReviewsUrl, googleRating, googleReviewCount } = body;
+  if (!isOptionalText(address) || !isOptionalText(googleReviewsUrl)) return null;
+  const trimmedAddress = typeof address === 'string' ? address.trim() : '';
+  const trimmedUrl = typeof googleReviewsUrl === 'string' ? googleReviewsUrl.trim() : '';
+  if (trimmedUrl !== '' && !isHttpsUrl(trimmedUrl)) return null;
+  const rating = googleRating ?? null;
+  if (rating !== null && (typeof rating !== 'number' || rating > 5 || !RATING_PATTERN.test(String(rating)))) {
+    return null;
+  }
+  const reviewCount = googleReviewCount ?? null;
+  if (reviewCount !== null && (!Number.isInteger(reviewCount) || Number(reviewCount) < 0)) return null;
+  return {
+    address: trimmedAddress || null,
+    googleReviewsUrl: trimmedUrl || null,
+    googleRating: rating,
+    googleReviewCount: reviewCount === null ? null : Number(reviewCount),
+  };
+};
+
+const localImageIdOf = (url: string | null) =>
+  url?.startsWith(LOCAL_PHOTO_PATH) ? Number(url.slice(LOCAL_PHOTO_PATH.length)) : null;
 
 const storageFull = () => HttpResponse.text('Espaço do navegador cheio', { status: 507 });
 
@@ -349,6 +390,50 @@ export const createApiHandlers = (
       database.purchaseLinks = remaining;
       return saved(HttpResponse.json({ mensagem: 'Canal de venda desassociado do produto com sucesso.' }));
     }),
+
+    // Local api only: the real one does not store the store settings yet (SKI-135).
+    http.get(`${baseUrl}/configuracao`, () => HttpResponse.json(database.storeSettings)),
+
+    http.put<never, StoreSettingsBody>(`${baseUrl}/configuracao`, async ({ request }) => {
+      const settings = toStoreSettings(await request.json());
+      if (!settings) return springError(400, 'Bad Request', request);
+      const previousSettings = database.storeSettings;
+      database.storeSettings = { ...previousSettings, ...settings };
+      if (onChange()) return HttpResponse.json(database.storeSettings);
+      database.storeSettings = previousSettings;
+      return storageFull();
+    }),
+
+    http.post(`${baseUrl}/configuracao/logo`, async ({ request }) => {
+      const file = (await request.formData()).get('file');
+      if (file === null || typeof file === 'string' || file.size === 0) return springError(400, 'Bad Request', request);
+      if (file.size > MAX_UPLOAD_BYTES) return springError(413, 'Payload Too Large', request);
+      if (!LOGO_TYPES.has(file.type)) return springError(415, 'Unsupported Media Type', request);
+      const id = database.nextId++;
+      await images.save(id, file);
+      const previousSettings = database.storeSettings;
+      database.storeSettings = { ...previousSettings, logoUrl: `${LOCAL_PHOTO_PATH}${id}` };
+      if (!onChange()) {
+        database.storeSettings = previousSettings;
+        await images.remove(id);
+        return storageFull();
+      }
+      const previousLogoId = localImageIdOf(previousSettings.logoUrl);
+      if (previousLogoId !== null) await images.remove(previousLogoId);
+      return HttpResponse.json(database.storeSettings);
+    }),
+
+    http.delete(`${baseUrl}/configuracao/logo`, async () => {
+      const previousSettings = database.storeSettings;
+      database.storeSettings = { ...previousSettings, logoUrl: null };
+      if (!onChange()) {
+        database.storeSettings = previousSettings;
+        return storageFull();
+      }
+      const previousLogoId = localImageIdOf(previousSettings.logoUrl);
+      if (previousLogoId !== null) await images.remove(previousLogoId);
+      return HttpResponse.json(database.storeSettings);
+    }),
   ];
 };
 
@@ -356,6 +441,9 @@ export const createLocalImagesHandler = (images: Pick<ImageStore, 'get'>) =>
   http.get<{ id: string }>('*/local-images/:id', async ({ params }) => {
     const file = await images.get(Number(params.id));
     if (!file) return new HttpResponse(null, { status: 404 });
-    const contentType = PHOTO_TYPES.has(file.type) ? file.type : 'application/octet-stream';
-    return new HttpResponse(await file.arrayBuffer(), { headers: { 'Content-Type': contentType } });
+    const contentType = SERVED_TYPES.has(file.type) ? file.type : 'application/octet-stream';
+    return new HttpResponse(await file.arrayBuffer(), {
+      // An svg opened as a page could run its scripts on the site origin.
+      headers: { 'Content-Type': contentType, 'Content-Security-Policy': "script-src 'none'" },
+    });
   });
