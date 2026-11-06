@@ -1,7 +1,7 @@
 import { Navigation } from 'lucide-react';
-import { STORE_SETTINGS, type StoreSettings } from '@/entities/store-settings';
+import { STORE_SETTINGS, type StoreSettingsValues } from '@/entities/store-settings';
 
-export const StoreLocation = ({ settings = STORE_SETTINGS }: { settings?: StoreSettings } = {}) => {
+export const StoreLocation = ({ settings = STORE_SETTINGS }: { settings?: StoreSettingsValues } = {}) => {
   const address = settings.address?.trim();
   if (!address) return null;
 

@@ -1,12 +1,12 @@
 import { render, screen, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
-import type { StoreSettings } from '@/entities/store-settings';
+import type { StoreSettingsValues } from '@/entities/store-settings';
 import { server } from '@/test/msw/server';
 import { waitForLoaded } from '@/test/waitForLoaded';
 import { SiteFooter } from '../../SiteFooter';
 
-const renderFooter = async (props: { settings?: StoreSettings } = {}) => {
+const renderFooter = async (props: { settings?: StoreSettingsValues } = {}) => {
   render(<SiteFooter {...props} />);
   await waitForLoaded();
 };
@@ -76,7 +76,7 @@ describe('SiteFooter', () => {
   });
 
   it('shows the store address when it is registered', async () => {
-    const settings: StoreSettings = {
+    const settings: StoreSettingsValues = {
       address: 'Rua das Flores, 100 - São Paulo, SP',
       googleReviewsUrl: null,
       googleRating: null,

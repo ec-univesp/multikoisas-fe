@@ -5,7 +5,7 @@ import InputField from '@/components/form/input/InputField';
 import Label from '@/components/form/Label';
 import Button from '@/components/ui/button/Button';
 import { isHttpsUrl } from '@/entities/social-network';
-import { STORE_SETTINGS, type StoreSettings } from '@/entities/store-settings';
+import { STORE_SETTINGS, type StoreSettingsValues } from '@/entities/store-settings';
 
 type ValidatedField = 'googleReviewsUrl' | 'googleRating' | 'googleReviewCount';
 
@@ -76,7 +76,7 @@ const ValidatedInput = ({
   );
 };
 
-export const StoreSettingsForm = ({ settings = STORE_SETTINGS }: { settings?: StoreSettings }) => (
+export const StoreSettingsForm = ({ settings = STORE_SETTINGS }: { settings?: StoreSettingsValues }) => (
   <div className="space-y-4">
     <div>
       <Label htmlFor="store-settings-address">Endereço</Label>
