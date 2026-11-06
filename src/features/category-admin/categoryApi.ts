@@ -15,9 +15,9 @@ const callApi = async (method: string, path: string, body?: unknown): Promise<Re
     headers: body ? { 'Content-Type': 'application/json' } : undefined,
     body: body ? JSON.stringify(body) : undefined,
   });
-  if (response.status === HTTP_NOT_FOUND) throw new CategoryNotFoundError(`${method} ${path} respondeu 404`);
-  if (response.status === HTTP_CONFLICT) throw new CategoryInUseError(`${method} ${path} respondeu 409`);
-  if (!response.ok) throw new Error(`${method} ${path} respondeu ${response.status}`);
+  if (response.status === HTTP_NOT_FOUND) throw new CategoryNotFoundError(`${method} ${path} responded 404`);
+  if (response.status === HTTP_CONFLICT) throw new CategoryInUseError(`${method} ${path} responded 409`);
+  if (!response.ok) throw new Error(`${method} ${path} responded ${response.status}`);
   return response;
 };
 

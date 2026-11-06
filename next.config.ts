@@ -3,7 +3,7 @@ import { PRODUCT_IMAGE_HOSTS, PRODUCT_IMAGE_PATH } from './src/entities/product/
 import { API_URL } from './src/shared/api/getFromApi';
 
 const nextConfig: NextConfig = {
-  // A multikoisas-api não envia cabeçalhos CORS: o navegador fala com a mesma origem.
+  // multikoisas-api sends no CORS headers: the browser talks to the same origin.
   rewrites: async () => [{ source: '/api/:path*', destination: `${API_URL}/:path*` }],
   // Old portuguese routes stay reachable for links already shared.
   redirects: async () => [

@@ -18,7 +18,7 @@ const normalizeName = (name: string): string =>
     .replace(/\p{Diacritic}/gu, '')
     .toLocaleLowerCase('pt-BR');
 
-// O nome vai no caminho do PUT e do DELETE; o firewall do Spring recusa esses caracteres e os nomes "." e "..".
+// The name goes in the PUT and DELETE path; the Spring firewall refuses these characters and the names "." and "..".
 const isUnsafeInPath = (name: string): boolean => /[/\\%;]/.test(name) || ['.', '..'].includes(collapseSpaces(name));
 
 const nameErrorOf = (name: string, isRepeated: boolean): string | null => {

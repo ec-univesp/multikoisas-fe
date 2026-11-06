@@ -41,6 +41,6 @@ describe('fetchSocialNetworks', () => {
 
   it('fails with the path and status when the api errors', async () => {
     server.use(http.get('*/socialnetwork', () => new HttpResponse(null, { status: 500 })));
-    await expect(fetchSocialNetworks()).rejects.toThrow('/socialnetwork respondeu 500');
+    await expect(fetchSocialNetworks()).rejects.toThrow('/socialnetwork responded 500');
   });
 });

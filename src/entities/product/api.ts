@@ -40,7 +40,7 @@ const isStoreSlug = (slug: string): slug is StoreSlug => Object.hasOwn(STORE_PRE
 
 export const isStoreChannelName = (name: string): boolean => isStoreSlug(toBaseSlug(name));
 
-// ponytail: canal sem apresentação em STORE_PRESENTATION (Instagram, TikTok) não vira botão de compra.
+// ponytail: a channel without an entry in STORE_PRESENTATION (Instagram, TikTok) does not become a purchase button.
 export const toStoreLinks = (
   apiPurchaseLinks: readonly ApiPurchaseLink[],
   apiSalesChannels: readonly ApiSalesChannel[],
@@ -90,7 +90,7 @@ export const fetchCatalog = async (options: FetchOptions = {}): Promise<Catalog>
       getFromApi<ApiProduct>('/produto', options),
       fetchCategories(options),
       getFromApi<ApiProductCategory>('/categoriaproduto', options),
-      // Foto e link de compra são acessórios: sem eles a vitrine segue no ar.
+      // Photos and purchase links are optional: without them the showcase stays up.
       getFromApi<ApiProductImage>('/imagem', options).catch((): ApiProductImage[] => []),
       getFromApi<ApiSalesChannel>('/canalvenda', options).catch((): ApiSalesChannel[] => []),
       getFromApi<ApiPurchaseLink>('/canalvendaproduto', options).catch((): ApiPurchaseLink[] => []),

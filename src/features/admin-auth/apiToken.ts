@@ -3,7 +3,7 @@ import { API_URL } from '@/shared/api/getFromApi';
 type AuthEnvironment = Record<string, string | undefined>;
 type CachedToken = { value: string; renewAt: number };
 
-// O proxy não vê a resposta da API: um token recusado (conta removida, segredo trocado) só sai do cache ao vencer.
+// The proxy does not see the API response: a refused token (account removed, secret rotated) leaves the cache only when it expires.
 const TOKEN_REUSE_MILLISECONDS = 10 * 60 * 1000;
 const LOGIN_TIMEOUT_MILLISECONDS = 30 * 1000;
 

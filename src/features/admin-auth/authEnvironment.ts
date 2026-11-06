@@ -2,7 +2,7 @@ import { scryptSync } from 'node:crypto';
 
 type AuthEnvironment = Record<string, string | undefined>;
 
-// Só para `pnpm dev` numa máquina sem .env.local: produção e testes nunca entram aqui.
+// Only for `pnpm dev` on a machine without .env.local: production and tests never get here.
 const DEVELOPMENT_USERS: ReadonlyArray<readonly [username: string, password: string]> = [
   ['admin', 'admin'],
   ['multeste', 'mult1234'],

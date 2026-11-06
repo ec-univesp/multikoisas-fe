@@ -38,7 +38,7 @@ const seed = (): ApiDatabase => ({
     { id: 12, produtoId: 1, imagemUrl: `${SUPABASE_IMAGES}/garrafa-lado.webp` },
     { id: 10, produtoId: 1, imagemUrl: `${SUPABASE_IMAGES}/garrafa-frente.webp` },
     { id: 20, produtoId: 7, imagemUrl: `${SUPABASE_IMAGES}/caixa.webp` },
-    // Como a API real devolve a imagem 29: sem o /object/ (UNIV-17 no santi).
+    // How the real API returns image 29: missing /object/ (UNIV-17 on santi).
     {
       id: 21,
       produtoId: 7,
