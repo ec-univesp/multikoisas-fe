@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { toStoresPhrase, useCatalog } from '@/entities/product';
 import { isWhatsApp, useSocialNetworks, WhatsAppLink } from '@/entities/social-network';
+import { StoreLogo } from '@/entities/store-settings';
 import { ShowcaseLink, ShowcaseSearchField } from '@/features/showcase-filter';
-import { BrandMark } from '@/shared/ui/BrandMark';
 
 const navLinkClassName =
   'flex h-11 shrink-0 items-center rounded-lg px-3 text-sm font-semibold text-gray-700 hover:bg-white hover:text-store-navy';
@@ -23,7 +23,7 @@ export const SiteHeader = () => {
       <div className="bg-store-navy px-4 py-3 lg:px-8">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3">
           <Link href="/" className="flex flex-col">
-            <BrandMark tone="onDark" />
+            <StoreLogo tone="onDark" />
             <span className="-mt-1.5 ml-13 text-xs font-semibold tracking-wider text-blue-100 uppercase">
               Tudo em um só lugar
             </span>

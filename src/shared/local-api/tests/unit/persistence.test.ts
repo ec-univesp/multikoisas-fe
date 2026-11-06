@@ -59,6 +59,28 @@ describe('local api persistence', () => {
     expect(database.nextId).toBe(28);
   });
 
+  it('starts the store settings from the seed with the default logo', () => {
+    expect(loadDatabase().storeSettings).toEqual({
+      address: 'Av. Prof. Luiz Inácio de Anhaia Melo, 2085 - Centreville, Santo André - SP',
+      googleReviewsUrl: expect.stringMatching(/^https:\/\/www\.google\.com\/maps\//),
+      googleRating: 4.7,
+      googleReviewCount: 387,
+      logoUrl: null,
+    });
+  });
+
+  it('fills the store settings of data saved before they existed and keeps the rest', () => {
+    const database = loadDatabase();
+    database.products.splice(1);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...database, storeSettings: undefined }));
+
+    const reloaded = loadDatabase();
+
+    expect(reloaded.products).toHaveLength(1);
+    expect(reloaded.storeSettings.googleRating).toBe(4.7);
+    expect(reloaded.storeSettings.logoUrl).toBeNull();
+  });
+
   it('never hands out the seed itself', () => {
     loadDatabase().products.splice(0);
     expect(loadDatabase().products).toHaveLength(5);

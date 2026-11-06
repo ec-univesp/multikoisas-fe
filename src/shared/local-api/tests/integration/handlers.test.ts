@@ -28,6 +28,28 @@ const uploadPhoto = (produtoId: number, content: string, type = 'image/png') =>
     ].join('\r\n'),
   });
 
+const uploadLogo = (content: string, type = 'image/png') =>
+  fetch('/api/configuracao/logo', {
+    method: 'POST',
+    headers: { 'Content-Type': 'multipart/form-data; boundary=limite' },
+    body: [
+      '--limite',
+      'Content-Disposition: form-data; name="file"; filename="logo.png"',
+      `Content-Type: ${type}`,
+      '',
+      content,
+      '--limite--',
+      '',
+    ].join('\r\n'),
+  });
+
+const VALID_SETTINGS = {
+  address: 'Rua Nova, 10 - Santo André - SP',
+  googleReviewsUrl: 'https://g.page/r/multikoisas',
+  googleRating: 4.9,
+  googleReviewCount: 400,
+};
+
 let database: ApiDatabase;
 let images: ImageStore;
 const onChange = vi.fn(() => true);
@@ -254,5 +276,111 @@ describe('local api handlers without the api bugs', () => {
   it('answers 404 when deleting a product that does not exist', async () => {
     expect((await send('DELETE', '/api/produto/99')).status).toBe(404);
     expect(onChange).not.toHaveBeenCalled();
+  });
+});
+
+describe('local api store settings', () => {
+  it('reads the store settings', async () => {
+    const answer = await send('GET', '/api/configuracao');
+    expect(answer.status).toBe(200);
+    expect(await answer.json()).toEqual(expect.objectContaining({ googleRating: 4.7, logoUrl: null }));
+  });
+
+  it('saves the store settings and keeps the logo', async () => {
+    database.storeSettings.logoUrl = '/local-images/50';
+    const saved = await send('PUT', '/api/configuracao', VALID_SETTINGS);
+    expect(saved.status).toBe(200);
+    expect(await saved.json()).toEqual({ ...VALID_SETTINGS, logoUrl: '/local-images/50' });
+    expect(database.storeSettings).toEqual({ ...VALID_SETTINGS, logoUrl: '/local-images/50' });
+    expect(onChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('saves empty fields as missing', async () => {
+    const emptySettings = { address: ' ', googleReviewsUrl: '', googleRating: null, googleReviewCount: null };
+    expect((await send('PUT', '/api/configuracao', emptySettings)).status).toBe(200);
+    expect(database.storeSettings).toEqual({
+      address: null,
+      googleReviewsUrl: null,
+      googleRating: null,
+      googleReviewCount: null,
+      logoUrl: null,
+    });
+  });
+
+  it.each([
+    { googleReviewsUrl: 'http://g.page/r/multikoisas' },
+    { googleReviewsUrl: 'não é link' },
+    { googleRating: 5.1 },
+    { googleRating: 4.85 },
+    { googleRating: -1 },
+    { googleRating: '4' },
+    { googleReviewCount: 2.5 },
+    { googleReviewCount: -3 },
+    { address: 10 },
+  ])('refuses invalid store settings %o', async (invalidField) => {
+    const refused = await send('PUT', '/api/configuracao', { ...VALID_SETTINGS, ...invalidField });
+    expect(refused.status).toBe(400);
+    expect(database.storeSettings.googleRating).toBe(4.7);
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('answers 507 and keeps the settings when the browser refuses to save them', async () => {
+    onChange.mockReturnValue(false);
+    expect((await send('PUT', '/api/configuracao', VALID_SETTINGS)).status).toBe(507);
+    expect(database.storeSettings.googleRating).toBe(4.7);
+  });
+
+  it('keeps an uploaded logo in the image store, serves it and forgets the previous one', async () => {
+    const first = await uploadLogo('primeira');
+    expect(first.status).toBe(200);
+    expect(await first.json()).toEqual(expect.objectContaining({ logoUrl: '/local-images/5' }));
+
+    expect((await uploadLogo('<svg/>', 'image/svg+xml')).status).toBe(200);
+    expect(database.storeSettings.logoUrl).toBe('/local-images/6');
+    expect(await images.get(5)).toBeUndefined();
+    const served = await fetch('/local-images/6');
+    expect(served.headers.get('content-type')).toBe('image/svg+xml');
+    expect(await served.text()).toBe('<svg/>');
+    expect(onChange).toHaveBeenCalledTimes(2);
+  });
+
+  it.each(['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'])('accepts a %s logo', async (type) => {
+    expect((await uploadLogo('bytes', type)).status).toBe(200);
+  });
+
+  it('refuses a logo of another type, too big or missing', async () => {
+    expect((await uploadLogo('gif', 'image/gif')).status).toBe(415);
+    expect((await uploadLogo('x'.repeat(1_048_577))).status).toBe(413);
+    expect((await uploadLogo('')).status).toBe(400);
+    expect((await fetch('/api/configuracao/logo', { method: 'POST', body: new FormData() })).status).toBe(400);
+    expect(database.storeSettings.logoUrl).toBeNull();
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('keeps the previous logo when the browser refuses to save the new one', async () => {
+    await uploadLogo('primeira');
+    onChange.mockReturnValue(false);
+    expect((await uploadLogo('segunda')).status).toBe(507);
+    expect(database.storeSettings.logoUrl).toBe('/local-images/5');
+    expect(await images.get(5)).toBeDefined();
+    expect(await images.get(6)).toBeUndefined();
+  });
+
+  it('goes back to the default logo and forgets the stored one', async () => {
+    await uploadLogo('primeira');
+    const removed = await send('DELETE', '/api/configuracao/logo');
+    expect(removed.status).toBe(200);
+    expect(await removed.json()).toEqual(expect.objectContaining({ logoUrl: null }));
+    expect(database.storeSettings.logoUrl).toBeNull();
+    expect(await images.get(5)).toBeUndefined();
+    expect((await send('DELETE', '/api/configuracao/logo')).status).toBe(200);
+  });
+
+  it('keeps the logo when the browser refuses to save the default one', async () => {
+    await uploadLogo('primeira');
+    onChange.mockReturnValue(false);
+    expect((await send('DELETE', '/api/configuracao/logo')).status).toBe(507);
+    expect(database.storeSettings.logoUrl).toBe('/local-images/5');
+    expect(await images.get(5)).toBeDefined();
   });
 });

@@ -102,13 +102,4 @@ describe('StoreLogoField', () => {
 
     expect(URL.revokeObjectURL).toHaveBeenLastCalledWith('blob:logo-2');
   });
-
-  it('keeps saving disabled and explains why', () => {
-    render(<StoreLogoField />);
-
-    expect(screen.getByRole('button', { name: 'Salvar logo' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Salvar logo' })).toHaveAccessibleDescription(
-      'Salvar a logo ainda não está disponível: a API não guarda as configurações da loja.',
-    );
-  });
 });
