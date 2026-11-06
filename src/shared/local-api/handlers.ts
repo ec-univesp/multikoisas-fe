@@ -3,7 +3,7 @@ import type { ApiDatabase, ProductCategoryRow, PurchaseLinkRow } from './databas
 import type { ImageStore } from './imageStore';
 
 export type ApiHandlerOptions = {
-  onChange: () => void;
+  onChange: () => boolean;
   images: Pick<ImageStore, 'save' | 'remove'>;
   imageUrl: (id: number) => string;
   baseUrl?: string;
@@ -37,14 +37,17 @@ const SOCIAL_NETWORK_TAKEN = 'Esta rede social já está cadastrada.';
 
 const MAX_UPLOAD_BYTES = 1_048_576;
 
+const PHOTO_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif']);
+
+const LOCAL_PHOTO_PATH = '/local-images/';
+
+const storageFull = () => HttpResponse.text('Espaço do navegador cheio', { status: 507 });
+
 export const createApiHandlers = (
   database: ApiDatabase,
   { onChange, images, imageUrl, baseUrl = '*', reproduceApiBugs }: ApiHandlerOptions,
 ) => {
-  const saved = (response: Response) => {
-    onChange();
-    return response;
-  };
+  const saved = (response: Response) => (onChange() ? response : storageFull());
 
   return [
     http.get(`${baseUrl}/produto`, ({ request }) => {
@@ -81,13 +84,16 @@ export const createApiHandlers = (
         return HttpResponse.text('Nao existe vínculo com esse produto.', { status: 409 });
       }
       if (!database.products.some((product) => product.id === id)) return springError(404, 'Not Found', request);
-      const productPhotos = database.productImages.filter((productImage) => productImage.produtoId === id);
-      await Promise.all(productPhotos.map((productImage) => images.remove(productImage.id)));
+      const localPhotoIds = database.productImages
+        .filter((productImage) => productImage.produtoId === id && productImage.imagemUrl.includes(LOCAL_PHOTO_PATH))
+        .map((productImage) => productImage.id);
       database.productImages = database.productImages.filter((productImage) => productImage.produtoId !== id);
       database.purchaseLinks = database.purchaseLinks.filter((link) => link.produtoId !== id);
       database.productCategories = database.productCategories.filter((link) => link.produtoId !== id);
       database.products = database.products.filter((product) => product.id !== id);
-      return saved(HttpResponse.json({ message: `O produto ${id} deletado com sucesso.` }));
+      const response = saved(HttpResponse.json({ message: `O produto ${id} deletado com sucesso.` }));
+      if (response.ok) await Promise.allSettled(localPhotoIds.map((photoId) => images.remove(photoId)));
+      return response;
     }),
 
     http.get(`${baseUrl}/categoria`, ({ request }) => {
@@ -182,11 +188,17 @@ export const createApiHandlers = (
       if (file === null || typeof file === 'string') return springError(400, 'Bad Request', request);
       if (file.size === 0) return HttpResponse.text('O arquivo enviado está vazio.', { status: 409 });
       if (file.size > MAX_UPLOAD_BYTES) return springError(413, 'Payload Too Large', request);
+      if (!PHOTO_TYPES.has(file.type)) return springError(415, 'Unsupported Media Type', request);
       const id = database.nextId++;
       await images.save(id, file);
       const productImage = { id, produtoId: Number(produtoId), imagemUrl: imageUrl(id) };
       database.productImages.push(productImage);
-      return saved(HttpResponse.json(productImage, { status: 201 }));
+      if (!onChange()) {
+        database.productImages.pop();
+        await images.remove(id);
+        return storageFull();
+      }
+      return HttpResponse.json(productImage, { status: 201 });
     }),
 
     http.delete<never, ProductImageBody>(`${baseUrl}/imagem`, async ({ request }) => {
@@ -344,5 +356,6 @@ export const createLocalImagesHandler = (images: Pick<ImageStore, 'get'>) =>
   http.get<{ id: string }>('*/local-images/:id', async ({ params }) => {
     const file = await images.get(Number(params.id));
     if (!file) return new HttpResponse(null, { status: 404 });
-    return new HttpResponse(await file.arrayBuffer(), { headers: { 'Content-Type': file.type } });
+    const contentType = PHOTO_TYPES.has(file.type) ? file.type : 'application/octet-stream';
+    return new HttpResponse(await file.arrayBuffer(), { headers: { 'Content-Type': contentType } });
   });

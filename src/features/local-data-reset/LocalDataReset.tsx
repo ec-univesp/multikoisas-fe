@@ -5,7 +5,6 @@ import Button from '@/components/ui/button/Button';
 import { Modal } from '@/components/ui/modal';
 import { useModal } from '@/hooks/useModal';
 import { resetDatabase } from '@/shared/local-api/persistence';
-import { getLocalDatabase } from '@/shared/local-api/startLocalApi';
 
 export const LocalDataReset = () => {
   const resetModal = useModal();
@@ -17,7 +16,7 @@ export const LocalDataReset = () => {
 
   const restoreSampleData = async () => {
     setIsResetting(true);
-    await resetDatabase(getLocalDatabase());
+    await resetDatabase();
     window.location.reload();
   };
 

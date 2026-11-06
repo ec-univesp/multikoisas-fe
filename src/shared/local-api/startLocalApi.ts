@@ -1,21 +1,30 @@
-import type { ApiDatabase } from './database';
-import { createApiHandlers, createLocalImagesHandler } from './handlers';
-import { imageStore } from './imageStore';
-import { loadDatabase, saveDatabase } from './persistence';
-
 let workerStarted: Promise<void> | undefined;
-let localDatabase: ApiDatabase | undefined;
 
-export const getLocalDatabase = (): ApiDatabase => (localDatabase ??= loadDatabase());
+const READ_METHODS = new Set(['GET', 'HEAD']);
 
 const startWorker = async () => {
-  // msw/browser has no server build: imported only once the page runs in the browser.
-  const { setupWorker } = await import('msw/browser');
-  const database = getLocalDatabase();
+  // msw/browser has no server build: the local api loads only once the page runs in the browser.
+  const [{ http }, { setupWorker }, { createApiHandlers, createLocalImagesHandler }, { imageStore }, persistence] =
+    await Promise.all([
+      import('msw'),
+      import('msw/browser'),
+      import('./handlers'),
+      import('./imageStore'),
+      import('./persistence'),
+    ]);
+  const database = persistence.loadDatabase();
+  const reloadSavedDatabase = () => persistence.reloadDatabase(database);
+  window.addEventListener('storage', (event) => {
+    if (event.key === persistence.STORAGE_KEY) reloadSavedDatabase();
+  });
   const worker = setupWorker(
+    // Another tab may have saved since this one last read the browser storage.
+    http.all('/api/*', ({ request }) => {
+      if (!READ_METHODS.has(request.method)) reloadSavedDatabase();
+    }),
     ...createApiHandlers(database, {
       baseUrl: '/api',
-      onChange: () => saveDatabase(database),
+      onChange: () => persistence.saveDatabase(database),
       images: imageStore,
       imageUrl: (id) => `${window.location.origin}/local-images/${id}`,
       reproduceApiBugs: false,

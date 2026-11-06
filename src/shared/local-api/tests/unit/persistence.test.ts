@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { imageStore } from '../../imageStore';
-import { loadDatabase, resetDatabase, saveDatabase, STORAGE_KEY } from '../../persistence';
+import { loadDatabase, reloadDatabase, resetDatabase, saveDatabase, STORAGE_KEY } from '../../persistence';
 
 afterEach(() => {
   localStorage.clear();
@@ -32,13 +32,31 @@ describe('local api persistence', () => {
     expect(reloaded.nextId).toBe(28);
   });
 
-  it('keeps working in memory when the storage is full', () => {
+  it('tells whether the browser saved the data', () => {
+    expect(saveDatabase(loadDatabase())).toBe(true);
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
       throw new DOMException('full', 'QuotaExceededError');
     });
-    vi.spyOn(console, 'warn').mockImplementation(() => {});
-    expect(() => saveDatabase(loadDatabase())).not.toThrow();
-    expect(console.warn).toHaveBeenCalled();
+    expect(saveDatabase(loadDatabase())).toBe(false);
+  });
+
+  it('never hands out an id already taken by a saved row', () => {
+    const database = loadDatabase();
+    database.categories.push({ id: 40, nome: 'Jardim' });
+    saveDatabase({ ...database, nextId: 3 });
+    expect(loadDatabase().nextId).toBe(41);
+  });
+
+  it('replaces the data in memory with what another tab saved', () => {
+    const database = loadDatabase();
+    const otherTab = loadDatabase();
+    otherTab.categories.push({ id: otherTab.nextId++, nome: 'Jardim' });
+    saveDatabase(otherTab);
+
+    reloadDatabase(database);
+
+    expect(database.categories).toContainEqual({ id: 27, nome: 'Jardim' });
+    expect(database.nextId).toBe(28);
   });
 
   it('never hands out the seed itself', () => {
@@ -52,10 +70,23 @@ describe('local api persistence', () => {
     saveDatabase(database);
     await imageStore.save(27, new Blob(['foto'], { type: 'image/png' }));
 
-    await resetDatabase(database);
+    await resetDatabase();
 
-    expect(database.products).toHaveLength(5);
+    expect(loadDatabase().products).toHaveLength(5);
     expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
     expect(await imageStore.get(27)).toBeUndefined();
+  });
+
+  it('keeps the data and the photos when the browser refuses the reset', async () => {
+    saveDatabase(loadDatabase());
+    await imageStore.save(27, new Blob(['foto'], { type: 'image/png' }));
+    vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
+      throw new DOMException('denied', 'SecurityError');
+    });
+
+    await expect(resetDatabase()).rejects.toThrow('denied');
+
+    expect(localStorage.getItem(STORAGE_KEY)).not.toBeNull();
+    expect(await imageStore.get(27)).toBeDefined();
   });
 });

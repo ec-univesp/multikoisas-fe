@@ -31,19 +31,24 @@ const readSaved = (): unknown => {
 
 export const loadDatabase = (): ApiDatabase => {
   const saved = readSaved();
-  return isDatabase(saved) ? saved : createDatabase(seed);
+  if (!isDatabase(saved)) return createDatabase(seed);
+  return { ...saved, nextId: Math.max(saved.nextId, createDatabase(saved).nextId) };
+};
+
+export const reloadDatabase = (database: ApiDatabase) => {
+  Object.assign(database, loadDatabase());
 };
 
 export const saveDatabase = (database: ApiDatabase) => {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(database));
-  } catch (error) {
-    console.warn('Dados mantidos só nesta aba: o navegador recusou salvar.', error);
+    return true;
+  } catch {
+    return false;
   }
 };
 
-export const resetDatabase = async (database: ApiDatabase) => {
-  Object.assign(database, createDatabase(seed));
+export const resetDatabase = async () => {
   localStorage.removeItem(STORAGE_KEY);
   await imageStore.clear();
 };
