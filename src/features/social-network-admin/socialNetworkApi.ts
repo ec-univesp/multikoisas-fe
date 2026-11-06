@@ -34,7 +34,7 @@ const conflictErrorOf = async (response: Response, request: string): Promise<Err
 };
 
 export const fetchAllSocialNetworks = async (): Promise<SocialNetwork[]> =>
-  (await getFromApi<SocialNetworkResponse>('/socialnetwork', { fresh: true, fromBrowser: true })).map(toSocialNetwork);
+  (await getFromApi<SocialNetworkResponse>('/socialnetwork')).map(toSocialNetwork);
 
 export const createSocialNetwork = async (values: SocialNetworkValues): Promise<void> => {
   const response = await sendToApi('POST', '/api/socialnetwork', { descricao: values.name, link: values.url });

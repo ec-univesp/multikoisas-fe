@@ -42,12 +42,10 @@ describe('fetchSocialNetworks', () => {
     ]);
   });
 
-  it('calls the api with a revalidation window', async () => {
+  it('reads only through the local api in the browser', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch');
     await fetchSocialNetworks();
-    expect(fetchSpy).toHaveBeenCalledWith('https://multikoisas-univesp.onrender.com/socialnetwork', {
-      next: { revalidate: 300 },
-    });
+    expect(fetchSpy).toHaveBeenCalledWith('/api/socialnetwork', { cache: 'no-store' });
   });
 
   it('fails with the path and status when the api errors', async () => {

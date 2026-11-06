@@ -44,7 +44,7 @@ const unlinkCategory = (produtoId: number, categoriaId: number) =>
   callApi('DELETE', '/categoriaproduto', { produtoId, categoriaId } satisfies ProductCategoryBody);
 
 const fetchCategoryLinks = (produtoId: number): Promise<ProductCategoryBody[]> =>
-  getFromApi<ProductCategoryBody>(`/categoriaproduto?produtoId=${produtoId}`, { fresh: true, fromBrowser: true });
+  getFromApi<ProductCategoryBody>(`/categoriaproduto?produtoId=${produtoId}`);
 
 const toApiPurchaseLink = (produtoId: number, link: PurchaseLink): ApiPurchaseLink => ({
   produtoId,
@@ -59,12 +59,10 @@ export type EditableProduct = {
 };
 
 const fetchPurchaseLinks = async (produtoId: number): Promise<PurchaseLink[]> =>
-  (
-    await getFromApi<ApiPurchaseLink>(`/canalvendaproduto?produtoId=${produtoId}`, {
-      fresh: true,
-      fromBrowser: true,
-    })
-  ).map((apiPurchaseLink) => ({ salesChannelId: apiPurchaseLink.canalVendaId, url: apiPurchaseLink.link }));
+  (await getFromApi<ApiPurchaseLink>(`/canalvendaproduto?produtoId=${produtoId}`)).map((apiPurchaseLink) => ({
+    salesChannelId: apiPurchaseLink.canalVendaId,
+    url: apiPurchaseLink.link,
+  }));
 
 const toStoreLinksOf = (
   produtoId: number,
@@ -82,11 +80,11 @@ export const loadProductForEdit = async (
   salesChannels: readonly SalesChannel[],
 ): Promise<EditableProduct | null> => {
   const productId = product.id;
-  const [apiProduct] = await getFromApi<ApiProduct>(`/produto?id=${productId}`, { fresh: true, fromBrowser: true });
+  const [apiProduct] = await getFromApi<ApiProduct>(`/produto?id=${productId}`);
   if (!apiProduct) return null;
   const [[firstLink], photos, purchaseLinks] = await Promise.all([
     fetchCategoryLinks(productId),
-    fetchProductImageRecords(productId, { fresh: true, fromBrowser: true }).catch(() => null),
+    fetchProductImageRecords(productId).catch(() => null),
     fetchPurchaseLinks(productId),
   ]);
   return {
@@ -181,7 +179,7 @@ const deleteProductImage = async (produtoId: number, imageId: number) => {
 
 const reloadImages = async (produtoId: number, fallbackImages: string[]) => {
   try {
-    return toImageUrlsInIdOrder(await fetchProductImageRecords(produtoId, { fresh: true, fromBrowser: true }));
+    return toImageUrlsInIdOrder(await fetchProductImageRecords(produtoId));
   } catch {
     return fallbackImages;
   }

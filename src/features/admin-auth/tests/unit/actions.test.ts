@@ -1,10 +1,9 @@
 // @vitest-environment node
-import { http, HttpResponse } from 'msw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { TEST_API_CREDENTIALS } from '@/test/msw/handlers';
-import { recordApiRequests, server } from '@/test/msw/server';
+import { recordApiRequests } from '@/test/msw/server';
 import { loginAction, logoutAction } from '../../actions';
-import { API_TOKEN_COOKIE_NAME, SESSION_COOKIE_NAME, verifySessionToken } from '../../session';
+import { resolveSessionKey } from '../../authEnvironment';
+import { SESSION_COOKIE_NAME, verifySessionToken } from '../../session';
 
 const { cookieStore, redirect } = vi.hoisted(() => ({
   cookieStore: { set: vi.fn(), delete: vi.fn() },
@@ -17,14 +16,13 @@ vi.mock('next/headers', () => ({ cookies: async () => cookieStore }));
 vi.mock('next/navigation', () => ({ redirect }));
 
 const secret = 'a-session-secret-with-at-least-32-characters';
+const panelUsername = 'loja';
+const panelPassword = 'senha-do-painel';
 const now = Date.UTC(2026, 10, 6, 12, 0, 0);
+const eightHoursInSeconds = 8 * 60 * 60;
 const initialState = { error: null };
-const unavailableMessage = 'Não foi possível entrar agora. Tente de novo em instantes.';
-
-const encodeSegment = (value: object) => Buffer.from(JSON.stringify(value)).toString('base64url');
-const buildJwt = (payload: object) => `${encodeSegment({ alg: 'HS256' })}.${encodeSegment(payload)}.signature`;
-
-const answerLoginWith = (response: () => Response) => server.use(http.post('*/auth/login', response));
+const invalidMessage = 'Usuário ou senha incorretos.';
+const notConfiguredMessage = 'O login do painel não está configurado neste ambiente.';
 
 const buildFormData = (username: string, password: string) => {
   const formData = new FormData();
@@ -33,16 +31,16 @@ const buildFormData = (username: string, password: string) => {
   return formData;
 };
 
-const logInWithTestAccount = () =>
-  loginAction(initialState, buildFormData(TEST_API_CREDENTIALS.username, TEST_API_CREDENTIALS.password));
-
-const cookieOptions = (maxAge: number) => ({ httpOnly: true, sameSite: 'lax', secure: false, path: '/', maxAge });
+const logIn = (username = panelUsername, password = panelPassword) =>
+  loginAction(initialState, buildFormData(username, password));
 
 describe('loginAction', () => {
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(now);
     vi.stubEnv('SESSION_SECRET', secret);
+    vi.stubEnv('PANEL_USERNAME', panelUsername);
+    vi.stubEnv('PANEL_PASSWORD', panelPassword);
   });
 
   afterEach(() => {
@@ -55,15 +53,9 @@ describe('loginAction', () => {
     ['', 'senha'],
     ['loja', ''],
     ['   ', 'senha'],
-  ])('asks for username and password without calling the api (%j, %j)', async (username, password) => {
-    const apiRequests = recordApiRequests();
-
-    expect(await loginAction(initialState, buildFormData(username, password))).toEqual({
-      error: 'Informe usuário e senha.',
-      username,
-    });
+  ])('asks for username and password (%j, %j)', async (username, password) => {
+    expect(await logIn(username, password)).toEqual({ error: 'Informe usuário e senha.', username });
     expect(cookieStore.set).not.toHaveBeenCalled();
-    expect(apiRequests).toEqual([]);
   });
 
   it('asks for username and password when the fields are absent', async () => {
@@ -73,137 +65,76 @@ describe('loginAction', () => {
     });
   });
 
-  it('stores the session and the api token until the token expires, then opens the products panel', async () => {
-    const token = buildJwt({ sub: 'admin', exp: now / 1000 + 3600 });
-    answerLoginWith(() => HttpResponse.json({ token }));
-
-    await expect(logInWithTestAccount()).rejects.toThrow('NEXT_REDIRECT /admin/products');
-
-    expect(cookieStore.set).toHaveBeenCalledWith(API_TOKEN_COOKIE_NAME, token, cookieOptions(3600));
-    expect(cookieStore.set).toHaveBeenCalledWith(SESSION_COOKIE_NAME, expect.any(String), cookieOptions(3600));
-    const sessionToken = cookieStore.set.mock.calls.find(([name]) => name === SESSION_COOKIE_NAME)?.[1];
-    expect(await verifySessionToken(sessionToken, secret, now + 3600 * 1000 - 1)).toBe(true);
-    expect(await verifySessionToken(sessionToken, secret, now + 3600 * 1000)).toBe(false);
-  });
-
-  it('accepts a token whose expiry has a fraction of a second', async () => {
-    answerLoginWith(() => HttpResponse.json({ token: buildJwt({ exp: now / 1000 + 3600.5 }) }));
-
-    await expect(logInWithTestAccount()).rejects.toThrow('NEXT_REDIRECT /admin/products');
-
-    const sessionToken = cookieStore.set.mock.calls.find(([name]) => name === SESSION_COOKIE_NAME)?.[1];
-    expect(await verifySessionToken(sessionToken, secret, now + 3600 * 1000 - 1)).toBe(true);
-  });
-
-  it('does not send the password to the api when the session secret is missing', async () => {
-    vi.stubEnv('SESSION_SECRET', '');
+  it('stores an 8-hour session for the panel account and opens the products panel, without calling any api', async () => {
     const apiRequests = recordApiRequests();
 
-    expect(await logInWithTestAccount()).toEqual({
-      error: unavailableMessage,
-      username: TEST_API_CREDENTIALS.username,
+    await expect(logIn()).rejects.toThrow('NEXT_REDIRECT /admin/products');
+
+    expect(cookieStore.set).toHaveBeenCalledTimes(1);
+    expect(cookieStore.set).toHaveBeenCalledWith(SESSION_COOKIE_NAME, expect.any(String), {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: false,
+      path: '/',
+      maxAge: eightHoursInSeconds,
     });
+    const sessionToken = cookieStore.set.mock.calls[0]?.[1];
+    const key = resolveSessionKey(process.env);
+    expect(await verifySessionToken(sessionToken, key, now + eightHoursInSeconds * 1000 - 1)).toBe(true);
+    expect(await verifySessionToken(sessionToken, key, now + eightHoursInSeconds * 1000)).toBe(false);
     expect(apiRequests).toEqual([]);
-    expect(cookieStore.set).not.toHaveBeenCalled();
   });
 
-  it('keeps the cookies for 2 hours when the token has no readable expiry', async () => {
-    await expect(logInWithTestAccount()).rejects.toThrow('NEXT_REDIRECT /admin/products');
-
-    expect(cookieStore.set).toHaveBeenCalledWith(
-      API_TOKEN_COOKIE_NAME,
-      TEST_API_CREDENTIALS.token,
-      cookieOptions(2 * 60 * 60),
-    );
-    expect(cookieStore.set).toHaveBeenCalledWith(SESSION_COOKIE_NAME, expect.any(String), cookieOptions(2 * 60 * 60));
-  });
-
-  it('keeps the cookies for 2 hours when the token payload has no expiry', async () => {
-    answerLoginWith(() => HttpResponse.json({ token: buildJwt({ sub: 'admin' }) }));
-
-    await expect(logInWithTestAccount()).rejects.toThrow('NEXT_REDIRECT');
-
-    expect(cookieStore.set).toHaveBeenCalledWith(SESSION_COOKIE_NAME, expect.any(String), cookieOptions(2 * 60 * 60));
-  });
-
-  it('never keeps the cookies for more than 8 hours', async () => {
-    answerLoginWith(() => HttpResponse.json({ token: buildJwt({ exp: now / 1000 + 30 * 24 * 3600 }) }));
-
-    await expect(logInWithTestAccount()).rejects.toThrow('NEXT_REDIRECT');
-
-    expect(cookieStore.set).toHaveBeenCalledWith(SESSION_COOKIE_NAME, expect.any(String), cookieOptions(8 * 60 * 60));
-    expect(cookieStore.set).toHaveBeenCalledWith(API_TOKEN_COOKIE_NAME, expect.any(String), cookieOptions(8 * 60 * 60));
-  });
-
-  it('marks both cookies as secure in production', async () => {
+  it('marks the session cookie as secure in production', async () => {
     vi.stubEnv('NODE_ENV', 'production');
 
-    await expect(logInWithTestAccount()).rejects.toThrow('NEXT_REDIRECT');
+    await expect(logIn()).rejects.toThrow('NEXT_REDIRECT');
 
     expect(cookieStore.set).toHaveBeenCalledWith(
       SESSION_COOKIE_NAME,
       expect.any(String),
       expect.objectContaining({ secure: true }),
     );
-    expect(cookieStore.set).toHaveBeenCalledWith(
-      API_TOKEN_COOKIE_NAME,
-      expect.any(String),
-      expect.objectContaining({ secure: true }),
-    );
-  });
-
-  it('says the username or password is wrong when the api refuses them', async () => {
-    expect(await loginAction(initialState, buildFormData(TEST_API_CREDENTIALS.username, 'errada'))).toEqual({
-      error: 'Usuário ou senha incorretos.',
-      username: TEST_API_CREDENTIALS.username,
-    });
-    expect(cookieStore.set).not.toHaveBeenCalled();
-    expect(redirect).not.toHaveBeenCalled();
-  });
-
-  it('says the username or password is wrong when the api answers 401', async () => {
-    answerLoginWith(() => HttpResponse.json({ message: 'Bad credentials' }, { status: 401 }));
-
-    expect(await logInWithTestAccount()).toEqual({
-      error: 'Usuário ou senha incorretos.',
-      username: TEST_API_CREDENTIALS.username,
-    });
   });
 
   it.each([
-    ['the api is unreachable', () => HttpResponse.error()],
-    ['the api fails', () => HttpResponse.text('java.lang.NullPointerException at AuthController', { status: 500 })],
-    ['the api answers without a token', () => HttpResponse.json({ message: 'ok' })],
-    ['the api answers an empty token', () => HttpResponse.json({ token: '' })],
-    ['the api answers something other than json', () => HttpResponse.text('<html>sleeping</html>')],
-    ['the token is already expired', () => HttpResponse.json({ token: buildJwt({ exp: now / 1000 - 1 }) })],
-  ])('asks to try again later when %s, without showing the api text', async (_case, response) => {
-    answerLoginWith(response);
-
-    expect(await logInWithTestAccount()).toEqual({
-      error: unavailableMessage,
-      username: TEST_API_CREDENTIALS.username,
-    });
+    ['a wrong password', panelUsername, 'errada'],
+    ['a wrong username', 'outra', panelPassword],
+    ['a password that only starts the same', panelUsername, `${panelPassword}x`],
+  ])('says the username or password is wrong for %s', async (_case, username, password) => {
+    expect(await logIn(username, password)).toEqual({ error: invalidMessage, username });
     expect(cookieStore.set).not.toHaveBeenCalled();
     expect(redirect).not.toHaveBeenCalled();
   });
 
-  it('asks to try again later when the session secret is missing', async () => {
-    vi.stubEnv('SESSION_SECRET', '');
-
-    expect(await logInWithTestAccount()).toEqual({
-      error: unavailableMessage,
-      username: TEST_API_CREDENTIALS.username,
-    });
-    expect(cookieStore.set).not.toHaveBeenCalled();
+  it('ignores spaces around the username, typed or configured', async () => {
+    vi.stubEnv('PANEL_USERNAME', ` ${panelUsername}\n`);
+    await expect(logIn(`  ${panelUsername}  `)).rejects.toThrow('NEXT_REDIRECT /admin/products');
   });
+
+  it('waits half a second before saying the credentials are wrong, to slow down guessing', async () => {
+    const setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout');
+
+    expect(await logIn(panelUsername, 'errada')).toEqual({ error: invalidMessage, username: panelUsername });
+
+    expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 500);
+  });
+
+  it.each([['PANEL_USERNAME'], ['PANEL_PASSWORD'], ['SESSION_SECRET']])(
+    'explains that the login is not configured when %s is missing',
+    async (variable) => {
+      vi.stubEnv(variable, '');
+
+      expect(await logIn()).toEqual({ error: notConfiguredMessage, username: panelUsername });
+      expect(cookieStore.set).not.toHaveBeenCalled();
+    },
+  );
 });
 
 describe('logoutAction', () => {
-  it('deletes the session and api token cookies and redirects to the login page', async () => {
+  it('deletes the session cookie and redirects to the login page', async () => {
     await expect(logoutAction()).rejects.toThrow('NEXT_REDIRECT /panel');
 
     expect(cookieStore.delete).toHaveBeenCalledWith(SESSION_COOKIE_NAME);
-    expect(cookieStore.delete).toHaveBeenCalledWith(API_TOKEN_COOKIE_NAME);
   });
 });

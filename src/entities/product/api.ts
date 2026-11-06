@@ -1,4 +1,4 @@
-import { type FetchOptions, getFromApi } from '@/shared/api/getFromApi';
+import { getFromApi } from '@/shared/api/getFromApi';
 import { toDisplayableImageUrl } from './imageUrl';
 import { toBaseSlug } from './toBaseSlug';
 import { STORE_PRESENTATION, type Category, type Product, type StoreLink, type StoreSlug } from './types';
@@ -72,28 +72,25 @@ export const toProduct = (
   storeLinks,
 });
 
-export const fetchCategories = async (options: FetchOptions = {}): Promise<Category[]> =>
-  (await getFromApi<ApiCategory>('/categoria', options)).map((apiCategory) => ({
+export const fetchCategories = async (): Promise<Category[]> =>
+  (await getFromApi<ApiCategory>('/categoria')).map((apiCategory) => ({
     id: apiCategory.id,
     name: apiCategory.nome,
   }));
 
-export const fetchProductImageRecords = async (
-  produtoId: number,
-  options: FetchOptions = {},
-): Promise<ProductImageRecord[]> =>
-  toImageRecords(await getFromApi<ApiProductImage>(`/imagem?produtoId=${produtoId}`, options));
+export const fetchProductImageRecords = async (produtoId: number): Promise<ProductImageRecord[]> =>
+  toImageRecords(await getFromApi<ApiProductImage>(`/imagem?produtoId=${produtoId}`));
 
-export const fetchCatalog = async (options: FetchOptions = {}): Promise<Catalog> => {
+export const fetchCatalog = async (): Promise<Catalog> => {
   const [apiProducts, categories, apiProductCategories, apiImages, apiSalesChannels, apiPurchaseLinks] =
     await Promise.all([
-      getFromApi<ApiProduct>('/produto', options),
-      fetchCategories(options),
-      getFromApi<ApiProductCategory>('/categoriaproduto', options),
+      getFromApi<ApiProduct>('/produto'),
+      fetchCategories(),
+      getFromApi<ApiProductCategory>('/categoriaproduto'),
       // Photos and purchase links are optional: without them the showcase stays up.
-      getFromApi<ApiProductImage>('/imagem', options).catch((): ApiProductImage[] => []),
-      getFromApi<ApiSalesChannel>('/canalvenda', options).catch((): ApiSalesChannel[] => []),
-      getFromApi<ApiPurchaseLink>('/canalvendaproduto', options).catch((): ApiPurchaseLink[] => []),
+      getFromApi<ApiProductImage>('/imagem').catch((): ApiProductImage[] => []),
+      getFromApi<ApiSalesChannel>('/canalvenda').catch((): ApiSalesChannel[] => []),
+      getFromApi<ApiPurchaseLink>('/canalvendaproduto').catch((): ApiPurchaseLink[] => []),
     ]);
   const categoryOf = (produtoId: number): Category | undefined => {
     const productCategory = apiProductCategories.find((candidate) => candidate.produtoId === produtoId);
@@ -115,5 +112,4 @@ export const fetchCatalog = async (options: FetchOptions = {}): Promise<Catalog>
   };
 };
 
-export const fetchProducts = async (options: FetchOptions = {}): Promise<Product[]> =>
-  (await fetchCatalog(options)).products;
+export const fetchProducts = async (): Promise<Product[]> => (await fetchCatalog()).products;
