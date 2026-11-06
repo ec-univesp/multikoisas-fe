@@ -50,7 +50,11 @@ describe('syncProductImages', () => {
     expect(result).toEqual({
       product: {
         ...garrafa,
-        images: [`${SUPABASE_IMAGES}/garrafa-lado.webp`, `${SUPABASE_IMAGES}/upload-100`, `${SUPABASE_IMAGES}/upload-101`],
+        images: [
+          `${SUPABASE_IMAGES}/garrafa-lado.webp`,
+          `${SUPABASE_IMAGES}/upload-100`,
+          `${SUPABASE_IMAGES}/upload-101`,
+        ],
       },
       failedPhotoCount: 0,
     });
@@ -112,7 +116,9 @@ describe('syncProductImages', () => {
     await syncProductImages(garrafa, garrafaPhotos, { removedPhotoIds: [], newFiles: [fileA, fileB] });
 
     const uploads = fetchSpy.mock.calls.filter(([, init]) => init?.body instanceof FormData);
-    const uploadForms = uploads.map(([, init]) => init?.body).filter((body): body is FormData => body instanceof FormData);
+    const uploadForms = uploads
+      .map(([, init]) => init?.body)
+      .filter((body): body is FormData => body instanceof FormData);
     expect(uploadForms).toHaveLength(2);
     expect(uploadForms[0].get('file')).toBe(fileA);
     expect(uploadForms[1].get('file')).toBe(fileB);
@@ -120,7 +126,11 @@ describe('syncProductImages', () => {
   });
 
   it('counts as removed a photo the api no longer has', async () => {
-    server.use(http.delete('*/imagem', () => HttpResponse.text('Imagem não encontrada ou não pertence a este produto.', { status: 409 })));
+    server.use(
+      http.delete('*/imagem', () =>
+        HttpResponse.text('Imagem não encontrada ou não pertence a este produto.', { status: 409 }),
+      ),
+    );
 
     const result = await syncProductImages(garrafa, garrafaPhotos, { removedPhotoIds: [10], newFiles: [] });
 
@@ -160,7 +170,11 @@ describe('syncProductImages', () => {
       },
       failedPhotoCount: 0,
     });
-    expect(apiRequests).toEqual(['POST /api/imagem?produtoId=1', 'POST /api/imagem?produtoId=1', 'GET /api/imagem?produtoId=1']);
+    expect(apiRequests).toEqual([
+      'POST /api/imagem?produtoId=1',
+      'POST /api/imagem?produtoId=1',
+      'GET /api/imagem?produtoId=1',
+    ]);
   });
 
   it('keeps the known photos when the reload after an unreadable upload fails', async () => {

@@ -124,9 +124,10 @@ describe('SocialNetworkAdminPanel', () => {
 
     await submitNewSocialNetwork(user, 'Facebook', 'https://facebook.com/multikoisas');
 
-    expect(
-      await screen.findByText('A API recusou o cadastro. O time do back já foi avisado.'),
-    ).toHaveAttribute('role', 'alert');
+    expect(await screen.findByText('A API recusou o cadastro. O time do back já foi avisado.')).toHaveAttribute(
+      'role',
+      'alert',
+    );
     expect(screen.queryByLabelText('Nome da rede')).not.toBeInTheDocument();
     expect(screen.getByText('2 redes cadastradas')).toBeInTheDocument();
     expect(apiRequests).toEqual(['POST /api/socialnetwork', 'GET /api/socialnetwork']);
@@ -166,10 +167,7 @@ describe('SocialNetworkAdminPanel', () => {
 
       await submitNewSocialNetwork(user, name, 'https://facebook.com/multikoisas');
 
-      expect(screen.getByText('Use um nome sem / \\ % ; e diferente de "." ou "..".')).toHaveAttribute(
-        'role',
-        'alert',
-      );
+      expect(screen.getByText('Use um nome sem / \\ % ; e diferente de "." ou "..".')).toHaveAttribute('role', 'alert');
       expect(apiRequests).toEqual([]);
     },
   );
@@ -285,9 +283,10 @@ describe('SocialNetworkAdminPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Editar TikTok' }));
     await fillForm(user, 'TikTok', 'https://tiktok.com/@mk');
 
-    expect(
-      await screen.findByText('Essa rede foi alterada em outra aba. Recarregue a lista.'),
-    ).toHaveAttribute('role', 'alert');
+    expect(await screen.findByText('Essa rede foi alterada em outra aba. Recarregue a lista.')).toHaveAttribute(
+      'role',
+      'alert',
+    );
     expect(screen.queryByLabelText('Nome da rede')).not.toBeInTheDocument();
     expect(screen.getByText('2 redes cadastradas')).toBeInTheDocument();
     expect(apiRequests).toEqual(['PUT /api/socialnetwork/TikTok', 'GET /api/socialnetwork']);

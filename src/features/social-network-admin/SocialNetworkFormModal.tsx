@@ -29,10 +29,7 @@ const nameErrorOf = (name: string, isRepeated: boolean): string | null => {
 
 type FieldErrors = { name: string | null; url: string | null };
 
-const validate = (
-  { name, url }: SocialNetworkValues,
-  otherSocialNetworks: readonly SocialNetwork[],
-): FieldErrors => {
+const validate = ({ name, url }: SocialNetworkValues, otherSocialNetworks: readonly SocialNetwork[]): FieldErrors => {
   const isRepeated = otherSocialNetworks.some(
     (socialNetwork) => normalizeName(socialNetwork.name) === normalizeName(name),
   );

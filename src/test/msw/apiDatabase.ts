@@ -60,6 +60,7 @@ const seed = (): ApiDatabase => ({
     { id: 3, nome: 'Instagram' },
     { id: 4, nome: 'Facebook' },
     { id: 5, nome: 'TikTok' },
+    { id: 8, nome: 'MagaLu' },
   ],
   canalVendaProduto: [
     { produtoId: 1, canalVendaId: 2, link: 'https://shopee.com.br/garrafa-termica' },

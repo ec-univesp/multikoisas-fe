@@ -5,6 +5,7 @@ import Button from '@/components/ui/button/Button';
 import { useModal } from '@/hooks/useModal';
 import { PlusIcon } from '@/icons';
 import type { Category, Product } from '@/entities/product';
+import type { SalesChannel } from '@/entities/sales-channel';
 import { ProductFormModal } from './ProductFormModal';
 import { DeleteProductModal } from './DeleteProductModal';
 import { ProductTable } from './ProductTable';
@@ -14,18 +15,27 @@ import {
   deleteProduct,
   ProductDeleteRefusedError,
   loadProductForEdit,
+  PurchaseLinkError,
   type EditableProduct,
   syncProductImages,
+  syncPurchaseLinks,
   updateProduct,
 } from './productApi';
-import type { PhotoChanges, ProductFormValues } from './types';
+import type { PhotoChanges, ProductFormValues, PurchaseLink } from './types';
 
 type ProductAdminPanelProps = {
   initialProducts: readonly Product[];
   categories: readonly Category[];
+  salesChannels: readonly SalesChannel[];
 };
 
-export const ProductAdminPanel = ({ initialProducts, categories }: ProductAdminPanelProps) => {
+const toPurchaseLinks = (values: ProductFormValues): PurchaseLink[] =>
+  values.purchaseLinks.map((purchaseLink) => ({
+    salesChannelId: Number(purchaseLink.salesChannelId),
+    url: purchaseLink.url.trim(),
+  }));
+
+export const ProductAdminPanel = ({ initialProducts, categories, salesChannels }: ProductAdminPanelProps) => {
   const [products, setProducts] = useState<Product[]>([...initialProducts]);
   const [editingProduct, setEditingProduct] = useState<EditableProduct | null>(null);
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
@@ -33,15 +43,16 @@ export const ProductAdminPanel = ({ initialProducts, categories }: ProductAdminP
   const [isLoadingProduct, setIsLoadingProduct] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
 
+  const addFeedbackMessage = (message: string) =>
+    setFeedbackMessage((currentMessage) => (currentMessage ? `${currentMessage} ${message}` : message));
+
   const formModal = useModal();
   const deleteModal = useModal();
 
   const showSavedProduct = (savedProduct: Product) =>
     setProducts((currentProducts) =>
       currentProducts.some((candidate) => candidate.id === savedProduct.id)
-        ? currentProducts.map((candidate) =>
-            candidate.id === savedProduct.id ? savedProduct : candidate,
-          )
+        ? currentProducts.map((candidate) => (candidate.id === savedProduct.id ? savedProduct : candidate))
         : [...currentProducts, savedProduct],
     );
 
@@ -55,11 +66,9 @@ export const ProductAdminPanel = ({ initialProducts, categories }: ProductAdminP
     setFeedbackMessage(null);
     setIsLoadingProduct(true);
     try {
-      const editableProduct = await loadProductForEdit(product, categories);
+      const editableProduct = await loadProductForEdit(product, categories, salesChannels);
       if (!editableProduct) {
-        setProducts((currentProducts) =>
-          currentProducts.filter((candidate) => candidate.id !== product.id),
-        );
+        setProducts((currentProducts) => currentProducts.filter((candidate) => candidate.id !== product.id));
         setFeedbackMessage('Esse produto já tinha sido apagado. A lista foi atualizada.');
         return;
       }
@@ -91,9 +100,26 @@ export const ProductAdminPanel = ({ initialProducts, categories }: ProductAdminP
     }
   };
 
+  const savePurchaseLinks = async (savedProduct: Product, values: ProductFormValues): Promise<Product> => {
+    try {
+      return await syncPurchaseLinks(
+        savedProduct,
+        editingProduct?.purchaseLinks ?? [],
+        toPurchaseLinks(values),
+        salesChannels,
+      );
+    } catch (error) {
+      if (!(error instanceof PurchaseLinkError)) throw error;
+      addFeedbackMessage(
+        'Produto salvo, mas os links de compra não foram atualizados. Edite o produto para tentar de novo.',
+      );
+      return error.product;
+    }
+  };
+
   const saveProduct = async (values: ProductFormValues, photoChanges: PhotoChanges) => {
     setFeedbackMessage(null);
-    const savedProduct = await saveProductData(values);
+    const savedProduct = await savePurchaseLinks(await saveProductData(values), values);
     const { product, failedPhotoCount } = await syncProductImages(
       savedProduct,
       editingProduct ? editingProduct.photos : [],
@@ -108,9 +134,7 @@ export const ProductAdminPanel = ({ initialProducts, categories }: ProductAdminP
     setIsDeleting(true);
     try {
       await deleteProduct(deletingProduct);
-      setProducts((currentProducts) =>
-        currentProducts.filter((candidate) => candidate.id !== deletingProduct.id),
-      );
+      setProducts((currentProducts) => currentProducts.filter((candidate) => candidate.id !== deletingProduct.id));
       setDeletingProduct(null);
     } catch (error) {
       setFeedbackMessage(
@@ -128,8 +152,7 @@ export const ProductAdminPanel = ({ initialProducts, categories }: ProductAdminP
     <div>
       <div className="mb-4 flex items-center justify-between md:mb-6">
         <p className="text-theme-sm text-gray-500">
-          {products.length}{' '}
-          {products.length === 1 ? 'produto cadastrado' : 'produtos cadastrados'}
+          {products.length} {products.length === 1 ? 'produto cadastrado' : 'produtos cadastrados'}
         </p>
         <Button size="sm" startIcon={<PlusIcon />} onClick={openCreateModal}>
           Novo produto
@@ -150,7 +173,9 @@ export const ProductAdminPanel = ({ initialProducts, categories }: ProductAdminP
           onClose={formModal.closeModal}
           existingProduct={editingProduct?.product}
           existingPhotos={editingProduct?.photos}
+          existingPurchaseLinks={editingProduct?.purchaseLinks}
           categories={categories}
+          salesChannels={salesChannels}
           onSave={saveProduct}
         />
       )}

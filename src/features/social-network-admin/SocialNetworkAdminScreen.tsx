@@ -6,10 +6,7 @@ import type { SocialNetwork } from '@/entities/social-network';
 import { SocialNetworkAdminPanel } from './SocialNetworkAdminPanel';
 import { fetchAllSocialNetworks } from './socialNetworkApi';
 
-type LoadState =
-  | { status: 'loading' }
-  | { status: 'error' }
-  | { status: 'ready'; socialNetworks: SocialNetwork[] };
+type LoadState = { status: 'loading' } | { status: 'error' } | { status: 'ready'; socialNetworks: SocialNetwork[] };
 
 const loadSocialNetworks = async (): Promise<LoadState> => {
   try {

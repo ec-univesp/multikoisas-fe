@@ -124,7 +124,7 @@ export const ProductPhotosField = ({
                   disabled={disabled}
                   aria-label={`Remover foto ${index + 1}`}
                   title="Remover foto"
-                  className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center rounded-bl-lg bg-white/90 text-gray-600 hover:text-error-500"
+                  className="absolute top-0 right-0 flex h-11 w-11 items-center justify-center rounded-bl-lg bg-white/90 text-gray-600 hover:text-error-500"
                 >
                   <TrashBinIcon />
                 </button>

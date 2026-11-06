@@ -35,8 +35,10 @@ export const ProductCard = ({
           className="object-contain p-2"
         />
       </Link>
-      <span className="mt-3 line-clamp-1 text-xs font-semibold tracking-wider text-store-navy uppercase">{product.category}</span>
-      <h3 className="mt-1 line-clamp-2 font-semibold leading-tight text-gray-800">
+      <span className="mt-3 line-clamp-1 text-xs font-semibold tracking-wider text-store-navy uppercase">
+        {product.category}
+      </span>
+      <h3 className="mt-1 line-clamp-2 leading-tight font-semibold text-gray-800">
         <Link href={detailPath} className="hover:text-store-navy">
           {product.name}
         </Link>

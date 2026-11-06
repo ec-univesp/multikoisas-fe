@@ -114,8 +114,7 @@ export const SocialNetworkAdminPanel = ({ initialSocialNetworks }: SocialNetwork
     <div>
       <div className="mb-4 flex items-center justify-between md:mb-6">
         <p className="text-theme-sm text-gray-500">
-          {socialNetworks.length}{' '}
-          {socialNetworks.length === 1 ? 'rede cadastrada' : 'redes cadastradas'}
+          {socialNetworks.length} {socialNetworks.length === 1 ? 'rede cadastrada' : 'redes cadastradas'}
         </p>
         <Button size="sm" startIcon={<PlusIcon />} onClick={() => openFormModal(null)}>
           Nova rede
@@ -128,11 +127,7 @@ export const SocialNetworkAdminPanel = ({ initialSocialNetworks }: SocialNetwork
         </p>
       )}
 
-      <SocialNetworkTable
-        socialNetworks={socialNetworks}
-        onEdit={openFormModal}
-        onDelete={openDeleteModal}
-      />
+      <SocialNetworkTable socialNetworks={socialNetworks} onEdit={openFormModal} onDelete={openDeleteModal} />
 
       {formModal.isOpen && (
         <SocialNetworkFormModal

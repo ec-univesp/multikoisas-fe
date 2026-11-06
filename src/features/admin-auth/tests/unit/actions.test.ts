@@ -50,7 +50,10 @@ describe('loginAction', () => {
   });
 
   it('asks for username and password when the fields are absent', async () => {
-    expect(await loginAction(initialState, new FormData())).toEqual({ error: 'Informe usuário e senha.', username: '' });
+    expect(await loginAction(initialState, new FormData())).toEqual({
+      error: 'Informe usuário e senha.',
+      username: '',
+    });
   });
 
   it.each([
@@ -96,7 +99,11 @@ describe('loginAction', () => {
 
     await expect(loginAction(initialState, buildFormData('loja', 'senha-da-loja'))).rejects.toThrow('NEXT_REDIRECT');
 
-    expect(cookieStore.set).toHaveBeenCalledWith(SESSION_COOKIE_NAME, expect.any(String), expect.objectContaining({ secure: true }));
+    expect(cookieStore.set).toHaveBeenCalledWith(
+      SESSION_COOKIE_NAME,
+      expect.any(String),
+      expect.objectContaining({ secure: true }),
+    );
   });
 });
 

@@ -9,13 +9,16 @@ type CategoriaProdutoResponse = { produtoId: number; categoriaId: number };
 export type ImagemResponse = { id: number; produtoId: number; imagemUrl: string };
 export type ProductImageRecord = { id: number; url: string | null };
 type CanalVendaResponse = { id: number; nome: string };
-type CanalVendaProdutoResponse = { produtoId: number; canalVendaId: number; link: string };
-type Catalog = { products: Product[]; categories: Category[] };
+export type CanalVendaProdutoResponse = { produtoId: number; canalVendaId: number; link: string };
+type Catalog = { products: Product[]; categories: Category[]; salesChannels: { id: number; name: string }[] };
 
 const UNCATEGORIZED = 'Sem categoria';
 
 const firstNonEmptyLine = (text: string): string =>
-  text.split(/\r?\n/).find((line) => line.trim().length > 0)?.trim() ?? '';
+  text
+    .split(/\r?\n/)
+    .find((line) => line.trim().length > 0)
+    ?.trim() ?? '';
 
 export const toImageRecord = (imagem: ImagemResponse): ProductImageRecord => ({
   id: imagem.id,
@@ -34,8 +37,10 @@ const toImageUrls = (imagens: readonly ImagemResponse[]): string[] => toImageUrl
 
 const isStoreSlug = (slug: string): slug is StoreSlug => Object.hasOwn(STORE_PRESENTATION, slug);
 
+export const isStoreChannelName = (name: string): boolean => isStoreSlug(toBaseSlug(name));
+
 // ponytail: canal sem apresentação em STORE_PRESENTATION (Instagram, TikTok) não vira botão de compra.
-const toStoreLinks = (
+export const toStoreLinks = (
   vinculos: readonly CanalVendaProdutoResponse[],
   canaisVenda: readonly CanalVendaResponse[],
 ): StoreLink[] =>
@@ -86,9 +91,7 @@ export const fetchCatalog = async (options: FetchOptions = {}): Promise<Catalog>
     // Foto e link de compra são acessórios: sem eles a vitrine segue no ar.
     getFromApi<ImagemResponse>('/imagem', options).catch((): ImagemResponse[] => []),
     getFromApi<CanalVendaResponse>('/canalvenda', options).catch((): CanalVendaResponse[] => []),
-    getFromApi<CanalVendaProdutoResponse>('/canalvendaproduto', options).catch(
-      (): CanalVendaProdutoResponse[] => [],
-    ),
+    getFromApi<CanalVendaProdutoResponse>('/canalvendaproduto', options).catch((): CanalVendaProdutoResponse[] => []),
   ]);
   const categoryOf = (produtoId: number): Category | undefined => {
     const vinculo = vinculos.find((candidate) => candidate.produtoId === produtoId);
@@ -106,6 +109,7 @@ export const fetchCatalog = async (options: FetchOptions = {}): Promise<Catalog>
       toProduct(produto, categoryOf(produto.id), imagesOf(produto.id), storeLinksOf(produto.id)),
     ),
     categories,
+    salesChannels: canaisVenda.map((canalVenda) => ({ id: canalVenda.id, name: canalVenda.nome })),
   };
 };
 
