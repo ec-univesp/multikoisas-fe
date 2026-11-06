@@ -22,8 +22,13 @@ export default function SiteLayout({ children }: Readonly<{ children: React.Reac
         <main className="flex-1">{children}</main>
       </ShowcaseSearchProvider>
       <SiteFooter />
-      <GoogleReviewsBadge />
-      <WhatsAppFloatingButton />
+      <aside
+        aria-label="Contatos da loja"
+        className="fixed top-1/2 right-4 z-40 flex -translate-y-1/2 flex-col items-end gap-3"
+      >
+        <GoogleReviewsBadge />
+        <WhatsAppFloatingButton />
+      </aside>
     </div>
   );
 }

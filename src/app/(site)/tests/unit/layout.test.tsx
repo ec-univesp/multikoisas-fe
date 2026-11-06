@@ -27,11 +27,15 @@ describe('SiteLayout', () => {
     expect(findElementByType(main, 'p')?.props.children).toBe('página');
   });
 
-  it('keeps the floating WhatsApp button on every storefront page', () => {
-    expect(findElementByType(SiteLayout({ children: <p>página</p> }), WhatsAppFloatingButton)).toBeDefined();
-  });
-
-  it('keeps the google reviews badge floating on every storefront page', () => {
-    expect(findElementByType(SiteLayout({ children: <p>página</p> }), GoogleReviewsBadge)).toBeDefined();
+  it('floats the google reviews badge above the WhatsApp button, centered on the right edge', () => {
+    const floating = findElementByType(SiteLayout({ children: <p>página</p> }), 'aside') as
+      ReactElement<{ children?: ReactNode; className?: string; 'aria-label'?: string }> | undefined;
+    expect(floating?.props['aria-label']).toBe('Contatos da loja');
+    expect(floating?.props.className?.split(' ')).toEqual(
+      expect.arrayContaining(['fixed', 'top-1/2', 'right-4', '-translate-y-1/2']),
+    );
+    const [badge, whatsApp] = Children.toArray(floating?.props.children);
+    expect(isValidElement(badge) && badge.type).toBe(GoogleReviewsBadge);
+    expect(isValidElement(whatsApp) && whatsApp.type).toBe(WhatsAppFloatingButton);
   });
 });
