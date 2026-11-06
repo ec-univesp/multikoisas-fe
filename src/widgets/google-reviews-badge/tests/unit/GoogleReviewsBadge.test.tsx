@@ -14,6 +14,13 @@ const settingsWith = (overrides: Partial<StoreSettings>): StoreSettings => ({
 });
 
 describe('GoogleReviewsBadge', () => {
+  it('floats on the right with the store settings by default', () => {
+    render(<GoogleReviewsBadge />);
+    expect(
+      screen.getByRole('link', { name: 'Nota 4,7 de 5 no Google, 387 avaliações. Abre em outra aba.' }),
+    ).toHaveClass('fixed');
+  });
+
   it('renders nothing without a reviews link', () => {
     const { container } = render(<GoogleReviewsBadge settings={settingsWith({ googleReviewsUrl: null })} />);
     expect(container).toBeEmptyDOMElement();
@@ -32,7 +39,7 @@ describe('GoogleReviewsBadge', () => {
     expect(badge).toHaveAttribute('href', REVIEWS_URL);
     expect(badge).toHaveAttribute('target', '_blank');
     expect(badge).toHaveAttribute('rel', 'noopener noreferrer');
-    expect(badge).toHaveClass('h-11');
+    expect(badge).toHaveClass('fixed', 'right-4', 'bottom-20', 'h-11');
   });
 
   it('shows the rating with a comma and the review count from sm up', () => {

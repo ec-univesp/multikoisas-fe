@@ -1,6 +1,7 @@
 import { Children, isValidElement, type ReactElement, type ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
 import { ShowcaseSearchProvider } from '@/features/showcase-filter';
+import { GoogleReviewsBadge } from '@/widgets/google-reviews-badge';
 import { SiteHeader } from '@/widgets/site-header';
 import { WhatsAppFloatingButton } from '@/widgets/whatsapp-floating-button';
 import SiteLayout from '../../layout';
@@ -28,5 +29,9 @@ describe('SiteLayout', () => {
 
   it('keeps the floating WhatsApp button on every storefront page', () => {
     expect(findElementByType(SiteLayout({ children: <p>página</p> }), WhatsAppFloatingButton)).toBeDefined();
+  });
+
+  it('keeps the google reviews badge floating on every storefront page', () => {
+    expect(findElementByType(SiteLayout({ children: <p>página</p> }), GoogleReviewsBadge)).toBeDefined();
   });
 });
