@@ -109,4 +109,11 @@ describe('SiteFooter', () => {
     expect(await within(footer).findByText('Rua Nova, 10 - Santo André - SP')).toBeInTheDocument();
     expect(within(footer).getByRole('img', { name: 'MultiKoisas' })).toHaveAttribute('src', '/local-images/5');
   });
+
+  it('leaves out the address while the saved settings load and shows the default one when they fail', async () => {
+    server.use(http.get('*/configuracao', () => new HttpResponse(null, { status: 500 })));
+    render(<SiteFooter />);
+    expect(screen.getByRole('contentinfo').querySelector('address')).not.toBeInTheDocument();
+    expect(await screen.findByText(/Anhaia Melo, 2085/)).toBeInTheDocument();
+  });
 });

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { toStoresPhrase, useCatalog } from '@/entities/product';
 import { isWhatsApp, useSocialNetworks, WhatsAppLink } from '@/entities/social-network';
-import { StoreLogo } from '@/entities/store-settings';
+import { StoreLogo, useStoreSettings } from '@/entities/store-settings';
 import { ShowcaseLink, ShowcaseSearchField } from '@/features/showcase-filter';
 
 const navLinkClassName =
@@ -11,6 +11,7 @@ const navLinkClassName =
 
 export const SiteHeader = () => {
   const catalog = useCatalog();
+  const { logoUrl } = useStoreSettings().settings;
   const socialNetworks = useSocialNetworks();
   const whatsApp = socialNetworks.status === 'ready' ? socialNetworks.data.find(isWhatsApp) : undefined;
   const storesPhrase = catalog.status === 'ready' ? toStoresPhrase(catalog.data.products) : null;
@@ -24,7 +25,9 @@ export const SiteHeader = () => {
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3">
           <Link href="/" className="flex flex-col">
             <StoreLogo tone="onDark" />
-            <span className="-mt-1.5 ml-13 text-xs font-semibold tracking-wider text-blue-100 uppercase">
+            <span
+              className={`text-xs font-semibold tracking-wider text-blue-100 uppercase ${logoUrl ? 'mt-1' : '-mt-1.5 ml-13'}`}
+            >
               Tudo em um só lugar
             </span>
           </Link>

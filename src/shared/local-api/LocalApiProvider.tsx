@@ -3,7 +3,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { startLocalApi } from './startLocalApi';
 
-export const LocalApiProvider = ({ children }: { children: ReactNode }) => {
+export const LocalApiProvider = ({ children, fallback }: { children: ReactNode; fallback?: ReactNode }) => {
   const [startState, setStartState] = useState<'starting' | 'ready' | 'failed'>('starting');
 
   useEffect(() => {
@@ -16,6 +16,7 @@ export const LocalApiProvider = ({ children }: { children: ReactNode }) => {
     );
   }, []);
 
+  if (fallback !== undefined && startState !== 'ready') return fallback;
   if (startState === 'failed') {
     return (
       <p role="alert" className="p-6 text-center text-base text-gray-700">

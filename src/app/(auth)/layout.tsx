@@ -82,68 +82,68 @@ const PANEL_ICONS = Array.from({ length: PANEL_ICON_GRID_ROWS }).flatMap((_row, 
   }),
 );
 
+const TEXT_BRAND = (
+  <span className="text-2xl font-semibold tracking-tight text-white sm:text-3xl lg:text-5xl">
+    multi<span className="text-store-yellow">koisas</span>
+  </span>
+);
+
 export default function AuthLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <LocalApiProvider>
-      <div className="grid min-h-screen grid-rows-[auto_1fr] bg-white lg:grid-cols-[1.05fr_1fr] lg:grid-rows-1">
-        <aside className="relative isolate flex h-44 flex-col justify-end overflow-hidden bg-store-navy-950 px-6 pb-7 sm:h-52 sm:px-10 lg:h-auto lg:justify-center lg:px-16 lg:py-20">
-          <style>{`
+    <div className="grid min-h-screen grid-rows-[auto_1fr] bg-white lg:grid-cols-[1.05fr_1fr] lg:grid-rows-1">
+      <aside className="relative isolate flex h-44 flex-col justify-end overflow-hidden bg-store-navy-950 px-6 pb-7 sm:h-52 sm:px-10 lg:h-auto lg:justify-center lg:px-16 lg:py-20">
+        <style>{`
           @keyframes auth-panel-drift {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-6px); }
           }
         `}</style>
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -top-28 -right-24 size-[26rem] sm:size-[32rem] lg:-top-20 lg:-right-40 lg:size-[46rem]"
-          >
-            <div className="absolute inset-0 rounded-full border border-white/10" />
-            <div className="absolute inset-[13%] rounded-full border border-white/10" />
-            <div className="absolute inset-[27%] rounded-full border border-white/[0.07]" />
-            <div className="absolute inset-[41%] rounded-full border border-white/[0.05]" />
-            <div className="absolute inset-0 animate-spin rounded-full bg-[conic-gradient(from_0deg,transparent_240deg,var(--color-store-navy)_360deg)] opacity-90 [animation-duration:9s] motion-reduce:animate-none" />
-          </div>
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -bottom-32 -left-24 size-96 rounded-full bg-store-navy blur-3xl"
-          />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -top-28 -right-24 size-[26rem] sm:size-[32rem] lg:-top-20 lg:-right-40 lg:size-[46rem]"
+        >
+          <div className="absolute inset-0 rounded-full border border-white/10" />
+          <div className="absolute inset-[13%] rounded-full border border-white/10" />
+          <div className="absolute inset-[27%] rounded-full border border-white/[0.07]" />
+          <div className="absolute inset-[41%] rounded-full border border-white/[0.05]" />
+          <div className="absolute inset-0 animate-spin rounded-full bg-[conic-gradient(from_0deg,transparent_240deg,var(--color-store-navy)_360deg)] opacity-90 [animation-duration:9s] motion-reduce:animate-none" />
+        </div>
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -bottom-32 -left-24 size-96 rounded-full bg-store-navy blur-3xl"
+        />
 
-          <div aria-hidden className="pointer-events-none absolute inset-0 hidden lg:block">
-            {PANEL_ICONS.map(({ id, Icon, top, left, size, rotation, opacity, strokeWidth, delay }) => (
-              <div
-                key={id}
-                className="absolute"
-                style={{ top: `${top}%`, left: `${left}%`, transform: `rotate(${rotation}deg)` }}
-              >
-                <Icon
-                  size={size}
-                  strokeWidth={strokeWidth}
-                  className="animate-[auth-panel-drift_10s_ease-in-out_infinite] text-store-yellow motion-reduce:animate-none"
-                  style={{ opacity, animationDelay: delay }}
-                />
-              </div>
-            ))}
-          </div>
+        <div aria-hidden className="pointer-events-none absolute inset-0 hidden lg:block">
+          {PANEL_ICONS.map(({ id, Icon, top, left, size, rotation, opacity, strokeWidth, delay }) => (
+            <div
+              key={id}
+              className="absolute"
+              style={{ top: `${top}%`, left: `${left}%`, transform: `rotate(${rotation}deg)` }}
+            >
+              <Icon
+                size={size}
+                strokeWidth={strokeWidth}
+                className="animate-[auth-panel-drift_10s_ease-in-out_infinite] text-store-yellow motion-reduce:animate-none"
+                style={{ opacity, animationDelay: delay }}
+              />
+            </div>
+          ))}
+        </div>
 
-          <div className="relative max-w-md">
-            <StoreLogo
-              fallback={
-                <span className="text-2xl font-semibold tracking-tight text-white sm:text-3xl lg:text-5xl">
-                  multi<span className="text-store-yellow">koisas</span>
-                </span>
-              }
-            />
-            <p className="mt-1 text-sm font-medium text-white/80 lg:text-base">Painel da loja</p>
-            <p className="mt-5 hidden text-sm leading-relaxed text-white/60 lg:block lg:text-base">
-              Produtos, fotos e links de compra da vitrine, tudo num lugar só.
-            </p>
-          </div>
-        </aside>
+        <div className="relative max-w-md">
+          <LocalApiProvider fallback={TEXT_BRAND}>
+            <StoreLogo fallback={TEXT_BRAND} />
+          </LocalApiProvider>
+          <p className="mt-1 text-sm font-medium text-white/80 lg:text-base">Painel da loja</p>
+          <p className="mt-5 hidden text-sm leading-relaxed text-white/60 lg:block lg:text-base">
+            Produtos, fotos e links de compra da vitrine, tudo num lugar só.
+          </p>
+        </div>
+      </aside>
 
-        <main className="flex items-start justify-center px-6 pt-12 pb-16 sm:px-10 lg:items-center lg:py-20">
-          {children}
-        </main>
-      </div>
-    </LocalApiProvider>
+      <main className="flex items-start justify-center px-6 pt-12 pb-16 sm:px-10 lg:items-center lg:py-20">
+        {children}
+      </main>
+    </div>
   );
 }
