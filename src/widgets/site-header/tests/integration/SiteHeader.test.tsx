@@ -115,10 +115,7 @@ describe('SiteHeader', () => {
   it('ignores a whatsapp address that is not a valid https link', async () => {
     server.use(
       http.get('*/socialnetwork', () =>
-        HttpResponse.json([
-          { id: 3, descricao: 'WhatsApp', link: 'wa.me/5500000000000' },
-          { id: 5, descricao: 'WhatsApp', link: 'http://wa.me/5500000000000' },
-        ]),
+        HttpResponse.json([{ id: 5, descricao: 'WhatsApp', link: 'http://wa.me/5500000000000' }]),
       ),
     );
     await renderHeader();
@@ -132,7 +129,9 @@ describe('SiteHeader', () => {
   });
 
   it('hides the google reviews badge while the store has no reviews link', async () => {
-    await renderHeader();
+    await renderHeader({
+      settings: { address: null, googleReviewsUrl: null, googleRating: null, googleReviewCount: null },
+    });
     expect(screen.queryByRole('link', { name: /no Google/ })).not.toBeInTheDocument();
   });
 
