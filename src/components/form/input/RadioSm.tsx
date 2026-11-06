@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 
 interface RadioProps {
   id: string; // Unique ID for the radio button
@@ -10,19 +10,11 @@ interface RadioProps {
   className?: string; // Optional custom classes for styling
 }
 
-const RadioSm: React.FC<RadioProps> = ({
-  id,
-  name,
-  value,
-  checked,
-  label,
-  onChange,
-  className = "",
-}) => {
+const RadioSm: React.FC<RadioProps> = ({ id, name, value, checked, label, onChange, className = '' }) => {
   return (
     <label
       htmlFor={id}
-      className={`flex cursor-pointer select-none items-center text-sm text-gray-500 dark:text-gray-400 ${className}`}
+      className={`flex cursor-pointer items-center text-sm text-gray-500 select-none dark:text-gray-400 ${className}`}
     >
       <span className="relative">
         {/* Hidden Input */}
@@ -38,17 +30,11 @@ const RadioSm: React.FC<RadioProps> = ({
         {/* Styled Radio Circle */}
         <span
           className={`mr-2 flex h-4 w-4 items-center justify-center rounded-full border ${
-            checked
-              ? "border-brand-500 bg-brand-500"
-              : "bg-transparent border-gray-300 dark:border-gray-700"
+            checked ? 'border-brand-500 bg-brand-500' : 'border-gray-300 bg-transparent dark:border-gray-700'
           }`}
         >
           {/* Inner Dot */}
-          <span
-            className={`h-1.5 w-1.5 rounded-full ${
-              checked ? "bg-white" : "bg-white dark:bg-[#1e2636]"
-            }`}
-          ></span>
+          <span className={`h-1.5 w-1.5 rounded-full ${checked ? 'bg-white' : 'bg-white dark:bg-[#1e2636]'}`}></span>
         </span>
       </span>
       {label}

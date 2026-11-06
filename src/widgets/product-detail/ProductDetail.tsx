@@ -20,9 +20,7 @@ export const ProductDetail = ({ product }: { product: Product }) => {
           <span className="w-fit rounded-full bg-store-yellow px-2 py-0.5 text-xs font-semibold text-store-navy-950">
             {product.category}
           </span>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-gray-800 sm:text-4xl">
-            {product.name}
-          </h1>
+          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-gray-800 sm:text-4xl">{product.name}</h1>
           <p className="mt-4 whitespace-pre-line text-gray-500">{product.longDescription}</p>
 
           <div className="mt-8">

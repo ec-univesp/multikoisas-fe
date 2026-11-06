@@ -15,7 +15,8 @@ const readHiddenLine = (prompt) =>
     });
   });
 
-const USAGE = 'Uso: node scripts/hash-password.mjs <usuário> (digite a senha quando pedir, ou envie pela entrada padrão)';
+const USAGE =
+  'Uso: node scripts/hash-password.mjs <usuário> (digite a senha quando pedir, ou envie pela entrada padrão)';
 
 const username = process.argv[2];
 

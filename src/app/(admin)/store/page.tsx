@@ -1,8 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: "Configurações de site | MultiKoisas",
-  description: "Configurações do site da MultiKoisas.",
+  title: 'Configurações de site | MultiKoisas',
+  description: 'Configurações do site da MultiKoisas.',
 };
 
 export default function StorePage() {

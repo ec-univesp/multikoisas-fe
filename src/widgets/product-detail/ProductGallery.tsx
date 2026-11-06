@@ -96,7 +96,14 @@ export const ProductGallery = ({ name, images }: ProductGalleryProps) => {
                 onClick={() => setSelectedIndex(index)}
                 className={`relative block aspect-square min-h-11 w-full overflow-hidden rounded-xl bg-gray-100 ring-2 ${index === selectedIndex ? 'ring-store-navy' : 'ring-transparent'}`}
               >
-                <ProductImage src={image} alt="" fill loading="lazy" sizes="(max-width: 768px) 25vw, 12vw" className="object-cover" />
+                <ProductImage
+                  src={image}
+                  alt=""
+                  fill
+                  loading="lazy"
+                  sizes="(max-width: 768px) 25vw, 12vw"
+                  className="object-cover"
+                />
               </button>
             </li>
           ))}

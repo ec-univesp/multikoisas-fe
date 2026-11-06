@@ -85,8 +85,7 @@ export const SalesChannelAdminPanel = ({ initialSalesChannels }: SalesChannelAdm
     <div>
       <div className="mb-4 flex items-center justify-between md:mb-6">
         <p className="text-theme-sm text-gray-500">
-          {salesChannels.length}{' '}
-          {salesChannels.length === 1 ? 'canal cadastrado' : 'canais cadastrados'}
+          {salesChannels.length} {salesChannels.length === 1 ? 'canal cadastrado' : 'canais cadastrados'}
         </p>
         <Button size="sm" startIcon={<PlusIcon />} onClick={formModal.openModal}>
           Novo canal

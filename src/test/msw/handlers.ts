@@ -9,7 +9,7 @@ const springError = (status: number, error: string, request: Request) =>
   );
 
 // A API responde 404 sem corpo para lista vazia; /canalvendaproduto responde 204.
-const listResponse = <Row,>(rows: readonly Row[], emptyStatus = 404) =>
+const listResponse = <Row>(rows: readonly Row[], emptyStatus = 404) =>
   rows.length === 0 ? new HttpResponse(null, { status: emptyStatus }) : HttpResponse.json(rows);
 
 const queryOf = (request: Request) => new URL(request.url).searchParams;
@@ -197,7 +197,9 @@ export const handlers = [
 
   http.put<{ description: string }, RedeSocialBody>('*/socialnetwork/:description', async ({ request, params }) => {
     const { descricao, link } = await request.json();
-    const redeSocial = apiDatabase.redesSociais.find((candidate) => matchesText(params.description, candidate.descricao));
+    const redeSocial = apiDatabase.redesSociais.find((candidate) =>
+      matchesText(params.description, candidate.descricao),
+    );
     if (!redeSocial) return HttpResponse.text('Descrição não encontrado.', { status: 409 });
     if (descricao?.trim()) redeSocial.descricao = descricao.trim();
     if (link?.trim()) redeSocial.link = link.trim();
@@ -217,7 +219,8 @@ export const handlers = [
     const query = queryOf(request);
     return listResponse(
       apiDatabase.canaisVenda.filter(
-        (canalVenda) => matchesNumber(query.get('id'), canalVenda.id) && matchesText(query.get('nome'), canalVenda.nome),
+        (canalVenda) =>
+          matchesNumber(query.get('id'), canalVenda.id) && matchesText(query.get('nome'), canalVenda.nome),
       ),
     );
   }),
