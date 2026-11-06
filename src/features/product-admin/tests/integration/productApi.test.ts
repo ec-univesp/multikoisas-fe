@@ -63,7 +63,7 @@ describe('syncProductImages', () => {
       expect.stringMatching(/^multipart\/form-data; boundary=/),
       expect.stringMatching(/^multipart\/form-data; boundary=/),
     ]);
-    expect(apiDatabase.imagens.filter((image) => image.produtoId === 1).map((image) => image.id)).toEqual([
+    expect(apiDatabase.productImages.filter((image) => image.produtoId === 1).map((image) => image.id)).toEqual([
       12, 11, 100, 101,
     ]);
   });
@@ -145,7 +145,7 @@ describe('syncProductImages', () => {
       http.post(
         '*/imagem',
         () => {
-          apiDatabase.imagens.push({ id: 90, produtoId: 1, imagemUrl: `${SUPABASE_IMAGES}/sem-resposta.png` });
+          apiDatabase.productImages.push({ id: 90, produtoId: 1, imagemUrl: `${SUPABASE_IMAGES}/sem-resposta.png` });
           return new HttpResponse('', { status: 201 });
         },
         { once: true },

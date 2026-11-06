@@ -26,7 +26,7 @@ const respondWith = (method: 'post' | 'delete', path: string, status: number) =>
 const hang = (method: 'post' | 'delete', path: string) => server.use(http[method](path, () => delay('infinite')));
 
 const deleteFromApi = (canalVendaId: number) => {
-  apiDatabase.canaisVenda = apiDatabase.canaisVenda.filter((canalVenda) => canalVenda.id !== canalVendaId);
+  apiDatabase.salesChannels = apiDatabase.salesChannels.filter((salesChannel) => salesChannel.id !== canalVendaId);
 };
 
 const renderPanel = (initialSalesChannels: SalesChannel[] = salesChannels) =>
@@ -65,7 +65,7 @@ describe('SalesChannelAdminPanel', () => {
 
     expect(await screen.findByText('Mercado Livre')).toBeInTheDocument();
     expect(screen.getByText('5 canais cadastrados')).toBeInTheDocument();
-    expect(apiDatabase.canaisVenda).toContainEqual({ id: 100, nome: 'Mercado Livre' });
+    expect(apiDatabase.salesChannels).toContainEqual({ id: 100, nome: 'Mercado Livre' });
     expect(apiRequests).toEqual(['POST /api/canalvenda']);
   });
 
@@ -100,7 +100,7 @@ describe('SalesChannelAdminPanel', () => {
   });
 
   it('closes the form when the channel turns out to be already created', async () => {
-    apiDatabase.canaisVenda.push({ id: 6, nome: 'Mercado Livre' });
+    apiDatabase.salesChannels.push({ id: 6, nome: 'Mercado Livre' });
     const user = userEvent.setup();
     renderPanel();
 
@@ -157,7 +157,7 @@ describe('SalesChannelAdminPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Apagar' }));
 
     expect(await screen.findByText('Nenhum canal cadastrado.')).toBeInTheDocument();
-    expect(apiDatabase.canaisVenda.map((canalVenda) => canalVenda.id)).toEqual([2, 3, 5, 8]);
+    expect(apiDatabase.salesChannels.map((salesChannel) => salesChannel.id)).toEqual([2, 3, 5, 8]);
     expect(apiRequests).toEqual(['DELETE /api/canalvenda/4']);
   });
 

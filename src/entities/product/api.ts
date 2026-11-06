@@ -3,13 +3,13 @@ import { toDisplayableImageUrl } from './imageUrl';
 import { toBaseSlug } from './toBaseSlug';
 import { STORE_PRESENTATION, type Category, type Product, type StoreLink, type StoreSlug } from './types';
 
-export type ProdutoResponse = { id: number; nome: string; descricaoProduto: string };
-type CategoriaResponse = { id: number; nome: string };
-type CategoriaProdutoResponse = { produtoId: number; categoriaId: number };
-export type ImagemResponse = { id: number; produtoId: number; imagemUrl: string };
+export type ApiProduct = { id: number; nome: string; descricaoProduto: string };
+type ApiCategory = { id: number; nome: string };
+type ApiProductCategory = { produtoId: number; categoriaId: number };
+export type ApiProductImage = { id: number; produtoId: number; imagemUrl: string };
 export type ProductImageRecord = { id: number; url: string | null };
-type CanalVendaResponse = { id: number; nome: string };
-export type CanalVendaProdutoResponse = { produtoId: number; canalVendaId: number; link: string };
+type ApiSalesChannel = { id: number; nome: string };
+export type ApiPurchaseLink = { produtoId: number; canalVendaId: number; link: string };
 type Catalog = { products: Product[]; categories: Category[]; salesChannels: { id: number; name: string }[] };
 
 const UNCATEGORIZED = 'Sem categoria';
@@ -20,9 +20,9 @@ const firstNonEmptyLine = (text: string): string =>
     .find((line) => line.trim().length > 0)
     ?.trim() ?? '';
 
-export const toImageRecord = (imagem: ImagemResponse): ProductImageRecord => ({
-  id: imagem.id,
-  url: toDisplayableImageUrl(imagem.imagemUrl),
+export const toImageRecord = (apiImage: ApiProductImage): ProductImageRecord => ({
+  id: apiImage.id,
+  url: toDisplayableImageUrl(apiImage.imagemUrl),
 });
 
 export const toImageUrlsInIdOrder = (records: readonly ProductImageRecord[]): string[] =>
@@ -30,10 +30,11 @@ export const toImageUrlsInIdOrder = (records: readonly ProductImageRecord[]): st
     .sort((first, second) => first.id - second.id)
     .flatMap((record) => (record.url === null ? [] : [record.url]));
 
-const toImageRecords = (imagens: readonly ImagemResponse[]): ProductImageRecord[] =>
-  [...imagens].sort((first, second) => first.id - second.id).map(toImageRecord);
+const toImageRecords = (apiImages: readonly ApiProductImage[]): ProductImageRecord[] =>
+  [...apiImages].sort((first, second) => first.id - second.id).map(toImageRecord);
 
-const toImageUrls = (imagens: readonly ImagemResponse[]): string[] => toImageUrlsInIdOrder(imagens.map(toImageRecord));
+const toImageUrls = (apiImages: readonly ApiProductImage[]): string[] =>
+  toImageUrlsInIdOrder(apiImages.map(toImageRecord));
 
 const isStoreSlug = (slug: string): slug is StoreSlug => Object.hasOwn(STORE_PRESENTATION, slug);
 
@@ -41,75 +42,76 @@ export const isStoreChannelName = (name: string): boolean => isStoreSlug(toBaseS
 
 // ponytail: canal sem apresentação em STORE_PRESENTATION (Instagram, TikTok) não vira botão de compra.
 export const toStoreLinks = (
-  vinculos: readonly CanalVendaProdutoResponse[],
-  canaisVenda: readonly CanalVendaResponse[],
+  apiPurchaseLinks: readonly ApiPurchaseLink[],
+  apiSalesChannels: readonly ApiSalesChannel[],
 ): StoreLink[] =>
-  vinculos
-    .flatMap((vinculo) => {
-      const canalVenda = canaisVenda.find((candidate) => candidate.id === vinculo.canalVendaId);
-      const store = canalVenda ? toBaseSlug(canalVenda.nome) : '';
-      return isStoreSlug(store) && vinculo.link ? [{ store, url: vinculo.link }] : [];
+  apiPurchaseLinks
+    .flatMap((apiPurchaseLink) => {
+      const apiSalesChannel = apiSalesChannels.find((candidate) => candidate.id === apiPurchaseLink.canalVendaId);
+      const store = apiSalesChannel ? toBaseSlug(apiSalesChannel.nome) : '';
+      return isStoreSlug(store) && apiPurchaseLink.link ? [{ store, url: apiPurchaseLink.link }] : [];
     })
     .filter(
       (storeLink, position, storeLinks) => storeLinks.findIndex(({ store }) => store === storeLink.store) === position,
     );
 
 export const toProduct = (
-  produto: ProdutoResponse,
+  apiProduct: ApiProduct,
   category: Category | undefined,
   images: string[] = [],
   storeLinks: StoreLink[] = [],
 ): Product => ({
-  id: produto.id,
-  slug: `${toBaseSlug(produto.nome)}-${produto.id}`,
-  name: produto.nome,
+  id: apiProduct.id,
+  slug: `${toBaseSlug(apiProduct.nome)}-${apiProduct.id}`,
+  name: apiProduct.nome,
   category: category?.name ?? UNCATEGORIZED,
   categoryId: category?.id ?? null,
-  shortDescription: firstNonEmptyLine(produto.descricaoProduto),
-  longDescription: produto.descricaoProduto.trim(),
+  shortDescription: firstNonEmptyLine(apiProduct.descricaoProduto),
+  longDescription: apiProduct.descricaoProduto.trim(),
   images,
   storeLinks,
 });
 
 export const fetchCategories = async (options: FetchOptions = {}): Promise<Category[]> =>
-  (await getFromApi<CategoriaResponse>('/categoria', options)).map((categoria) => ({
-    id: categoria.id,
-    name: categoria.nome,
+  (await getFromApi<ApiCategory>('/categoria', options)).map((apiCategory) => ({
+    id: apiCategory.id,
+    name: apiCategory.nome,
   }));
 
 export const fetchProductImageRecords = async (
   produtoId: number,
   options: FetchOptions = {},
 ): Promise<ProductImageRecord[]> =>
-  toImageRecords(await getFromApi<ImagemResponse>(`/imagem?produtoId=${produtoId}`, options));
+  toImageRecords(await getFromApi<ApiProductImage>(`/imagem?produtoId=${produtoId}`, options));
 
 export const fetchCatalog = async (options: FetchOptions = {}): Promise<Catalog> => {
-  const [produtos, categories, vinculos, imagens, canaisVenda, linksDeCompra] = await Promise.all([
-    getFromApi<ProdutoResponse>('/produto', options),
-    fetchCategories(options),
-    getFromApi<CategoriaProdutoResponse>('/categoriaproduto', options),
-    // Foto e link de compra são acessórios: sem eles a vitrine segue no ar.
-    getFromApi<ImagemResponse>('/imagem', options).catch((): ImagemResponse[] => []),
-    getFromApi<CanalVendaResponse>('/canalvenda', options).catch((): CanalVendaResponse[] => []),
-    getFromApi<CanalVendaProdutoResponse>('/canalvendaproduto', options).catch((): CanalVendaProdutoResponse[] => []),
-  ]);
+  const [apiProducts, categories, apiProductCategories, apiImages, apiSalesChannels, apiPurchaseLinks] =
+    await Promise.all([
+      getFromApi<ApiProduct>('/produto', options),
+      fetchCategories(options),
+      getFromApi<ApiProductCategory>('/categoriaproduto', options),
+      // Foto e link de compra são acessórios: sem eles a vitrine segue no ar.
+      getFromApi<ApiProductImage>('/imagem', options).catch((): ApiProductImage[] => []),
+      getFromApi<ApiSalesChannel>('/canalvenda', options).catch((): ApiSalesChannel[] => []),
+      getFromApi<ApiPurchaseLink>('/canalvendaproduto', options).catch((): ApiPurchaseLink[] => []),
+    ]);
   const categoryOf = (produtoId: number): Category | undefined => {
-    const vinculo = vinculos.find((candidate) => candidate.produtoId === produtoId);
-    return categories.find((category) => category.id === vinculo?.categoriaId);
+    const productCategory = apiProductCategories.find((candidate) => candidate.produtoId === produtoId);
+    return categories.find((category) => category.id === productCategory?.categoriaId);
   };
   const imagesOf = (produtoId: number): string[] =>
-    toImageUrls(imagens.filter((imagem) => imagem.produtoId === produtoId));
+    toImageUrls(apiImages.filter((apiImage) => apiImage.produtoId === produtoId));
   const storeLinksOf = (produtoId: number): StoreLink[] =>
     toStoreLinks(
-      linksDeCompra.filter((vinculo) => vinculo.produtoId === produtoId),
-      canaisVenda,
+      apiPurchaseLinks.filter((apiPurchaseLink) => apiPurchaseLink.produtoId === produtoId),
+      apiSalesChannels,
     );
   return {
-    products: produtos.map((produto) =>
-      toProduct(produto, categoryOf(produto.id), imagesOf(produto.id), storeLinksOf(produto.id)),
+    products: apiProducts.map((apiProduct) =>
+      toProduct(apiProduct, categoryOf(apiProduct.id), imagesOf(apiProduct.id), storeLinksOf(apiProduct.id)),
     ),
     categories,
-    salesChannels: canaisVenda.map((canalVenda) => ({ id: canalVenda.id, name: canalVenda.nome })),
+    salesChannels: apiSalesChannels.map((apiSalesChannel) => ({ id: apiSalesChannel.id, name: apiSalesChannel.nome })),
   };
 };
 

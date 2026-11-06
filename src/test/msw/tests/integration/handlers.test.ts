@@ -74,7 +74,7 @@ describe('multikoisas-api handlers', () => {
 
     const unlinked = await send('DELETE', '/api/categoriaproduto', { produtoId: 5, categoriaId: 3 });
     expect(unlinked.status).toBe(200);
-    expect(apiDatabase.categoriaProduto).not.toContainEqual({ produtoId: 5, categoriaId: 3 });
+    expect(apiDatabase.productCategories).not.toContainEqual({ produtoId: 5, categoriaId: 3 });
   });
 
   it('creates, renames and deletes a category', async () => {
@@ -82,7 +82,7 @@ describe('multikoisas-api handlers', () => {
     expect(created.status).toBe(201);
     expect(await created.json()).toEqual({ id: 100, nome: 'Lavanderia' });
     expect((await send('PUT', '/api/categoria/100', { nome: 'Área de Serviço' })).status).toBe(204);
-    expect(apiDatabase.categorias).toContainEqual({ id: 100, nome: 'Área de Serviço' });
+    expect(apiDatabase.categories).toContainEqual({ id: 100, nome: 'Área de Serviço' });
     expect((await send('DELETE', '/api/categoria/100')).status).toBe(204);
     expect((await send('DELETE', '/api/categoria/100')).status).toBe(404);
     expect((await send('PUT', '/api/categoria/100', { nome: 'Nada' })).status).toBe(404);
@@ -100,7 +100,7 @@ describe('multikoisas-api handlers', () => {
     expect(created.status).toBe(201);
     expect(await created.json()).toEqual({ id: 100, nome: 'Vassoura', descricaoProduto: 'Macia.' });
     expect((await send('PUT', '/api/produto/100', { nome: 'Rodo', descricaoProduto: 'Firme.' })).status).toBe(200);
-    expect(apiDatabase.produtos).toContainEqual({ id: 100, nome: 'Rodo', descricaoProduto: 'Firme.' });
+    expect(apiDatabase.products).toContainEqual({ id: 100, nome: 'Rodo', descricaoProduto: 'Firme.' });
     expect((await send('DELETE', '/api/produto/100')).status).toBe(409);
   });
 
@@ -112,10 +112,10 @@ describe('multikoisas-api handlers', () => {
   it('deletes a product with its images, store links and categories, and refuses one without them', async () => {
     const deleted = await send('DELETE', '/api/produto/1');
     expect(deleted.status).toBe(200);
-    expect(apiDatabase.produtos.map((produto) => produto.id)).not.toContain(1);
-    expect(apiDatabase.categoriaProduto.some((link) => link.produtoId === 1)).toBe(false);
-    expect(apiDatabase.canalVendaProduto.some((link) => link.produtoId === 1)).toBe(false);
-    expect(apiDatabase.imagens.some((imagem) => imagem.produtoId === 1)).toBe(false);
+    expect(apiDatabase.products.map((product) => product.id)).not.toContain(1);
+    expect(apiDatabase.productCategories.some((link) => link.produtoId === 1)).toBe(false);
+    expect(apiDatabase.purchaseLinks.some((link) => link.produtoId === 1)).toBe(false);
+    expect(apiDatabase.productImages.some((productImage) => productImage.produtoId === 1)).toBe(false);
     for (const produtoId of [5, 404]) {
       const refused = await send('DELETE', `/api/produto/${produtoId}`);
       expect(refused.status).toBe(409);
@@ -188,7 +188,7 @@ describe('multikoisas-api handlers', () => {
   });
 
   it('finds, updates the link and deletes a social network by its exact description', async () => {
-    apiDatabase.redesSociais.push({ id: 7, descricao: 'TikTok', link: 'https://tiktok.com/@mk' });
+    apiDatabase.socialNetworks.push({ id: 7, descricao: 'TikTok', link: 'https://tiktok.com/@mk' });
     expect((await send('GET', '/api/socialnetwork?name=tiktok')).status).toBe(404);
     expect(await (await send('GET', '/api/socialnetwork?name=TikTok')).json()).toEqual([
       { id: 7, descricao: 'TikTok', link: 'https://tiktok.com/@mk' },
@@ -200,7 +200,7 @@ describe('multikoisas-api handlers', () => {
   });
 
   it('refuses a rename with 409 and an unknown description with 409, like the real api', async () => {
-    apiDatabase.redesSociais.push({ id: 7, descricao: 'TikTok', link: 'https://tiktok.com/@mk' });
+    apiDatabase.socialNetworks.push({ id: 7, descricao: 'TikTok', link: 'https://tiktok.com/@mk' });
     const renamed = await send('PUT', '/api/socialnetwork/TikTok', { descricao: 'Kwai', link: 'https://x' });
     expect(renamed.status).toBe(409);
     expect(await renamed.text()).toBe('Esta rede social já está cadastrada.');
@@ -242,12 +242,12 @@ describe('multikoisas-api handlers', () => {
     expect((await fetch('/api/imagem?produtoId=5', { method: 'POST', body: withoutFile })).status).toBe(400);
     expect((await uploadToProduct5('vazio.png', '')).status).toBe(409);
     expect((await uploadToProduct5('grande.png', 'x'.repeat(1_048_577))).status).toBe(413);
-    expect(apiDatabase.imagens.filter((image) => image.produtoId === 5)).toEqual([]);
+    expect(apiDatabase.productImages.filter((image) => image.produtoId === 5)).toEqual([]);
   });
 
   it('deletes an image by id and product', async () => {
     expect((await send('DELETE', '/api/imagem', { id: 20, produtoId: 7 })).status).toBe(204);
-    expect(apiDatabase.imagens.map((image) => image.id)).not.toContain(20);
+    expect(apiDatabase.productImages.map((image) => image.id)).not.toContain(20);
     expect((await send('DELETE', '/api/imagem', { id: 20, produtoId: 7 })).status).toBe(409);
     expect((await send('DELETE', '/api/imagem', { id: 21, produtoId: 1 })).status).toBe(409);
   });

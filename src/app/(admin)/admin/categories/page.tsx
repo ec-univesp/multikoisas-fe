@@ -7,11 +7,11 @@ export const metadata: Metadata = {
   description: 'Categorias usadas para organizar os produtos da vitrine da MultiKoisas.',
 };
 
-const CategoriasPage = () => (
+const CategoriesPage = () => (
   <div>
     <PageBreadcrumb pageTitle="Categorias" />
     <CategoryAdminScreen />
   </div>
 );
 
-export default CategoriasPage;
+export default CategoriesPage;
