@@ -13,7 +13,7 @@ const SHOWCASE_LABEL = 'Buscar produto na vitrine';
 
 const Showcase = ({ children }: { children?: React.ReactNode }) => (
   <section>
-    <h2 id="vitrine" tabIndex={-1}>
+    <h2 id="showcase" tabIndex={-1}>
       Vitrine de produtos
     </h2>
     {children}
@@ -58,7 +58,7 @@ describe('VitrineSearch', () => {
       </VitrineSearchProvider>,
     );
     await userEvent.type(screen.getByRole('searchbox', { name: HEADER_LABEL }), 'balde{Enter}');
-    expect(push).toHaveBeenCalledWith('/vitrine#vitrine');
+    expect(push).toHaveBeenCalledWith('/showcase#showcase');
     expect(screen.getByRole('status')).toHaveTextContent('balde');
   });
 

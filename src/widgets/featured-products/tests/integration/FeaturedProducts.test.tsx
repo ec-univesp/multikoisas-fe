@@ -40,7 +40,7 @@ describe('FeaturedProducts', () => {
 
   it('leads to the full showcase page', async () => {
     await renderFeaturedProducts();
-    expect(screen.getByRole('link', { name: 'Ver todos os produtos' })).toHaveAttribute('href', '/vitrine');
+    expect(screen.getByRole('link', { name: 'Ver todos os produtos' })).toHaveAttribute('href', '/showcase');
   });
 
   it('leaves the section out when the catalog cannot be read', async () => {

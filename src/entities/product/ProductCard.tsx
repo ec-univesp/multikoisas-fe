@@ -15,7 +15,7 @@ export const ProductCard = ({
   imageSizes = '(max-width: 768px) 50vw, (max-width: 1280px) 33vw, 25vw',
 }: ProductCardProps) => {
   const coverImage = product.images[0] ?? PRODUCT_IMAGE_PLACEHOLDER;
-  const detailPath = `/produto/${product.slug}`;
+  const detailPath = `/product/${product.slug}`;
   const storeButtonsLayout = product.storeLinks.length > 1 ? 'grid gap-2 sm:grid-cols-2' : 'grid gap-2';
 
   return (

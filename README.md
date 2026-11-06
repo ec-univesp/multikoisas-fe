@@ -44,12 +44,12 @@ Projeto integrador da UNIVESP · time Squad PI2
 | Endereço            | O que é                                                                            |
 | ------------------- | ---------------------------------------------------------------------------------- |
 | `/`                 | Vitrine pública: produtos da API com filtro por categoria e busca                  |
-| `/produto/<slug>`   | Página do produto: descrição completa e onde comprar                               |
+| `/product/<slug>`   | Página do produto: descrição completa e onde comprar                               |
 | `/admin`            | Painel com o total de produtos publicados e métricas de cliques (ainda de exemplo) |
-| `/admin/produtos`   | Criar, editar e apagar produtos, escolhendo a categoria                            |
-| `/admin/categorias` | Criar, renomear e apagar categorias                                                |
+| `/admin/products`   | Criar, editar e apagar produtos, escolhendo a categoria                            |
+| `/admin/categories` | Criar, renomear e apagar categorias                                                |
 
-O endereço do produto é o nome dele seguido do id na API, como `/produto/garrafa-termica-1l-12`.
+O endereço do produto é o nome dele seguido do id na API, como `/product/garrafa-termica-1l-12`.
 
 ## Como o front fala com a API
 

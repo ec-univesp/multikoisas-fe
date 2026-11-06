@@ -26,7 +26,7 @@ describe('ProductCard', () => {
     const heading = screen.getByRole('heading', { name: 'Garrafa Térmica 1L' });
     expect(within(heading).getByRole('link', { name: 'Garrafa Térmica 1L' })).toHaveAttribute(
       'href',
-      '/produto/garrafa-termica-1l-1',
+      '/product/garrafa-termica-1l-1',
     );
     expect(screen.getByText('Mantém a temperatura.')).toHaveClass('line-clamp-3');
     expect(screen.getByAltText('Garrafa Térmica 1L')).toHaveAttribute('src', expect.stringContaining('garrafa.webp'));
@@ -88,11 +88,11 @@ describe('ProductCard', () => {
     render(<ProductCard product={product} />);
     expect(screen.getByRole('link', { name: 'Opções de compra: Garrafa Térmica 1L' })).toHaveAttribute(
       'href',
-      '/produto/garrafa-termica-1l-1',
+      '/product/garrafa-termica-1l-1',
     );
     expect(screen.getByAltText('Garrafa Térmica 1L').closest('a')).toHaveAttribute(
       'href',
-      '/produto/garrafa-termica-1l-1',
+      '/product/garrafa-termica-1l-1',
     );
   });
 

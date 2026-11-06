@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useRef } from 'react';
 
-const VITRINE_ID = 'vitrine';
+const VITRINE_ID = 'showcase';
 
 const focusVitrineHeading = () => document.getElementById(VITRINE_ID)?.focus({ preventScroll: true });
 
@@ -27,7 +27,7 @@ export const VitrineHeading = () => {
 };
 
 export const VitrineLink = ({ className }: { className: string }) => (
-  <Link href="/vitrine" className={className} onClick={focusVitrineHeading}>
+  <Link href="/showcase" className={className} onClick={focusVitrineHeading}>
     Vitrine de produtos
   </Link>
 );

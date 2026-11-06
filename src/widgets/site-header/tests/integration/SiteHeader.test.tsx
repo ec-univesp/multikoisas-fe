@@ -25,8 +25,8 @@ describe('SiteHeader', () => {
     const sectionLinks = within(screen.getByRole('navigation', { name: 'Seções do site' })).getAllByRole('link');
     expect(sectionLinks.map((link) => [link.textContent, link.getAttribute('href')])).toEqual([
       ['Início', '/'],
-      ['Vitrine de produtos', '/vitrine'],
-      ['A loja', '/#sobre'],
+      ['Vitrine de produtos', '/showcase'],
+      ['A loja', '/#about'],
     ]);
   });
 

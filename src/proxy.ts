@@ -4,7 +4,7 @@ import { resolveAuthEnvironment } from '@/features/admin-auth/authEnvironment';
 import { SESSION_COOKIE_NAME, verifySessionToken } from '@/features/admin-auth/session';
 
 const LOGIN_PATH = '/panel';
-const PANEL_HOME_PATH = '/admin/produtos';
+const PANEL_HOME_PATH = '/admin/products';
 const READ_METHODS = new Set(['GET', 'HEAD']);
 const PANEL_WRITABLE_RESOURCES = new Set([
   'produto',

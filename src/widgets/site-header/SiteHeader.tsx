@@ -41,7 +41,7 @@ export const SiteHeader = async () => {
               Início
             </Link>
             <VitrineLink className={navLinkClassName} />
-            <Link href="/#sobre" className={navLinkClassName}>
+            <Link href="/#about" className={navLinkClassName}>
               A loja
             </Link>
           </nav>

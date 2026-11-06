@@ -80,7 +80,7 @@ describe('loginAction', () => {
 
   it('stores a signed session cookie and redirects to the products panel', async () => {
     await expect(loginAction(initialState, buildFormData('loja', 'senha-da-loja'))).rejects.toThrow(
-      'NEXT_REDIRECT /admin/produtos',
+      'NEXT_REDIRECT /admin/products',
     );
 
     expect(cookieStore.set).toHaveBeenCalledWith(SESSION_COOKIE_NAME, expect.any(String), {
