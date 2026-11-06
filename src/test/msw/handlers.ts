@@ -19,7 +19,7 @@ const loginHandler = http.post<never, { username?: string; password?: string }>(
 export const handlers = [
   loginHandler,
   ...createApiHandlers(apiDatabase, {
-    onChange: () => {},
+    onChange: () => true,
     images: createMemoryImageStore(),
     // Vitest jsdom replaces the file name with "blob" in the multipart body.
     imageUrl: (id) => `${SUPABASE_IMAGES}/upload-${id}`,
