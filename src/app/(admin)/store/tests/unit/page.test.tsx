@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import StorePage from '../../page';
 
 describe('StorePage', () => {
-  it('renders the site settings title with the store logo, store data and social networks sections', async () => {
+  it('renders the site settings title with the store logo, store data and social networks sections, ending with the sample data reset', async () => {
     render(<StorePage />);
 
     expect(screen.getByRole('heading', { name: 'Configurações de site' })).toBeInTheDocument();
@@ -12,5 +12,7 @@ describe('StorePage', () => {
     expect(screen.getByRole('button', { name: 'Salvar dados' })).toBeDisabled();
     expect(screen.getByRole('heading', { name: 'Redes sociais' })).toBeInTheDocument();
     expect(await screen.findByText('Instagram')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Dados de exemplo' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Restaurar dados iniciais' })).toBeInTheDocument();
   });
 });
