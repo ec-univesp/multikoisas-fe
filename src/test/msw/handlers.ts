@@ -281,13 +281,13 @@ export const handlers = [
     if (!produtoExists || !canalExists) {
       return HttpResponse.text('Produto ou canal de venda inexistente. Verifique os IDs informados.', { status: 409 });
     }
-    const row = { produtoId, canalVendaId, link };
-    apiDatabase.canalVendaProduto.push(row);
-    return HttpResponse.json(row, { status: 201 });
+    apiDatabase.canalVendaProduto.push({ produtoId, canalVendaId, link });
+    return HttpResponse.json({ mensagem: 'Canal de venda associado ao produto com sucesso.' }, { status: 201 });
   }),
 
   http.delete<never, CanalVendaProdutoRow>('*/canalvendaproduto', async ({ request }) => {
-    const { produtoId, canalVendaId } = await request.json();
+    const { produtoId, canalVendaId, link } = await request.json();
+    if (!link?.trim()) return springError(400, 'Bad Request', request);
     const remaining = apiDatabase.canalVendaProduto.filter(
       (link) => !(link.produtoId === produtoId && link.canalVendaId === canalVendaId),
     );

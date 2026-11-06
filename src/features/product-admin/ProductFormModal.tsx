@@ -8,9 +8,11 @@ import Input from '@/components/form/input/InputField';
 import Select from '@/components/form/Select';
 import TextArea from '@/components/form/input/TextArea';
 import type { Category, Product, ProductImageRecord } from '@/entities/product';
-import { hasProductFormErrors, validateProductForm } from './validateProductForm';
+import type { SalesChannel } from '@/entities/sales-channel';
+import { findInvalidPurchaseLinkKeys, hasProductFormErrors, validateProductForm } from './validateProductForm';
 import { ProductPhotosField, type NewPhoto } from './ProductPhotosField';
-import type { PhotoChanges, ProductFormErrors, ProductFormValues } from './types';
+import { PurchaseLinksField } from './PurchaseLinksField';
+import type { PhotoChanges, ProductFormErrors, ProductFormValues, PurchaseLink, PurchaseLinkDraft } from './types';
 
 const isSameFile = (first: File, second: File) =>
   first.name === second.name && first.size === second.size && first.lastModified === second.lastModified;
@@ -20,10 +22,15 @@ const revokeAll = (previewUrls: Set<string>) => {
   previewUrls.clear();
 };
 
-const buildInitialFormValues = (product?: Product): ProductFormValues => ({
+const buildInitialFormValues = (product: Product | undefined, purchaseLinks: readonly PurchaseLink[]): ProductFormValues => ({
   name: product?.name ?? '',
   categoryId: product?.categoryId === null || !product ? '' : String(product.categoryId),
   description: product?.longDescription ?? '',
+  purchaseLinks: purchaseLinks.map((link, index) => ({
+    key: index,
+    salesChannelId: String(link.salesChannelId),
+    url: link.url,
+  })),
 });
 
 type ProductFormModalProps = {
@@ -31,7 +38,9 @@ type ProductFormModalProps = {
   onClose: () => void;
   existingProduct?: Product;
   existingPhotos?: readonly ProductImageRecord[] | null;
+  existingPurchaseLinks?: readonly PurchaseLink[];
   categories: readonly Category[];
+  salesChannels: readonly SalesChannel[];
   onSave: (values: ProductFormValues, photoChanges: PhotoChanges) => Promise<number>;
 };
 
@@ -40,12 +49,15 @@ export const ProductFormModal = ({
   onClose,
   existingProduct,
   existingPhotos = [],
+  existingPurchaseLinks = [],
   categories,
+  salesChannels,
   onSave,
 }: ProductFormModalProps) => {
   const [values, setValues] = useState<ProductFormValues>(() =>
-    buildInitialFormValues(existingProduct),
+    buildInitialFormValues(existingProduct, existingPurchaseLinks),
   );
+  const nextPurchaseLinkKeyRef = useRef(existingPurchaseLinks.length);
   const [errors, setErrors] = useState<ProductFormErrors>({});
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -59,8 +71,24 @@ export const ProductFormModal = ({
     return () => revokeAll(previewUrls);
   }, []);
 
-  const updateField = (field: keyof ProductFormValues, value: string) =>
+  const updateField = (field: 'name' | 'categoryId' | 'description', value: string) =>
     setValues((previousValues) => ({ ...previousValues, [field]: value }));
+
+  const updatePurchaseLinks = (update: (purchaseLinks: PurchaseLinkDraft[]) => PurchaseLinkDraft[]) =>
+    setValues((previousValues) => ({ ...previousValues, purchaseLinks: update(previousValues.purchaseLinks) }));
+
+  const addPurchaseLink = () => {
+    const key = nextPurchaseLinkKeyRef.current++;
+    updatePurchaseLinks((purchaseLinks) => [...purchaseLinks, { key, salesChannelId: '', url: '' }]);
+  };
+
+  const changePurchaseLink = (key: number, changes: Partial<PurchaseLinkDraft>) =>
+    updatePurchaseLinks((purchaseLinks) =>
+      purchaseLinks.map((purchaseLink) => (purchaseLink.key === key ? { ...purchaseLink, ...changes } : purchaseLink)),
+    );
+
+  const removePurchaseLink = (key: number) =>
+    updatePurchaseLinks((purchaseLinks) => purchaseLinks.filter((purchaseLink) => purchaseLink.key !== key));
 
   const addPhotos = (files: File[]) => {
     const unseenFiles = files.filter((file) => !newPhotos.some((photo) => isSameFile(photo.file, file)));
@@ -169,6 +197,17 @@ export const ProductFormModal = ({
                 className="text-base"
               />
             </div>
+
+            <PurchaseLinksField
+              purchaseLinks={values.purchaseLinks}
+              salesChannels={salesChannels}
+              error={errors.purchaseLinks}
+              invalidRowKeys={errors.purchaseLinks ? findInvalidPurchaseLinkKeys(values.purchaseLinks) : []}
+              disabled={isSaving || failedPhotoCount > 0}
+              onAdd={addPurchaseLink}
+              onChange={changePurchaseLink}
+              onRemove={removePurchaseLink}
+            />
 
             <ProductPhotosField
               existingPhotos={existingPhotos}

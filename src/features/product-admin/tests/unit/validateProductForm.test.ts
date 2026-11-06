@@ -6,6 +6,7 @@ const validValues: ProductFormValues = {
   name: 'Garrafa Térmica 1L',
   categoryId: '2',
   description: 'Mantém a temperatura por 12 horas.',
+  purchaseLinks: [{ key: 1, salesChannelId: '2', url: 'https://shopee.com.br/garrafa' }],
 };
 
 describe('validateProductForm', () => {
@@ -14,7 +15,7 @@ describe('validateProductForm', () => {
   });
 
   it('rejects blank fields', () => {
-    expect(validateProductForm({ name: '   ', categoryId: '', description: ' ' })).toEqual({
+    expect(validateProductForm({ name: '   ', categoryId: '', description: ' ', purchaseLinks: [] })).toEqual({
       name: 'Informe o nome do produto.',
       categoryId: 'Escolha a categoria do produto.',
       description: 'Informe a descrição do produto.',

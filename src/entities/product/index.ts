@@ -4,11 +4,13 @@ export {
   fetchProductBySlug,
   fetchProductImageRecords,
   fetchProducts,
+  isStoreChannelName,
   toImageRecord,
   toImageUrlsInIdOrder,
   toProduct,
+  toStoreLinks,
 } from './api';
-export type { ImagemResponse, ProductImageRecord, ProdutoResponse } from './api';
+export type { CanalVendaProdutoResponse, ImagemResponse, ProductImageRecord, ProdutoResponse } from './api';
 export { ProductCard } from './ProductCard';
 export { ProductImage } from './ProductImage';
 export { toStoresPhrase } from './toStoresPhrase';
