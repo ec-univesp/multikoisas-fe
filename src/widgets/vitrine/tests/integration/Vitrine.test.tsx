@@ -15,7 +15,7 @@ describe('Vitrine', () => {
     const showcaseHeading = screen.getByRole('heading', { level: 1, name: 'Vitrine de produtos' });
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
     expect(screen.getByRole('search', { name: 'Buscar produto na vitrine' })).toBeInTheDocument();
-    expect(container.querySelector('#vitrine')).toBe(showcaseHeading);
+    expect(container.querySelector('#showcase')).toBe(showcaseHeading);
     expect(showcaseHeading).toHaveAttribute('tabindex', '-1');
     expect(screen.getByRole('heading', { name: 'Garrafa Térmica 1L' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Balde 12L' })).toBeInTheDocument();

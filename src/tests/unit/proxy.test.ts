@@ -36,7 +36,7 @@ describe('proxy', () => {
     expect(config.matcher).toEqual(['/admin/:path*', '/panel', '/store', '/api/:path*']);
   });
 
-  it.each(['/admin', '/admin/produtos'])('redirects %s to the login page without a session', async (path) => {
+  it.each(['/admin', '/admin/products'])('redirects %s to the login page without a session', async (path) => {
     const response = await proxy(buildRequest(path));
 
     expect(response.status).toBe(307);
@@ -51,13 +51,13 @@ describe('proxy', () => {
   });
 
   it('redirects to the login page when the session token is invalid', async () => {
-    const response = await proxy(buildRequest('/admin/produtos', 'tampered.token'));
+    const response = await proxy(buildRequest('/admin/products', 'tampered.token'));
 
     expect(response.headers.get('location')).toBe('http://localhost:3000/panel');
   });
 
   it('lets an admin page through with a valid session', async () => {
-    const response = await proxy(buildRequest('/admin/produtos', await validToken()));
+    const response = await proxy(buildRequest('/admin/products', await validToken()));
 
     expect(response.headers.get('location')).toBeNull();
     expect(response.headers.get('x-middleware-next')).toBe('1');
@@ -67,7 +67,7 @@ describe('proxy', () => {
     const token = await validToken();
     vi.stubEnv('ADMIN_USERS', `${adminUsers},multeste=scrypt:${'ef'.repeat(16)}:${'01'.repeat(64)}`);
 
-    const response = await proxy(buildRequest('/admin/produtos', token));
+    const response = await proxy(buildRequest('/admin/products', token));
 
     expect(response.headers.get('location')).toBe('http://localhost:3000/panel');
   });
@@ -76,7 +76,7 @@ describe('proxy', () => {
     const response = await proxy(buildRequest('/panel', await validToken()));
 
     expect(response.status).toBe(307);
-    expect(response.headers.get('location')).toBe('http://localhost:3000/admin/produtos');
+    expect(response.headers.get('location')).toBe('http://localhost:3000/admin/products');
   });
 
   it('lets the login page through without a session', async () => {

@@ -23,8 +23,8 @@ describe('SiteFooter', () => {
     render(await SiteFooter());
     const shortcuts = screen.getByRole('navigation', { name: 'Navegue' });
     expect(within(shortcuts).getByRole('link', { name: 'Início' })).toHaveAttribute('href', '/');
-    expect(within(shortcuts).getByRole('link', { name: 'Vitrine de produtos' })).toHaveAttribute('href', '/vitrine');
-    expect(within(shortcuts).getByRole('link', { name: 'A loja' })).toHaveAttribute('href', '/#sobre');
+    expect(within(shortcuts).getByRole('link', { name: 'Vitrine de produtos' })).toHaveAttribute('href', '/showcase');
+    expect(within(shortcuts).getByRole('link', { name: 'A loja' })).toHaveAttribute('href', '/#about');
   });
 
   it('links each store social network in a new tab with its icon', async () => {

@@ -34,7 +34,7 @@ export const SiteFooter = async () => {
               <VitrineLink className={shortcutClassName} />
             </li>
             <li>
-              <Link href="/#sobre" className={shortcutClassName}>
+              <Link href="/#about" className={shortcutClassName}>
                 A loja
               </Link>
             </li>

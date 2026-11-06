@@ -33,7 +33,7 @@ export const loginAction = async (_previousState: LoginState, formData: FormData
     path: '/',
     maxAge: SESSION_DURATION_SECONDS,
   });
-  redirect('/admin/produtos');
+  redirect('/admin/products');
 };
 
 export const logoutAction = async (): Promise<void> => {

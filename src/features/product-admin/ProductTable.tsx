@@ -58,7 +58,7 @@ export const ProductTable = ({ products, onEdit, onDelete }: ProductTableProps) 
                     </div>
                     <div>
                       <Link
-                        href={`/produto/${product.slug}`}
+                        href={`/product/${product.slug}`}
                         className="block text-theme-sm font-medium text-gray-800 hover:text-brand-500"
                       >
                         {product.name}

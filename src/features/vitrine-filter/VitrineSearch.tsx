@@ -35,9 +35,9 @@ export const VitrineSearchField = ({ id, label }: { id: string; label: string })
 
   const scrollToShowcase = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const showcaseHeading = document.getElementById('vitrine');
+    const showcaseHeading = document.getElementById('showcase');
     if (!showcaseHeading) {
-      router.push('/vitrine#vitrine');
+      router.push('/showcase#showcase');
       return;
     }
     showcaseHeading.scrollIntoView({ behavior: 'smooth' });
