@@ -1,8 +1,10 @@
 "use client";
 import Image from "next/image";
+import Link from "next/link";
 import React, { useState } from "react";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { logoutAction } from "@/features/admin-auth/actions";
+import { BoltIcon } from "@/icons";
 
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
@@ -65,6 +67,15 @@ function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
             Painel da MultiKoisas
           </span>
         </div>
+
+        <Link
+          href="/store"
+          onClick={closeDropdown}
+          className="flex w-full items-center gap-3 px-3 py-2 mt-3 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700"
+        >
+          <BoltIcon aria-hidden className="size-6 text-gray-500 group-hover:text-gray-700" />
+          Configurações de site
+        </Link>
 
         <form action={logoutAction}>
         <button

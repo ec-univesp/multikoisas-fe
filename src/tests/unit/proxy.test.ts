@@ -21,12 +21,19 @@ describe('proxy', () => {
   });
   afterEach(() => vi.unstubAllEnvs());
 
-  it('runs only on the admin pages and the login page', () => {
-    expect(config.matcher).toEqual(['/admin/:path*', '/panel']);
+  it('runs only on the admin pages, the login page and the site settings page', () => {
+    expect(config.matcher).toEqual(['/admin/:path*', '/panel', '/store']);
   });
 
   it.each(['/admin', '/admin/produtos'])('redirects %s to the login page without a session', async (path) => {
     const response = await proxy(buildRequest(path));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get('location')).toBe('http://localhost:3000/panel');
+  });
+
+  it('redirects /store to the login page without a session', async () => {
+    const response = await proxy(buildRequest('/store'));
 
     expect(response.status).toBe(307);
     expect(response.headers.get('location')).toBe('http://localhost:3000/panel');
