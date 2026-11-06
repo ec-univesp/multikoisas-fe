@@ -1,6 +1,6 @@
 import type { SalesChannel } from '@/entities/sales-channel';
 
-type CanalVendaResponse = { id: number; nome: string };
+type ApiSalesChannel = { id: number; nome: string };
 
 const HTTP_NOT_FOUND = 404;
 const HTTP_CONFLICT = 409;
@@ -27,8 +27,8 @@ const callApi = async (method: string, path: string, body?: unknown): Promise<Re
 };
 
 export const createSalesChannel = async (name: string): Promise<SalesChannel> => {
-  const canalVenda: CanalVendaResponse = await (await callApi('POST', '/canalvenda', { nome: name })).json();
-  return { id: canalVenda.id, name: canalVenda.nome };
+  const apiSalesChannel: ApiSalesChannel = await (await callApi('POST', '/canalvenda', { nome: name })).json();
+  return { id: apiSalesChannel.id, name: apiSalesChannel.nome };
 };
 
 export const deleteSalesChannel = async (salesChannel: SalesChannel): Promise<void> => {

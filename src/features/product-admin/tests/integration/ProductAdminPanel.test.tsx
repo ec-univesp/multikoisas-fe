@@ -49,12 +49,13 @@ const hang = (method: 'get' | 'post' | 'delete', path: string) =>
 const photo = (name: string, type = 'image/png', size = 3) => new File(['x'.repeat(size)], name, { type });
 
 const photoIdsOf = (produtoId: number) =>
-  apiDatabase.imagens.filter((imagem) => imagem.produtoId === produtoId).map((imagem) => imagem.id);
+  apiDatabase.productImages
+    .filter((productImage) => productImage.produtoId === produtoId)
+    .map((productImage) => productImage.id);
 
-const purchaseLinksOf = (produtoId: number) =>
-  apiDatabase.canalVendaProduto.filter((link) => link.produtoId === produtoId);
+const purchaseLinksOf = (produtoId: number) => apiDatabase.purchaseLinks.filter((link) => link.produtoId === produtoId);
 
-const linksOf = (produtoId: number) => apiDatabase.categoriaProduto.filter((link) => link.produtoId === produtoId);
+const linksOf = (produtoId: number) => apiDatabase.productCategories.filter((link) => link.produtoId === produtoId);
 
 const renderPanel = (products: Product[] = [buildProduct({})], availableSalesChannels = salesChannels) =>
   render(
@@ -92,7 +93,7 @@ describe('ProductAdminPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
 
     expect(await screen.findByText('Balde Multiuso 12L')).toBeInTheDocument();
-    expect(apiDatabase.produtos).toContainEqual({
+    expect(apiDatabase.products).toContainEqual({
       id: 100,
       nome: 'Balde Multiuso 12L',
       descricaoProduto: 'Balde resistente.',
@@ -101,7 +102,7 @@ describe('ProductAdminPanel', () => {
   });
 
   it('loads the latest product from the api before editing it', async () => {
-    apiDatabase.produtos[0].nome = 'Garrafa Térmica Nova';
+    apiDatabase.products[0].nome = 'Garrafa Térmica Nova';
     const user = userEvent.setup();
     renderPanel();
 
@@ -177,7 +178,7 @@ describe('ProductAdminPanel', () => {
   });
 
   it('drops a product that was deleted elsewhere when opening it for edit', async () => {
-    apiDatabase.produtos = apiDatabase.produtos.filter((produto) => produto.id !== 5);
+    apiDatabase.products = apiDatabase.products.filter((product) => product.id !== 5);
     const user = userEvent.setup();
     renderPanel([buildProduct({}), buildProduct({ id: 5, slug: 'balde-12l-5', name: 'Balde 12L', categoryId: null })]);
 
@@ -189,7 +190,7 @@ describe('ProductAdminPanel', () => {
   });
 
   it('updates the product in the api without touching an unchanged category', async () => {
-    apiDatabase.produtos[0].descricaoProduto = 'Mantém a temperatura por 12 horas.\nAmpola de vidro.';
+    apiDatabase.products[0].descricaoProduto = 'Mantém a temperatura por 12 horas.\nAmpola de vidro.';
     const user = userEvent.setup();
     renderPanel([buildProduct({}), buildProduct({ id: 5, slug: 'balde-5', name: 'Balde 12L' })]);
 
@@ -201,7 +202,7 @@ describe('ProductAdminPanel', () => {
 
     expect(await screen.findByText('Garrafa Térmica 1.5L')).toBeInTheDocument();
     expect(screen.getByText('Balde 12L')).toBeInTheDocument();
-    expect(apiDatabase.produtos).toContainEqual({
+    expect(apiDatabase.products).toContainEqual({
       id: 1,
       nome: 'Garrafa Térmica 1.5L',
       descricaoProduto: 'Mantém a temperatura por 12 horas.\nAmpola de vidro.',
@@ -345,7 +346,7 @@ describe('ProductAdminPanel', () => {
 
     expect(await screen.findByText('Nenhum produto cadastrado.')).toBeInTheDocument();
     expect(apiRequests).toEqual(['DELETE /api/produto/1']);
-    expect(apiDatabase.produtos.map((produto) => produto.id)).not.toContain(1);
+    expect(apiDatabase.products.map((product) => product.id)).not.toContain(1);
     expect(linksOf(1)).toEqual([]);
     expect(purchaseLinksOf(1)).toEqual([]);
     expect(linksOf(7)).toEqual([
