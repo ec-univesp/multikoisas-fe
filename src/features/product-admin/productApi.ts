@@ -118,13 +118,8 @@ const keepOnlyCategory = async (produtoId: number, categoriaId: number) => {
 const findCategory = (categories: readonly Category[], values: ProductFormValues) =>
   categories.find((category) => String(category.id) === values.categoryId);
 
-export const createProduct = async (
-  values: ProductFormValues,
-  categories: readonly Category[],
-): Promise<Product> => {
-  const produto: ProdutoResponse = await (
-    await callApi('POST', '/produto', toProdutoRequest(values))
-  ).json();
+export const createProduct = async (values: ProductFormValues, categories: readonly Category[]): Promise<Product> => {
+  const produto: ProdutoResponse = await (await callApi('POST', '/produto', toProdutoRequest(values))).json();
   const category = findCategory(categories, values);
   if (!category) return toProduct(produto, undefined);
   try {
@@ -159,7 +154,8 @@ export class ProductDeleteRefusedError extends Error {}
 
 export const deleteProduct = async (product: Product): Promise<void> => {
   const response = await fetch(`/api/produto/${product.id}`, { method: 'DELETE' });
-  if (response.status === HTTP_CONFLICT) throw new ProductDeleteRefusedError(`DELETE /produto/${product.id} respondeu 409`);
+  if (response.status === HTTP_CONFLICT)
+    throw new ProductDeleteRefusedError(`DELETE /produto/${product.id} respondeu 409`);
   if (!response.ok) throw new Error(`DELETE /produto/${product.id} respondeu ${response.status}`);
 };
 
@@ -238,7 +234,6 @@ export class PurchaseLinkError extends Error {
 
 const isSameLink = (first: PurchaseLink, second: PurchaseLink) =>
   first.salesChannelId === second.salesChannelId && first.url === second.url;
-
 
 export const syncPurchaseLinks = async (
   product: Product,

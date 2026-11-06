@@ -45,9 +45,7 @@ export const SiteHeader = async () => {
               A loja
             </Link>
           </nav>
-          {storesPhrase && (
-            <p className="px-3 text-sm font-medium text-gray-600 md:px-0">{`Compre ${storesPhrase}`}</p>
-          )}
+          {storesPhrase && <p className="px-3 text-sm font-medium text-gray-600 md:px-0">{`Compre ${storesPhrase}`}</p>}
         </div>
       </div>
     </header>

@@ -15,10 +15,7 @@ export const normalizeSalesChannelName = (name: string): string =>
     .replace(/\p{Diacritic}/gu, '')
     .toLocaleLowerCase('pt-BR');
 
-const validateSalesChannelName = (
-  name: string,
-  salesChannels: readonly SalesChannel[],
-): string | null => {
+const validateSalesChannelName = (name: string, salesChannels: readonly SalesChannel[]): string | null => {
   if (!name.trim()) return 'Informe o nome do canal.';
   const isRepeated = salesChannels.some(
     (salesChannel) => normalizeSalesChannelName(salesChannel.name) === normalizeSalesChannelName(name),
@@ -33,12 +30,7 @@ type SalesChannelFormModalProps = {
   onSave: (name: string) => Promise<void>;
 };
 
-export const SalesChannelFormModal = ({
-  isOpen,
-  onClose,
-  salesChannels,
-  onSave,
-}: SalesChannelFormModalProps) => {
+export const SalesChannelFormModal = ({ isOpen, onClose, salesChannels, onSave }: SalesChannelFormModalProps) => {
   const [name, setName] = useState('');
   const [nameError, setNameError] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);

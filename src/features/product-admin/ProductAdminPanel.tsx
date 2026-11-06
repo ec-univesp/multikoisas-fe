@@ -52,9 +52,7 @@ export const ProductAdminPanel = ({ initialProducts, categories, salesChannels }
   const showSavedProduct = (savedProduct: Product) =>
     setProducts((currentProducts) =>
       currentProducts.some((candidate) => candidate.id === savedProduct.id)
-        ? currentProducts.map((candidate) =>
-            candidate.id === savedProduct.id ? savedProduct : candidate,
-          )
+        ? currentProducts.map((candidate) => (candidate.id === savedProduct.id ? savedProduct : candidate))
         : [...currentProducts, savedProduct],
     );
 
@@ -70,9 +68,7 @@ export const ProductAdminPanel = ({ initialProducts, categories, salesChannels }
     try {
       const editableProduct = await loadProductForEdit(product, categories, salesChannels);
       if (!editableProduct) {
-        setProducts((currentProducts) =>
-          currentProducts.filter((candidate) => candidate.id !== product.id),
-        );
+        setProducts((currentProducts) => currentProducts.filter((candidate) => candidate.id !== product.id));
         setFeedbackMessage('Esse produto já tinha sido apagado. A lista foi atualizada.');
         return;
       }
@@ -114,7 +110,9 @@ export const ProductAdminPanel = ({ initialProducts, categories, salesChannels }
       );
     } catch (error) {
       if (!(error instanceof PurchaseLinkError)) throw error;
-      addFeedbackMessage('Produto salvo, mas os links de compra não foram atualizados. Edite o produto para tentar de novo.');
+      addFeedbackMessage(
+        'Produto salvo, mas os links de compra não foram atualizados. Edite o produto para tentar de novo.',
+      );
       return error.product;
     }
   };
@@ -136,9 +134,7 @@ export const ProductAdminPanel = ({ initialProducts, categories, salesChannels }
     setIsDeleting(true);
     try {
       await deleteProduct(deletingProduct);
-      setProducts((currentProducts) =>
-        currentProducts.filter((candidate) => candidate.id !== deletingProduct.id),
-      );
+      setProducts((currentProducts) => currentProducts.filter((candidate) => candidate.id !== deletingProduct.id));
       setDeletingProduct(null);
     } catch (error) {
       setFeedbackMessage(
@@ -156,8 +152,7 @@ export const ProductAdminPanel = ({ initialProducts, categories, salesChannels }
     <div>
       <div className="mb-4 flex items-center justify-between md:mb-6">
         <p className="text-theme-sm text-gray-500">
-          {products.length}{' '}
-          {products.length === 1 ? 'produto cadastrado' : 'produtos cadastrados'}
+          {products.length} {products.length === 1 ? 'produto cadastrado' : 'produtos cadastrados'}
         </p>
         <Button size="sm" startIcon={<PlusIcon />} onClick={openCreateModal}>
           Novo produto

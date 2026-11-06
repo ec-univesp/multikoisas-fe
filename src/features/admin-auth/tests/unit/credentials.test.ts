@@ -104,7 +104,11 @@ describe('verifyCredentials', () => {
     { malformedEntry: `multeste=scrypt:abc:${hashOf('x', 'abc')}`, username: 'multeste', password: 'x' },
     { malformedEntry: `multeste=scrypt:${'zz'.repeat(16)}:${hashOf('x', '')}`, username: 'multeste', password: 'x' },
     { malformedEntry: `multeste=scrypt:${salt}:${hashOf('x', salt, 32)}`, username: 'multeste', password: 'x' },
-    { malformedEntry: `multeste=scrypt:${salt}:${hashOf('x', salt).toUpperCase()}`, username: 'multeste', password: 'x' },
+    {
+      malformedEntry: `multeste=scrypt:${salt}:${hashOf('x', salt).toUpperCase()}`,
+      username: 'multeste',
+      password: 'x',
+    },
   ])(
     'ignores the malformed entry $malformedEntry even with the password its hash was built from',
     async ({ malformedEntry, username, password }) => {

@@ -1,11 +1,11 @@
 declare module 'jsvectormap' {
-    interface JsVectorMapOptions {
-        [key: string]: unknown;
-    }
+  interface JsVectorMapOptions {
+    [key: string]: unknown;
+  }
 
-    class JsVectorMap {
-        constructor(options: JsVectorMapOptions);
-    }
+  class JsVectorMap {
+    constructor(options: JsVectorMapOptions);
+  }
 
-    export default JsVectorMap;
+  export default JsVectorMap;
 }

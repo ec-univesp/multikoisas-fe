@@ -26,7 +26,11 @@ describe('FeaturedProducts', () => {
     server.use(
       http.get('*/produto', () =>
         HttpResponse.json(
-          Array.from({ length: 15 }, (_, index) => ({ id: 100 + index, nome: `Produto ${index}`, descricaoProduto: '' })),
+          Array.from({ length: 15 }, (_, index) => ({
+            id: 100 + index,
+            nome: `Produto ${index}`,
+            descricaoProduto: '',
+          })),
         ),
       ),
     );

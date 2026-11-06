@@ -46,7 +46,12 @@ export const VitrineSearchField = ({ id, label }: { id: string; label: string })
   };
 
   return (
-    <form role="search" aria-label={label} onSubmit={scrollToShowcase} className="flex w-full items-center gap-1 rounded-lg bg-white p-1">
+    <form
+      role="search"
+      aria-label={label}
+      onSubmit={scrollToShowcase}
+      className="flex w-full items-center gap-1 rounded-lg bg-white p-1"
+    >
       <label htmlFor={id} className="sr-only">
         {label}
       </label>

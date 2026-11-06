@@ -8,10 +8,13 @@ const hasValidSecret = (secret: string | undefined): secret is string =>
   secret !== undefined && secret.length >= MINIMUM_SECRET_LENGTH;
 
 const importSigningKey = (secret: string, credentialsFingerprint: string) =>
-  crypto.subtle.importKey('raw', new TextEncoder().encode(`${secret}:${credentialsFingerprint}`), { name: 'HMAC', hash: 'SHA-256' }, false, [
-    'sign',
-    'verify',
-  ]);
+  crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(`${secret}:${credentialsFingerprint}`),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign', 'verify'],
+  );
 
 const toBase64Url = (bytes: ArrayBuffer) =>
   btoa(String.fromCharCode(...new Uint8Array(bytes)))

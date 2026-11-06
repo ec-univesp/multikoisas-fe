@@ -15,7 +15,10 @@ type Catalog = { products: Product[]; categories: Category[]; salesChannels: { i
 const UNCATEGORIZED = 'Sem categoria';
 
 const firstNonEmptyLine = (text: string): string =>
-  text.split(/\r?\n/).find((line) => line.trim().length > 0)?.trim() ?? '';
+  text
+    .split(/\r?\n/)
+    .find((line) => line.trim().length > 0)
+    ?.trim() ?? '';
 
 export const toImageRecord = (imagem: ImagemResponse): ProductImageRecord => ({
   id: imagem.id,
@@ -88,9 +91,7 @@ export const fetchCatalog = async (options: FetchOptions = {}): Promise<Catalog>
     // Foto e link de compra são acessórios: sem eles a vitrine segue no ar.
     getFromApi<ImagemResponse>('/imagem', options).catch((): ImagemResponse[] => []),
     getFromApi<CanalVendaResponse>('/canalvenda', options).catch((): CanalVendaResponse[] => []),
-    getFromApi<CanalVendaProdutoResponse>('/canalvendaproduto', options).catch(
-      (): CanalVendaProdutoResponse[] => [],
-    ),
+    getFromApi<CanalVendaProdutoResponse>('/canalvendaproduto', options).catch((): CanalVendaProdutoResponse[] => []),
   ]);
   const categoryOf = (produtoId: number): Category | undefined => {
     const vinculo = vinculos.find((candidate) => candidate.produtoId === produtoId);

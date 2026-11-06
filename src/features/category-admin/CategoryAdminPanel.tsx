@@ -56,9 +56,7 @@ export const CategoryAdminPanel = ({ initialCategories }: CategoryAdminPanelProp
     try {
       const renamedCategory = await renameCategory(editingCategory, name);
       setCategories((currentCategories) =>
-        currentCategories.map((candidate) =>
-          candidate.id === renamedCategory.id ? renamedCategory : candidate,
-        ),
+        currentCategories.map((candidate) => (candidate.id === renamedCategory.id ? renamedCategory : candidate)),
       );
     } catch (error) {
       if (!(error instanceof CategoryNotFoundError)) throw error;
@@ -94,8 +92,7 @@ export const CategoryAdminPanel = ({ initialCategories }: CategoryAdminPanelProp
     <div>
       <div className="mb-4 flex items-center justify-between md:mb-6">
         <p className="text-theme-sm text-gray-500">
-          {categories.length}{' '}
-          {categories.length === 1 ? 'categoria cadastrada' : 'categorias cadastradas'}
+          {categories.length} {categories.length === 1 ? 'categoria cadastrada' : 'categorias cadastradas'}
         </p>
         <Button size="sm" startIcon={<PlusIcon />} onClick={openCreateModal}>
           Nova categoria

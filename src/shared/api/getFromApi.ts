@@ -10,9 +10,7 @@ export const getFromApi = async <Item>(
   path: string,
   { fresh = false, fromBrowser = false }: FetchOptions = {},
 ): Promise<Item[]> => {
-  const cachePolicy: RequestInit = fresh
-    ? { cache: 'no-store' }
-    : { next: { revalidate: REVALIDATE_SECONDS } };
+  const cachePolicy: RequestInit = fresh ? { cache: 'no-store' } : { next: { revalidate: REVALIDATE_SECONDS } };
   const baseUrl = fromBrowser ? '/api' : API_URL;
   const response = await fetch(`${baseUrl}${path}`, cachePolicy);
   if (EMPTY_LIST_STATUSES.has(response.status)) return [];

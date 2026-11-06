@@ -2,8 +2,7 @@ import { notFound } from 'next/navigation';
 import { fetchProductBySlug, fetchProducts } from '@/entities/product';
 import { ProductDetail } from '@/widgets/product-detail';
 
-export const generateStaticParams = async () =>
-  (await fetchProducts()).map((product) => ({ slug: product.slug }));
+export const generateStaticParams = async () => (await fetchProducts()).map((product) => ({ slug: product.slug }));
 
 export const generateMetadata = async ({ params }: { params: Promise<{ slug: string }> }) => {
   const { slug } = await params;

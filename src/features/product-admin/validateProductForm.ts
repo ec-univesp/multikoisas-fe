@@ -39,5 +39,4 @@ export const validateProductForm = (values: ProductFormValues): ProductFormError
   return errors;
 };
 
-export const hasProductFormErrors = (errors: ProductFormErrors): boolean =>
-  Object.keys(errors).length > 0;
+export const hasProductFormErrors = (errors: ProductFormErrors): boolean => Object.keys(errors).length > 0;
