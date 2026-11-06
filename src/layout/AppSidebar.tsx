@@ -7,7 +7,6 @@ import { useSidebar } from "../context/SidebarContext";
 import {
   ChevronDownIcon,
   FolderIcon,
-  GridIcon,
   HorizontaLDots,
   PlugInIcon,
   TableIcon,
@@ -21,11 +20,6 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
-  {
-    icon: <GridIcon />,
-    name: "Painel",
-    path: "/admin",
-  },
   {
     icon: <TableIcon />,
     name: "Produtos",
