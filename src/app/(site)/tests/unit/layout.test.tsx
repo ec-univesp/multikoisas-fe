@@ -2,6 +2,7 @@ import { Children, isValidElement, type ReactElement, type ReactNode } from 'rea
 import { describe, expect, it } from 'vitest';
 import { ShowcaseSearchProvider } from '@/features/showcase-filter';
 import { SiteHeader } from '@/widgets/site-header';
+import { WhatsAppFloatingButton } from '@/widgets/whatsapp-floating-button';
 import SiteLayout from '../../layout';
 
 type ElementWithChildren = ReactElement<{ children?: ReactNode }>;
@@ -23,5 +24,9 @@ describe('SiteLayout', () => {
     const main = findElementByType(provider, 'main');
     expect(Children.toArray(main?.props.children)).toHaveLength(1);
     expect(findElementByType(main, 'p')?.props.children).toBe('página');
+  });
+
+  it('keeps the floating WhatsApp button on every storefront page', () => {
+    expect(findElementByType(SiteLayout({ children: <p>página</p> }), WhatsAppFloatingButton)).toBeDefined();
   });
 });
