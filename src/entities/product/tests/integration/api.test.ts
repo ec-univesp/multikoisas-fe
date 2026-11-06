@@ -77,36 +77,18 @@ describe('fetchProducts', () => {
     expect(products.every((product) => product.images.length === 0)).toBe(true);
   });
 
-  it('goes through the site proxy when called from the browser', async () => {
-    const fetchSpy = vi.spyOn(globalThis, 'fetch');
-    await fetchProducts({ fresh: true, fromBrowser: true });
-    expect(fetchSpy).toHaveBeenCalledWith('/api/produto', { cache: 'no-store' });
-    expect(fetchSpy).toHaveBeenCalledWith('/api/imagem', { cache: 'no-store' });
-  });
-
   it('labels a product with no linked category', async () => {
     const [, balde] = await fetchProducts();
     expect(balde.category).toBe('Sem categoria');
     expect(balde.categoryId).toBeNull();
   });
 
-  it('calls the api at the default address with a revalidation window', async () => {
+  it('reads only through the local api in the browser, never the real api', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch');
     await fetchProducts();
-    expect(fetchSpy).toHaveBeenCalledWith('https://multikoisas-univesp.onrender.com/produto', {
-      next: { revalidate: 300 },
-    });
-    expect(fetchSpy).toHaveBeenCalledWith('https://multikoisas-univesp.onrender.com/imagem', {
-      next: { revalidate: 300 },
-    });
-  });
-
-  it('skips the cache when fresh data is requested', async () => {
-    const fetchSpy = vi.spyOn(globalThis, 'fetch');
-    await fetchProducts({ fresh: true });
-    expect(fetchSpy).toHaveBeenCalledWith('https://multikoisas-univesp.onrender.com/produto', {
-      cache: 'no-store',
-    });
+    expect(fetchSpy).toHaveBeenCalledWith('/api/produto', { cache: 'no-store' });
+    expect(fetchSpy).toHaveBeenCalledWith('/api/imagem', { cache: 'no-store' });
+    expect(fetchSpy.mock.calls.some(([url]) => String(url).includes('onrender.com'))).toBe(false);
   });
 
   it('fails with the path and status when the api errors', async () => {
@@ -117,7 +99,7 @@ describe('fetchProducts', () => {
 
 describe('fetchCategories', () => {
   it('lists the api categories', async () => {
-    expect(await fetchCategories({ fresh: true })).toEqual([
+    expect(await fetchCategories()).toEqual([
       { id: 2, name: 'Utensílios de Cozinha' },
       { id: 3, name: 'Banheiros' },
     ]);
@@ -126,7 +108,7 @@ describe('fetchCategories', () => {
 
 describe('fetchProductImageRecords', () => {
   it('lists the photos of a product with their ids in id order, ready to display', async () => {
-    expect(await fetchProductImageRecords(7, { fresh: true, fromBrowser: true })).toEqual([
+    expect(await fetchProductImageRecords(7)).toEqual([
       { id: 20, url: `${SUPABASE_IMAGES}/caixa.webp` },
       {
         id: 21,
@@ -137,7 +119,7 @@ describe('fetchProductImageRecords', () => {
   });
 
   it('answers no photos when the api says the product has none', async () => {
-    expect(await fetchProductImageRecords(5, { fresh: true, fromBrowser: true })).toEqual([]);
+    expect(await fetchProductImageRecords(5)).toEqual([]);
   });
 });
 

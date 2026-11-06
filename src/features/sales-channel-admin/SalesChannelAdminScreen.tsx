@@ -9,7 +9,7 @@ type LoadState = { status: 'loading' } | { status: 'error' } | { status: 'ready'
 
 const loadSalesChannels = async (): Promise<LoadState> => {
   try {
-    return { status: 'ready', salesChannels: await fetchSalesChannels({ fresh: true, fromBrowser: true }) };
+    return { status: 'ready', salesChannels: await fetchSalesChannels() };
   } catch {
     return { status: 'error' };
   }
