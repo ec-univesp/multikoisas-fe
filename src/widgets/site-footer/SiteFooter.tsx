@@ -36,11 +36,6 @@ export const SiteFooter = async ({ settings = STORE_SETTINGS }: { settings?: Sto
             <li>
               <ShowcaseLink className={shortcutClassName} />
             </li>
-            <li>
-              <Link href="/#about" className={shortcutClassName}>
-                A loja
-              </Link>
-            </li>
           </ul>
         </nav>
 

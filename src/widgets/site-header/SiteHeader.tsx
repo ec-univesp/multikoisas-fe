@@ -41,9 +41,6 @@ export const SiteHeader = async () => {
               Início
             </Link>
             <ShowcaseLink className={navLinkClassName} />
-            <Link href="/#about" className={navLinkClassName}>
-              A loja
-            </Link>
           </nav>
           {storesPhrase && <p className="px-3 text-sm font-medium text-gray-600 md:px-0">{`Compre ${storesPhrase}`}</p>}
         </div>
