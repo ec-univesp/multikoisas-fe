@@ -9,7 +9,7 @@ import Select from '@/components/form/Select';
 import TextArea from '@/components/form/input/TextArea';
 import type { Category, Product, ProductImageRecord } from '@/entities/product';
 import type { SalesChannel } from '@/entities/sales-channel';
-import { hasProductFormErrors, validateProductForm } from './validateProductForm';
+import { findInvalidPurchaseLinkKeys, hasProductFormErrors, validateProductForm } from './validateProductForm';
 import { ProductPhotosField, type NewPhoto } from './ProductPhotosField';
 import { PurchaseLinksField } from './PurchaseLinksField';
 import type { PhotoChanges, ProductFormErrors, ProductFormValues, PurchaseLink, PurchaseLinkDraft } from './types';
@@ -202,6 +202,7 @@ export const ProductFormModal = ({
               purchaseLinks={values.purchaseLinks}
               salesChannels={salesChannels}
               error={errors.purchaseLinks}
+              invalidRowKeys={errors.purchaseLinks ? findInvalidPurchaseLinkKeys(values.purchaseLinks) : []}
               disabled={isSaving || failedPhotoCount > 0}
               onAdd={addPurchaseLink}
               onChange={changePurchaseLink}

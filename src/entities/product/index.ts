@@ -4,6 +4,7 @@ export {
   fetchProductBySlug,
   fetchProductImageRecords,
   fetchProducts,
+  isStoreChannelName,
   toImageRecord,
   toImageUrlsInIdOrder,
   toProduct,

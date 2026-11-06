@@ -2,14 +2,18 @@ import Button from '@/components/ui/button/Button';
 import Input from '@/components/form/input/InputField';
 import Label from '@/components/form/Label';
 import Select from '@/components/form/Select';
+import { isStoreChannelName } from '@/entities/product';
 import type { SalesChannel } from '@/entities/sales-channel';
 import { PlusIcon, TrashBinIcon } from '@/icons';
 import type { PurchaseLinkDraft } from './types';
+
+const PURCHASE_LINKS_ERROR_ID = 'purchase-links-error';
 
 type PurchaseLinksFieldProps = {
   purchaseLinks: readonly PurchaseLinkDraft[];
   salesChannels: readonly SalesChannel[];
   error?: string;
+  invalidRowKeys: readonly number[];
   disabled: boolean;
   onAdd: () => void;
   onChange: (key: number, changes: Partial<PurchaseLinkDraft>) => void;
@@ -20,15 +24,19 @@ export const PurchaseLinksField = ({
   purchaseLinks,
   salesChannels,
   error,
+  invalidRowKeys,
   disabled,
   onAdd,
   onChange,
   onRemove,
 }: PurchaseLinksFieldProps) => {
-  const storeOptions = salesChannels.map((salesChannel) => ({
-    value: String(salesChannel.id),
-    label: salesChannel.name,
-  }));
+  const optionsFor = (purchaseLink: PurchaseLinkDraft) =>
+    salesChannels
+      .filter(
+        (salesChannel) =>
+          isStoreChannelName(salesChannel.name) || String(salesChannel.id) === purchaseLink.salesChannelId,
+      )
+      .map((salesChannel) => ({ value: String(salesChannel.id), label: salesChannel.name }));
 
   return (
     <fieldset>
@@ -38,6 +46,7 @@ export const PurchaseLinksField = ({
       <ul className="flex flex-col gap-3">
         {purchaseLinks.map((purchaseLink, index) => {
           const position = index + 1;
+          const isInvalid = invalidRowKeys.includes(purchaseLink.key);
           return (
             <li key={purchaseLink.key} className="flex flex-col gap-2 sm:flex-row sm:items-end">
               <div className="sm:w-48">
@@ -45,9 +54,10 @@ export const PurchaseLinksField = ({
                 <Select
                   id={`purchase-link-store-${purchaseLink.key}`}
                   placeholder="Escolha a loja"
-                  options={storeOptions}
+                  options={optionsFor(purchaseLink)}
                   defaultValue={purchaseLink.salesChannelId}
                   onChange={(salesChannelId) => onChange(purchaseLink.key, { salesChannelId })}
+                  disabled={disabled}
                   className="text-base"
                 />
               </div>
@@ -60,6 +70,9 @@ export const PurchaseLinksField = ({
                   defaultValue={purchaseLink.url}
                   onChange={(event) => onChange(purchaseLink.key, { url: event.target.value })}
                   disabled={disabled}
+                  error={isInvalid}
+                  aria-invalid={isInvalid || undefined}
+                  aria-describedby={isInvalid ? PURCHASE_LINKS_ERROR_ID : undefined}
                   className="text-base"
                 />
               </div>
@@ -79,21 +92,27 @@ export const PurchaseLinksField = ({
       </ul>
 
       {error && (
-        <p role="alert" className="mt-1.5 text-xs text-error-500">
+        <p id={PURCHASE_LINKS_ERROR_ID} role="alert" className="mt-1.5 text-xs text-error-500">
           {error}
         </p>
       )}
 
-      <Button
-        size="sm"
-        variant="outline"
-        startIcon={<PlusIcon />}
-        onClick={onAdd}
-        disabled={disabled}
-        className="mt-3"
-      >
-        Adicionar loja
-      </Button>
+      {salesChannels.length === 0 ? (
+        <p className="mt-3 text-sm text-gray-500">
+          Não foi possível carregar as lojas. Recarregue a página para mexer nos links.
+        </p>
+      ) : (
+        <Button
+          size="sm"
+          variant="outline"
+          startIcon={<PlusIcon />}
+          onClick={onAdd}
+          disabled={disabled}
+          className="mt-3"
+        >
+          Adicionar loja
+        </Button>
+      )}
     </fieldset>
   );
 };

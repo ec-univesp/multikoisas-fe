@@ -10,12 +10,20 @@ const isHttpsUrl = (text: string): boolean => {
   }
 };
 
+const isIncompleteLink = (link: PurchaseLinkDraft) => !isNonEmptyText(link.salesChannelId) || !isHttpsUrl(link.url);
+
+const isRepeatedStore = (link: PurchaseLinkDraft, position: number, purchaseLinks: readonly PurchaseLinkDraft[]) =>
+  purchaseLinks.findIndex((candidate) => candidate.salesChannelId === link.salesChannelId) !== position;
+
+export const findInvalidPurchaseLinkKeys = (purchaseLinks: readonly PurchaseLinkDraft[]): number[] => {
+  const incompleteLinks = purchaseLinks.filter(isIncompleteLink);
+  const invalidLinks = incompleteLinks.length > 0 ? incompleteLinks : purchaseLinks.filter(isRepeatedStore);
+  return invalidLinks.map((link) => link.key);
+};
+
 const validatePurchaseLinks = (purchaseLinks: readonly PurchaseLinkDraft[]): string | undefined => {
-  if (purchaseLinks.some((link) => !isNonEmptyText(link.salesChannelId) || !isHttpsUrl(link.url))) {
-    return 'Escolha a loja e cole um link que comece com https://.';
-  }
-  const salesChannelIds = purchaseLinks.map((link) => link.salesChannelId);
-  if (new Set(salesChannelIds).size !== salesChannelIds.length) return 'Cada loja só pode aparecer uma vez.';
+  if (purchaseLinks.some(isIncompleteLink)) return 'Escolha a loja e cole um link que comece com https://.';
+  if (purchaseLinks.some(isRepeatedStore)) return 'Cada loja só pode aparecer uma vez.';
   return undefined;
 };
 

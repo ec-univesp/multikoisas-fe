@@ -43,6 +43,9 @@ export const ProductAdminPanel = ({ initialProducts, categories, salesChannels }
   const [isLoadingProduct, setIsLoadingProduct] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
 
+  const addFeedbackMessage = (message: string) =>
+    setFeedbackMessage((currentMessage) => (currentMessage ? `${currentMessage} ${message}` : message));
+
   const formModal = useModal();
   const deleteModal = useModal();
 
@@ -65,7 +68,7 @@ export const ProductAdminPanel = ({ initialProducts, categories, salesChannels }
     setFeedbackMessage(null);
     setIsLoadingProduct(true);
     try {
-      const editableProduct = await loadProductForEdit(product, categories);
+      const editableProduct = await loadProductForEdit(product, categories, salesChannels);
       if (!editableProduct) {
         setProducts((currentProducts) =>
           currentProducts.filter((candidate) => candidate.id !== product.id),
@@ -111,8 +114,8 @@ export const ProductAdminPanel = ({ initialProducts, categories, salesChannels }
       );
     } catch (error) {
       if (!(error instanceof PurchaseLinkError)) throw error;
-      setFeedbackMessage('Produto salvo, mas os links de compra não foram atualizados. Edite o produto para tentar de novo.');
-      return savedProduct;
+      addFeedbackMessage('Produto salvo, mas os links de compra não foram atualizados. Edite o produto para tentar de novo.');
+      return error.product;
     }
   };
 
