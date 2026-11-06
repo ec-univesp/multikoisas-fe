@@ -12,7 +12,7 @@ const isHttpsUrl = (link: string): boolean => {
 };
 
 export const fetchSocialNetworks = async (options: FetchOptions = {}): Promise<SocialNetwork[]> =>
-  (await getFromApi<SocialNetworkResponse[]>('/socialnetwork', options))
+  (await getFromApi<SocialNetworkResponse>('/socialnetwork', options))
     .filter((socialNetwork) => isHttpsUrl(socialNetwork.link))
     .map((socialNetwork) => ({
       id: socialNetwork.id,

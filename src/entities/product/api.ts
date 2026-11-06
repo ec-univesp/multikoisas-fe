@@ -67,7 +67,7 @@ export const toProduct = (
 });
 
 export const fetchCategories = async (options: FetchOptions = {}): Promise<Category[]> =>
-  (await getFromApi<CategoriaResponse[]>('/categoria', options)).map((categoria) => ({
+  (await getFromApi<CategoriaResponse>('/categoria', options)).map((categoria) => ({
     id: categoria.id,
     name: categoria.nome,
   }));
@@ -76,17 +76,17 @@ export const fetchProductImageRecords = async (
   produtoId: number,
   options: FetchOptions = {},
 ): Promise<ProductImageRecord[]> =>
-  toImageRecords(await getFromApi<ImagemResponse[]>(`/imagem/${produtoId}`, options));
+  toImageRecords(await getFromApi<ImagemResponse>(`/imagem?produtoId=${produtoId}`, options));
 
 export const fetchCatalog = async (options: FetchOptions = {}): Promise<Catalog> => {
   const [produtos, categories, vinculos, imagens, canaisVenda, linksDeCompra] = await Promise.all([
-    getFromApi<ProdutoResponse[]>('/produto', options),
+    getFromApi<ProdutoResponse>('/produto', options),
     fetchCategories(options),
-    getFromApi<CategoriaProdutoResponse[]>('/categoriaproduto', options),
+    getFromApi<CategoriaProdutoResponse>('/categoriaproduto', options),
     // Foto e link de compra são acessórios: sem eles a vitrine segue no ar.
-    getFromApi<ImagemResponse[]>('/imagem', options).catch((): ImagemResponse[] => []),
-    getFromApi<CanalVendaResponse[]>('/canalvenda', options).catch((): CanalVendaResponse[] => []),
-    getFromApi<CanalVendaProdutoResponse[]>('/canalvendaproduto', options).catch(
+    getFromApi<ImagemResponse>('/imagem', options).catch((): ImagemResponse[] => []),
+    getFromApi<CanalVendaResponse>('/canalvenda', options).catch((): CanalVendaResponse[] => []),
+    getFromApi<CanalVendaProdutoResponse>('/canalvendaproduto', options).catch(
       (): CanalVendaProdutoResponse[] => [],
     ),
   ]);

@@ -54,7 +54,7 @@ describe('syncProductImages', () => {
       },
       failedPhotoCount: 0,
     });
-    expect(apiRequests).toEqual(['DELETE /api/imagem', 'POST /api/imagem', 'POST /api/imagem']);
+    expect(apiRequests).toEqual(['DELETE /api/imagem', 'POST /api/imagem?produtoId=1', 'POST /api/imagem?produtoId=1']);
     expect(contentTypes).toEqual([
       expect.stringMatching(/^multipart\/form-data; boundary=/),
       expect.stringMatching(/^multipart\/form-data; boundary=/),
@@ -104,20 +104,19 @@ describe('syncProductImages', () => {
     expect(apiRequests).toEqual([]);
   });
 
-  it('sends each chosen file with the product id in its own upload form', async () => {
+  it('sends each chosen file in its own upload form, with the product id in the query', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch');
     const fileA = photo('a.png');
     const fileB = photo('b.png');
 
     await syncProductImages(garrafa, garrafaPhotos, { removedPhotoIds: [], newFiles: [fileA, fileB] });
 
-    const uploadForms = fetchSpy.mock.calls
-      .map(([, init]) => init?.body)
-      .filter((body): body is FormData => body instanceof FormData);
+    const uploads = fetchSpy.mock.calls.filter(([, init]) => init?.body instanceof FormData);
+    const uploadForms = uploads.map(([, init]) => init?.body).filter((body): body is FormData => body instanceof FormData);
     expect(uploadForms).toHaveLength(2);
     expect(uploadForms[0].get('file')).toBe(fileA);
     expect(uploadForms[1].get('file')).toBe(fileB);
-    expect(uploadForms.map((form) => form.get('produtoId'))).toEqual(['1', '1']);
+    expect(uploads.map(([url]) => url)).toEqual(['/api/imagem?produtoId=1', '/api/imagem?produtoId=1']);
   });
 
   it('counts as removed a photo the api no longer has', async () => {
@@ -161,13 +160,13 @@ describe('syncProductImages', () => {
       },
       failedPhotoCount: 0,
     });
-    expect(apiRequests).toEqual(['POST /api/imagem', 'POST /api/imagem', 'GET /api/imagem/1']);
+    expect(apiRequests).toEqual(['POST /api/imagem?produtoId=1', 'POST /api/imagem?produtoId=1', 'GET /api/imagem?produtoId=1']);
   });
 
   it('keeps the known photos when the reload after an unreadable upload fails', async () => {
     server.use(
       http.post('*/imagem', () => new HttpResponse('', { status: 201 }), { once: true }),
-      http.get('*/imagem/:produtoId', () => new HttpResponse(null, { status: 500 })),
+      http.get('*/imagem', () => new HttpResponse(null, { status: 500 })),
     );
 
     const result = await syncProductImages(garrafa, garrafaPhotos, {
