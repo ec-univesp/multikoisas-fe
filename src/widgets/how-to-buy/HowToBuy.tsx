@@ -1,15 +1,16 @@
-import { MousePointerClick, ShieldCheck, ShoppingBag } from 'lucide-react';
-import { fetchProducts, toStoresPhrase, type Product } from '@/entities/product';
+'use client';
 
-const loadProducts = (): Promise<Product[]> => fetchProducts().catch(() => []);
+import { MousePointerClick, ShieldCheck, ShoppingBag } from 'lucide-react';
+import { toStoresPhrase, useCatalog } from '@/entities/product';
 
 const storeStepDescription = (storesPhrase: string | null): string =>
   storesPhrase
     ? `Conclua a compra ${storesPhrase} pelo botão da loja que preferir.`
     : 'Conclua a compra pelo botão da loja que preferir.';
 
-export const HowToBuy = async () => {
-  const storesPhrase = toStoresPhrase(await loadProducts());
+export const HowToBuy = () => {
+  const catalog = useCatalog();
+  const storesPhrase = catalog.status === 'ready' ? toStoresPhrase(catalog.data.products) : null;
   const purchaseSteps = [
     {
       title: 'Escolha o produto',
@@ -25,7 +26,7 @@ export const HowToBuy = async () => {
   ];
 
   return (
-    <section className="mx-auto max-w-7xl px-4 pb-12 lg:px-8">
+    <section aria-busy={catalog.status === 'loading'} className="mx-auto max-w-7xl px-4 pb-12 lg:px-8">
       <div className="rounded-xl bg-white p-5 shadow-theme-xs lg:p-6">
         <h2 className="text-xl font-extrabold tracking-tight text-store-navy">
           Você escolhe na nossa vitrine e compra onde preferir!

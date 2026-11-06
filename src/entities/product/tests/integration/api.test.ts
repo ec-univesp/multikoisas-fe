@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { server } from '@/test/msw/server';
-import { fetchCategories, fetchProductBySlug, fetchProductImageRecords, fetchProducts } from '../../api';
+import { fetchCategories, fetchProductImageRecords, fetchProducts } from '../../api';
 
 const SUPABASE_IMAGES = 'https://avphmmvnlrbidhjrzozx.supabase.co/storage/v1/object/public/imagem';
 
@@ -112,16 +112,6 @@ describe('fetchProducts', () => {
   it('fails with the path and status when the api errors', async () => {
     server.use(http.get('*/produto', () => new HttpResponse(null, { status: 503 })));
     await expect(fetchProducts()).rejects.toThrow('/produto responded 503');
-  });
-});
-
-describe('fetchProductBySlug', () => {
-  it('finds the product by its slug', async () => {
-    expect((await fetchProductBySlug('balde-12l-5'))?.name).toBe('Balde 12L');
-  });
-
-  it('returns undefined for an unknown slug', async () => {
-    expect(await fetchProductBySlug('balde-12l-6')).toBeUndefined();
   });
 });
 
