@@ -32,7 +32,7 @@ type NameBody = { nome?: string };
 type ProductBody = { nome?: string; descricaoProduto?: string };
 type ProductImageBody = { id?: number; produtoId?: number };
 type SocialNetworkBody = { descricao?: string; link?: string };
-type StoreSettingsBody = Partial<Record<keyof Omit<StoreSettingsRow, 'logoUrl'>, unknown>>;
+type StoreSettingsChanges = Partial<Omit<StoreSettingsRow, 'logoUrl'>>;
 
 const SOCIAL_NETWORK_TAKEN = 'Esta rede social já está cadastrada.';
 
@@ -58,25 +58,37 @@ const isHttpsUrl = (link: string) => {
 
 const isOptionalText = (value: unknown) => value === undefined || value === null || typeof value === 'string';
 
-// Mirrors the store settings form: empty fields are allowed and saved as null.
-const toStoreSettings = (body: StoreSettingsBody): Omit<StoreSettingsRow, 'logoUrl'> | null => {
-  const { address, googleReviewsUrl, googleRating, googleReviewCount } = body;
-  if (!isOptionalText(address) || !isOptionalText(googleReviewsUrl)) return null;
-  const trimmedAddress = typeof address === 'string' ? address.trim() : '';
-  const trimmedUrl = typeof googleReviewsUrl === 'string' ? googleReviewsUrl.trim() : '';
-  if (trimmedUrl !== '' && !isHttpsUrl(trimmedUrl)) return null;
-  const rating = googleRating ?? null;
-  if (rating !== null && (typeof rating !== 'number' || rating > 5 || !RATING_PATTERN.test(String(rating)))) {
-    return null;
+const isRating = (value: unknown): value is number | null =>
+  value === null || (typeof value === 'number' && value <= 5 && RATING_PATTERN.test(String(value)));
+
+const isReviewCount = (value: unknown): value is number | null =>
+  value === null || (typeof value === 'number' && Number.isInteger(value) && value >= 0);
+
+const toText = (value: unknown) => (typeof value === 'string' ? value.trim() || null : null);
+
+// Mirrors the store settings form: empty fields are saved as null, omitted fields keep their value.
+const toStoreSettingsChanges = (body: unknown): StoreSettingsChanges | null => {
+  if (typeof body !== 'object' || body === null || Array.isArray(body)) return null;
+  const changes: StoreSettingsChanges = {};
+  if ('address' in body) {
+    if (!isOptionalText(body.address)) return null;
+    changes.address = toText(body.address);
   }
-  const reviewCount = googleReviewCount ?? null;
-  if (reviewCount !== null && (!Number.isInteger(reviewCount) || Number(reviewCount) < 0)) return null;
-  return {
-    address: trimmedAddress || null,
-    googleReviewsUrl: trimmedUrl || null,
-    googleRating: rating,
-    googleReviewCount: reviewCount === null ? null : Number(reviewCount),
-  };
+  if ('googleReviewsUrl' in body) {
+    if (!isOptionalText(body.googleReviewsUrl)) return null;
+    const url = toText(body.googleReviewsUrl);
+    if (url !== null && !isHttpsUrl(url)) return null;
+    changes.googleReviewsUrl = url;
+  }
+  if ('googleRating' in body) {
+    if (!isRating(body.googleRating)) return null;
+    changes.googleRating = body.googleRating;
+  }
+  if ('googleReviewCount' in body) {
+    if (!isReviewCount(body.googleReviewCount)) return null;
+    changes.googleReviewCount = body.googleReviewCount;
+  }
+  return changes;
 };
 
 const localImageIdOf = (url: string | null) =>
@@ -394,8 +406,8 @@ export const createApiHandlers = (
     // Local api only: the real one does not store the store settings yet (SKI-135).
     http.get(`${baseUrl}/configuracao`, () => HttpResponse.json(database.storeSettings)),
 
-    http.put<never, StoreSettingsBody>(`${baseUrl}/configuracao`, async ({ request }) => {
-      const settings = toStoreSettings(await request.json());
+    http.put(`${baseUrl}/configuracao`, async ({ request }) => {
+      const settings = toStoreSettingsChanges(await request.json());
       if (!settings) return springError(400, 'Bad Request', request);
       const previousSettings = database.storeSettings;
       database.storeSettings = { ...previousSettings, ...settings };

@@ -2,20 +2,27 @@
 
 import Image from 'next/image';
 import { isWhatsApp, SocialNetworkLinks, useSocialNetworks, WhatsAppLink } from '@/entities/social-network';
+import { useStoreSettings } from '@/entities/store-settings';
 import { BrandMark } from '@/shared/ui/BrandMark';
 import { STORE_PHOTO, type StorePhoto } from './storePhoto';
 
 const StorePicture = ({ storePhoto }: { storePhoto: StorePhoto | null }) => {
+  const { logoUrl } = useStoreSettings().settings;
   if (!storePhoto) {
     return (
       <div
         role="img"
         aria-label="MultiKoisas"
-        className="flex aspect-[4/3] items-center justify-center rounded-xl bg-store-navy"
+        className="flex aspect-[4/3] items-center justify-center rounded-xl bg-store-navy p-8"
       >
-        <div className="scale-150 sm:scale-200">
-          <BrandMark tone="onDark" />
-        </div>
+        {logoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element -- the logo lives in the browser image store, next/image cannot load it
+          <img src={logoUrl} alt="" className="size-full object-contain" />
+        ) : (
+          <div className="scale-150 sm:scale-200">
+            <BrandMark tone="onDark" />
+          </div>
+        )}
       </div>
     );
   }

@@ -14,9 +14,11 @@ const settingsWith = (overrides: Partial<StoreSettingsValues>): StoreSettingsVal
 });
 
 describe('GoogleReviewsBadge', () => {
-  it('uses the store settings by default, in the Google colors with the G logo', () => {
+  it('uses the store settings by default, in the Google colors with the G logo', async () => {
     render(<GoogleReviewsBadge />);
-    const badge = screen.getByRole('link', { name: 'Nota 4,7 de 5 no Google, 387 avaliações. Abre em outra aba.' });
+    const badge = await screen.findByRole('link', {
+      name: 'Nota 4,7 de 5 no Google, 387 avaliações. Abre em outra aba.',
+    });
     expect(badge).toHaveClass('bg-white');
     expect(badge.querySelector('[data-icon="google"]')).toBeInTheDocument();
   });

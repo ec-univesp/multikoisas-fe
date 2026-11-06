@@ -189,5 +189,17 @@ export const StoreSettingsForm = ({ settings }: { settings?: StoreSettingsValues
       </p>
     );
   }
+  if (savedSettings.status === 'error') {
+    return (
+      <div className="space-y-3">
+        <p role="alert" className="text-sm text-error-500">
+          Não foi possível carregar os dados da loja.
+        </p>
+        <Button variant="outline" onClick={savedSettings.retry}>
+          Tentar de novo
+        </Button>
+      </div>
+    );
+  }
   return <StoreSettingsFields initialSettings={savedSettings.settings} />;
 };

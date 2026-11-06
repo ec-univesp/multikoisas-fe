@@ -23,9 +23,15 @@ describe('StoreSettingsForm saving', () => {
     expect(screen.getByLabelText('Nota no Google')).toHaveValue(4.7);
   });
 
-  it('starts with the default settings when the saved ones cannot be read', async () => {
-    server.use(http.get('*/configuracao', () => new HttpResponse(null, { status: 500 })));
+  it('offers to try again, without the fields, when the saved settings cannot be read', async () => {
+    server.use(http.get('*/configuracao', () => new HttpResponse(null, { status: 500 }), { once: true }));
+    const user = userEvent.setup();
     render(<StoreSettingsForm />);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível carregar os dados da loja.');
+    expect(screen.queryByLabelText('Endereço')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Tentar de novo' }));
+
     expect(await screen.findByLabelText('Quantidade de avaliações')).toHaveValue(387);
   });
 
