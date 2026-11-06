@@ -1,8 +1,10 @@
 import Link from 'next/link';
 import { fetchProducts, toStoresPhrase, type Product } from '@/entities/product';
 import { fetchSocialNetworks, isWhatsApp, WhatsAppLink, type SocialNetwork } from '@/entities/social-network';
+import { STORE_SETTINGS, type StoreSettings } from '@/entities/store-settings';
 import { ShowcaseLink, ShowcaseSearchField } from '@/features/showcase-filter';
 import { BrandMark } from '@/shared/ui/BrandMark';
+import { GoogleReviewsBadge } from './GoogleReviewsBadge';
 
 const loadProducts = (): Promise<Product[]> => fetchProducts().catch(() => []);
 const loadSocialNetworks = (): Promise<SocialNetwork[]> => fetchSocialNetworks().catch(() => []);
@@ -10,7 +12,7 @@ const loadSocialNetworks = (): Promise<SocialNetwork[]> => fetchSocialNetworks()
 const navLinkClassName =
   'flex h-11 shrink-0 items-center rounded-lg px-3 text-sm font-semibold text-gray-700 hover:bg-white hover:text-store-navy';
 
-export const SiteHeader = async () => {
+export const SiteHeader = async ({ settings = STORE_SETTINGS }: { settings?: StoreSettings } = {}) => {
   const [products, socialNetworks] = await Promise.all([loadProducts(), loadSocialNetworks()]);
   const whatsApp = socialNetworks.find(isWhatsApp);
   const storesPhrase = toStoresPhrase(products);
@@ -28,6 +30,7 @@ export const SiteHeader = async () => {
               Tudo em um só lugar
             </span>
           </Link>
+          <GoogleReviewsBadge settings={settings} className="lg:order-last" />
           {whatsApp && <WhatsAppLink url={whatsApp.url} className="lg:order-last" />}
           <div className="w-full lg:w-auto lg:max-w-xl lg:flex-1">
             <ShowcaseSearchField id="site-header-search" label="Buscar produto no cabeçalho" />
