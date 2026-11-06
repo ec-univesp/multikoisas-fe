@@ -150,25 +150,39 @@ describe('multikoisas-api handlers', () => {
 
   it('links a product to a sales channel and answers 204 for an empty link list', async () => {
     expect((await send('GET', '/api/canalvendaproduto?produtoId=5')).status).toBe(204);
-    const linked = await send('POST', '/api/canalvendaproduto', { produtoId: 5, canalVendaId: 4, link: 'https://fb.com/balde' });
+    const linked = await send('POST', '/api/canalvendaproduto', {
+      produtoId: 5,
+      canalVendaId: 4,
+      link: 'https://fb.com/balde',
+    });
     expect(linked.status).toBe(201);
     expect(await linked.json()).toEqual({ mensagem: 'Canal de venda associado ao produto com sucesso.' });
     expect(await (await send('GET', '/api/canalvendaproduto?produtoId=5')).json()).toEqual([
       { produtoId: 5, canalVendaId: 4, link: 'https://fb.com/balde' },
     ]);
-    expect((await send('POST', '/api/canalvendaproduto', { produtoId: 5, canalVendaId: 4, link: 'https://x' })).status).toBe(409);
-    expect((await send('POST', '/api/canalvendaproduto', { produtoId: 404, canalVendaId: 4, link: 'https://x' })).status).toBe(409);
-    expect((await send('POST', '/api/canalvendaproduto', { produtoId: 5, canalVendaId: 3, link: '' })).status).toBe(400);
+    expect(
+      (await send('POST', '/api/canalvendaproduto', { produtoId: 5, canalVendaId: 4, link: 'https://x' })).status,
+    ).toBe(409);
+    expect(
+      (await send('POST', '/api/canalvendaproduto', { produtoId: 404, canalVendaId: 4, link: 'https://x' })).status,
+    ).toBe(409);
+    expect((await send('POST', '/api/canalvendaproduto', { produtoId: 5, canalVendaId: 3, link: '' })).status).toBe(
+      400,
+    );
     expect((await send('DELETE', '/api/canalvendaproduto', { produtoId: 5, canalVendaId: 4 })).status).toBe(400);
     expect(
       (await send('DELETE', '/api/canalvendaproduto', { produtoId: 5, canalVendaId: 4, link: 'https://fb.com/balde' }))
         .status,
     ).toBe(200);
-    expect((await send('DELETE', '/api/canalvendaproduto', { produtoId: 5, canalVendaId: 4, link: 'https://x' })).status).toBe(409);
+    expect(
+      (await send('DELETE', '/api/canalvendaproduto', { produtoId: 5, canalVendaId: 4, link: 'https://x' })).status,
+    ).toBe(409);
   });
 
   it('creates, filters, updates and deletes a social network by its description', async () => {
-    expect((await send('POST', '/api/socialnetwork', { descricao: 'TikTok', link: 'https://tiktok.com/@mk' })).status).toBe(201);
+    expect(
+      (await send('POST', '/api/socialnetwork', { descricao: 'TikTok', link: 'https://tiktok.com/@mk' })).status,
+    ).toBe(201);
     expect((await send('POST', '/api/socialnetwork', { descricao: 'tiktok', link: 'https://x' })).status).toBe(409);
     expect((await send('POST', '/api/socialnetwork', { descricao: '', link: 'https://x' })).status).toBe(400);
     expect(await (await send('GET', '/api/socialnetwork?name=TikTok')).json()).toEqual([

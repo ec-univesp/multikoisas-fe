@@ -1,0 +1,9 @@
+.next
+out
+build
+coverage
+docs
+.claude
+public
+pnpm-lock.yaml
+next-env.d.ts

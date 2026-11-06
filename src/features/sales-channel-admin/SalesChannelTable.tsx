@@ -1,12 +1,6 @@
 'use client';
 
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import { TrashBinIcon } from '@/icons';
 import type { SalesChannel } from '@/entities/sales-channel';
 
@@ -30,10 +24,7 @@ export const SalesChannelTable = ({ salesChannels, onDelete }: SalesChannelTable
         <Table>
           <TableHeader className="border-b border-gray-200">
             <TableRow>
-              <TableCell
-                isHeader
-                className="px-5 py-3 text-start text-theme-xs font-medium text-gray-500"
-              >
+              <TableCell isHeader className="px-5 py-3 text-start text-theme-xs font-medium text-gray-500">
                 Canal de venda
               </TableCell>
               <TableCell isHeader className="px-5 py-3">

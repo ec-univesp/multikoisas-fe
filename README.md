@@ -30,24 +30,24 @@ Projeto integrador da UNIVESP · time Squad PI2
 
 ## Links
 
-| O quê | Onde |
-| --- | --- |
-| Site no ar | <https://multikoisas.netlify.app> |
-| Painel administrativo | <https://multikoisas.netlify.app/admin> |
-| API do projeto (back-end) | <https://multikoisas-univesp.onrender.com> |
+| O quê                         | Onde                                                             |
+| ----------------------------- | ---------------------------------------------------------------- |
+| Site no ar                    | <https://multikoisas.netlify.app>                                |
+| Painel administrativo         | <https://multikoisas.netlify.app/admin>                          |
+| API do projeto (back-end)     | <https://multikoisas-univesp.onrender.com>                       |
 | Documentação da API (Swagger) | <https://multikoisas-univesp.onrender.com/swagger-ui/index.html> |
-| Código do back-end | <https://github.com/pi2alunos/multikoisas-univesp> |
-| Quadro de tarefas do time | santi, projeto `UNIV` — <https://getsanti.app/p/UNIV> |
+| Código do back-end            | <https://github.com/pi2alunos/multikoisas-univesp>               |
+| Quadro de tarefas do time     | santi, projeto `UNIV` — <https://getsanti.app/p/UNIV>            |
 
 ## Duas superfícies, um projeto
 
-| Endereço | O que é |
-| --- | --- |
-| `/` | Vitrine pública: produtos da API com filtro por categoria e busca |
-| `/produto/<slug>` | Página do produto: descrição completa e onde comprar |
-| `/admin` | Painel com o total de produtos publicados e métricas de cliques (ainda de exemplo) |
-| `/admin/produtos` | Criar, editar e apagar produtos, escolhendo a categoria |
-| `/admin/categorias` | Criar, renomear e apagar categorias |
+| Endereço            | O que é                                                                            |
+| ------------------- | ---------------------------------------------------------------------------------- |
+| `/`                 | Vitrine pública: produtos da API com filtro por categoria e busca                  |
+| `/produto/<slug>`   | Página do produto: descrição completa e onde comprar                               |
+| `/admin`            | Painel com o total de produtos publicados e métricas de cliques (ainda de exemplo) |
+| `/admin/produtos`   | Criar, editar e apagar produtos, escolhendo a categoria                            |
+| `/admin/categorias` | Criar, renomear e apagar categorias                                                |
 
 O endereço do produto é o nome dele seguido do id na API, como `/produto/garrafa-termica-1l-12`.
 
@@ -59,11 +59,11 @@ O catálogo vem da API do time, um serviço Spring Boot publicado no Render.
 - **Escrita pelo navegador, através do próprio site.** As telas do painel chamam `/api/...`, e o `next.config.ts` repassa essas chamadas para a API. Assim o navegador fala só com o domínio do site: a API não libera chamadas vindas de outros domínios (CORS), então a chamada direta seria bloqueada.
 - **Endereço configurável.** A variável de ambiente `MULTIKOISAS_API_URL` troca o endereço da API. Sem ela, o projeto usa <https://multikoisas-univesp.onrender.com>.
 
-| Recurso da API | Uso no front |
-| --- | --- |
-| `GET /produto`, `POST /produto`, `PUT /produto/{id}`, `DELETE /produto/{id}` | vitrine, página do produto e cadastro de produtos |
-| `GET /categoria`, `POST /categoria`, `PUT /categoria/{id}`, `DELETE /categoria/{id}` | filtro da vitrine e cadastro de categorias |
-| `GET /categoriaproduto`, `POST /categoriaproduto`, `DELETE /categoriaproduto` | categoria de cada produto |
+| Recurso da API                                                                       | Uso no front                                      |
+| ------------------------------------------------------------------------------------ | ------------------------------------------------- |
+| `GET /produto`, `POST /produto`, `PUT /produto/{id}`, `DELETE /produto/{id}`         | vitrine, página do produto e cadastro de produtos |
+| `GET /categoria`, `POST /categoria`, `PUT /categoria/{id}`, `DELETE /categoria/{id}` | filtro da vitrine e cadastro de categorias        |
+| `GET /categoriaproduto`, `POST /categoriaproduto`, `DELETE /categoriaproduto`        | categoria de cada produto                         |
 
 ### Ver o JSON da API com o Bruno
 
@@ -72,11 +72,11 @@ A pasta `bruno/multikoisas-api` é uma coleção pronta do [Bruno](https://www.u
 1. No Bruno, **Open Collection** e escolha a pasta `bruno/multikoisas-api`.
 2. No seletor de ambiente (canto superior direito), escolha onde chamar:
 
-   | Ambiente | `baseUrl` | Para quê |
-   | --- | --- | --- |
-   | API direta | `https://multikoisas-univesp.onrender.com` | a API publicada (hoje roda a branch `master`) |
-   | Pelo site | `https://multikoisas.netlify.app/api` | o mesmo caminho que o painel usa, pelo proxy do Netlify |
-   | Local | `http://localhost:8080` | o back-end rodando na sua máquina, por exemplo na branch `develop` |
+   | Ambiente   | `baseUrl`                                  | Para quê                                                           |
+   | ---------- | ------------------------------------------ | ------------------------------------------------------------------ |
+   | API direta | `https://multikoisas-univesp.onrender.com` | a API publicada (hoje roda a branch `master`)                      |
+   | Pelo site  | `https://multikoisas.netlify.app/api`      | o mesmo caminho que o painel usa, pelo proxy do Netlify            |
+   | Local      | `http://localhost:8080`                    | o back-end rodando na sua máquina, por exemplo na branch `develop` |
 
 3. Abra uma requisição, como `1 - produtos/Listar produtos`, e clique em enviar: o JSON aparece na aba de resposta.
 
@@ -96,16 +96,19 @@ Também dá para rodar pelo terminal, sem abrir o aplicativo: `cd bruno/multikoi
 Tarefas no santi, projeto `UNIV`.
 
 **Pronto**
+
 - Vitrine, página do produto e painel lendo produtos e categorias da API.
 - Cadastro de produtos no painel (criar, editar, apagar e escolher categoria).
 - Cadastro de categorias no painel.
 - Testes de integração que simulam a API com MSW, reproduzindo o contrato real dela.
 
 **Em andamento**
+
 - Redes sociais da loja no rodapé da vitrine.
 - Cadastro de canais de venda e de redes sociais no painel.
 
 **Esperando o back-end**
+
 - Fotos dos produtos: falta a API permitir ler a imagem.
 - Botões "Comprar na loja": falta a API liberar os links por canal de venda.
 - Login do painel: falta a API ter autenticação.
@@ -144,10 +147,10 @@ O servidor recarrega sozinho a cada arquivo salvo — não precisa reiniciar nad
 
 O painel (`/admin`) pede login em `/panel`. Os usuários e as senhas ficam em variáveis de ambiente do servidor; copie o `.env.example` para `.env.local` e preencha:
 
-| Variável | Conteúdo |
-| --- | --- |
-| `ADMIN_USERS` | lista de usuários do painel, uma entrada `usuário=hash` por pessoa, separadas por vírgula |
-| `SESSION_SECRET` | texto aleatório com 32 caracteres ou mais, por exemplo `openssl rand -base64 48` |
+| Variável                                                | Conteúdo                                                                                                             |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `ADMIN_USERS`                                           | lista de usuários do painel, uma entrada `usuário=hash` por pessoa, separadas por vírgula                            |
+| `SESSION_SECRET`                                        | texto aleatório com 32 caracteres ou mais, por exemplo `openssl rand -base64 48`                                     |
 | `MULTIKOISAS_API_USERNAME` e `MULTIKOISAS_API_PASSWORD` | conta com papel ADMIN na multikoisas-api; o painel entra com ela para gravar. Sem elas, salvar no painel mostra erro |
 
 Para gerar a entrada de uma pessoa, rode o comando abaixo com o usuário dela, digite a senha quando pedir (ela não aparece na tela) e copie a linha impressa:

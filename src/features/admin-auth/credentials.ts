@@ -37,7 +37,8 @@ const parseAdminUsers = (adminUsers: string | undefined) =>
     return [];
   });
 
-const findUser = (users: AdminUser[], username: string) => users.filter((user) => textsMatch(username, user.username))[0];
+const findUser = (users: AdminUser[], username: string) =>
+  users.filter((user) => textsMatch(username, user.username))[0];
 
 export const verifyCredentials = async (
   username: string,

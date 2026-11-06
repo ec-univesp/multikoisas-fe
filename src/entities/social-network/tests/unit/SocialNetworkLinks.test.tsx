@@ -27,8 +27,14 @@ describe('SocialNetworkLinks', () => {
         linkClassName=""
       />,
     );
-    expect(screen.getByRole('link', { name: 'Instagram' }).querySelector('svg')).toHaveAttribute('data-icon', 'instagram');
+    expect(screen.getByRole('link', { name: 'Instagram' }).querySelector('svg')).toHaveAttribute(
+      'data-icon',
+      'instagram',
+    );
     expect(screen.getByRole('link', { name: 'Shopee' }).querySelector('svg')).toHaveAttribute('data-icon', 'shopee');
-    expect(screen.getByRole('link', { name: 'Blog da loja' }).querySelector('svg')).toHaveAttribute('data-icon', 'globe');
+    expect(screen.getByRole('link', { name: 'Blog da loja' }).querySelector('svg')).toHaveAttribute(
+      'data-icon',
+      'globe',
+    );
   });
 });

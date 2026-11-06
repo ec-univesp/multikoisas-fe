@@ -2,13 +2,7 @@
 
 import Link from 'next/link';
 import Badge from '@/components/ui/badge/Badge';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import { PencilIcon, TrashBinIcon } from '@/icons';
 import { PRODUCT_IMAGE_PLACEHOLDER, ProductImage, STORE_PRESENTATION } from '@/entities/product';
 import type { Product } from '@/entities/product';
@@ -34,22 +28,13 @@ export const ProductTable = ({ products, onEdit, onDelete }: ProductTableProps) 
         <Table>
           <TableHeader className="border-b border-gray-200">
             <TableRow>
-              <TableCell
-                isHeader
-                className="px-5 py-3 text-start text-theme-xs font-medium text-gray-500"
-              >
+              <TableCell isHeader className="px-5 py-3 text-start text-theme-xs font-medium text-gray-500">
                 Produto
               </TableCell>
-              <TableCell
-                isHeader
-                className="px-5 py-3 text-start text-theme-xs font-medium text-gray-500"
-              >
+              <TableCell isHeader className="px-5 py-3 text-start text-theme-xs font-medium text-gray-500">
                 Categoria
               </TableCell>
-              <TableCell
-                isHeader
-                className="px-5 py-3 text-start text-theme-xs font-medium text-gray-500"
-              >
+              <TableCell isHeader className="px-5 py-3 text-start text-theme-xs font-medium text-gray-500">
                 Lojas
               </TableCell>
               <TableCell isHeader className="px-5 py-3">
@@ -78,15 +63,11 @@ export const ProductTable = ({ products, onEdit, onDelete }: ProductTableProps) 
                       >
                         {product.name}
                       </Link>
-                      <span className="block text-theme-xs text-gray-500">
-                        {product.shortDescription}
-                      </span>
+                      <span className="block text-theme-xs text-gray-500">{product.shortDescription}</span>
                     </div>
                   </div>
                 </TableCell>
-                <TableCell className="px-5 py-4 text-start text-theme-sm text-gray-500">
-                  {product.category}
-                </TableCell>
+                <TableCell className="px-5 py-4 text-start text-theme-sm text-gray-500">{product.category}</TableCell>
                 <TableCell className="px-5 py-4 text-start">
                   <div className="flex flex-wrap gap-1.5">
                     {product.storeLinks.map((storeLink) => (

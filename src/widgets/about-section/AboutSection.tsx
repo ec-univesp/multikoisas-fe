@@ -56,8 +56,7 @@ export const AboutSection = async ({ storePhoto = STORE_PHOTO }: { storePhoto?: 
             A MultiKoisas é uma loja de utilidades para casa, cozinha, limpeza, ferragens e organização.
           </p>
           <p className="mt-2 text-gray-600">
-            Aqui na vitrine você encontra o produto certo e conclui a compra direto na loja parceira da sua
-            preferência.
+            Aqui na vitrine você encontra o produto certo e conclui a compra direto na loja parceira da sua preferência.
           </p>
           {whatsApp && <WhatsAppLink url={whatsApp.url} className="mt-4" />}
           {otherNetworks.length > 0 && (

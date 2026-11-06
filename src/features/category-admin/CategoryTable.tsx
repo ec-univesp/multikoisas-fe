@@ -1,12 +1,6 @@
 'use client';
 
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import { PencilIcon, TrashBinIcon } from '@/icons';
 import type { Category } from '@/entities/product';
 
@@ -31,10 +25,7 @@ export const CategoryTable = ({ categories, onEdit, onDelete }: CategoryTablePro
         <Table>
           <TableHeader className="border-b border-gray-200">
             <TableRow>
-              <TableCell
-                isHeader
-                className="px-5 py-3 text-start text-theme-xs font-medium text-gray-500"
-              >
+              <TableCell isHeader className="px-5 py-3 text-start text-theme-xs font-medium text-gray-500">
                 Categoria
               </TableCell>
               <TableCell isHeader className="px-5 py-3">

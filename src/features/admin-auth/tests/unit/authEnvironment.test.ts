@@ -36,7 +36,10 @@ describe('resolveAuthEnvironment', () => {
   });
 
   it('keeps a session secret set by the developer', () => {
-    const resolved = resolveAuthEnvironment({ NODE_ENV: 'development', SESSION_SECRET: 'segredo-escolhido-pelo-dev-com-32-chars!' });
+    const resolved = resolveAuthEnvironment({
+      NODE_ENV: 'development',
+      SESSION_SECRET: 'segredo-escolhido-pelo-dev-com-32-chars!',
+    });
 
     expect(resolved.SESSION_SECRET).toBe('segredo-escolhido-pelo-dev-com-32-chars!');
   });
