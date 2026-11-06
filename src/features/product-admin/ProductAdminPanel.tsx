@@ -5,6 +5,7 @@ import Button from '@/components/ui/button/Button';
 import { useModal } from '@/hooks/useModal';
 import { PlusIcon } from '@/icons';
 import type { Category, Product } from '@/entities/product';
+import type { SalesChannel } from '@/entities/sales-channel';
 import { ProductFormModal } from './ProductFormModal';
 import { DeleteProductModal } from './DeleteProductModal';
 import { ProductTable } from './ProductTable';
@@ -14,18 +15,27 @@ import {
   deleteProduct,
   ProductDeleteRefusedError,
   loadProductForEdit,
+  PurchaseLinkError,
   type EditableProduct,
   syncProductImages,
+  syncPurchaseLinks,
   updateProduct,
 } from './productApi';
-import type { PhotoChanges, ProductFormValues } from './types';
+import type { PhotoChanges, ProductFormValues, PurchaseLink } from './types';
 
 type ProductAdminPanelProps = {
   initialProducts: readonly Product[];
   categories: readonly Category[];
+  salesChannels: readonly SalesChannel[];
 };
 
-export const ProductAdminPanel = ({ initialProducts, categories }: ProductAdminPanelProps) => {
+const toPurchaseLinks = (values: ProductFormValues): PurchaseLink[] =>
+  values.purchaseLinks.map((purchaseLink) => ({
+    salesChannelId: Number(purchaseLink.salesChannelId),
+    url: purchaseLink.url.trim(),
+  }));
+
+export const ProductAdminPanel = ({ initialProducts, categories, salesChannels }: ProductAdminPanelProps) => {
   const [products, setProducts] = useState<Product[]>([...initialProducts]);
   const [editingProduct, setEditingProduct] = useState<EditableProduct | null>(null);
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
@@ -91,9 +101,24 @@ export const ProductAdminPanel = ({ initialProducts, categories }: ProductAdminP
     }
   };
 
+  const savePurchaseLinks = async (savedProduct: Product, values: ProductFormValues): Promise<Product> => {
+    try {
+      return await syncPurchaseLinks(
+        savedProduct,
+        editingProduct?.purchaseLinks ?? [],
+        toPurchaseLinks(values),
+        salesChannels,
+      );
+    } catch (error) {
+      if (!(error instanceof PurchaseLinkError)) throw error;
+      setFeedbackMessage('Produto salvo, mas os links de compra não foram atualizados. Edite o produto para tentar de novo.');
+      return savedProduct;
+    }
+  };
+
   const saveProduct = async (values: ProductFormValues, photoChanges: PhotoChanges) => {
     setFeedbackMessage(null);
-    const savedProduct = await saveProductData(values);
+    const savedProduct = await savePurchaseLinks(await saveProductData(values), values);
     const { product, failedPhotoCount } = await syncProductImages(
       savedProduct,
       editingProduct ? editingProduct.photos : [],
@@ -150,7 +175,9 @@ export const ProductAdminPanel = ({ initialProducts, categories }: ProductAdminP
           onClose={formModal.closeModal}
           existingProduct={editingProduct?.product}
           existingPhotos={editingProduct?.photos}
+          existingPurchaseLinks={editingProduct?.purchaseLinks}
           categories={categories}
+          salesChannels={salesChannels}
           onSave={saveProduct}
         />
       )}

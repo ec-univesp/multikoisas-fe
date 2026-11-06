@@ -3,6 +3,8 @@ import {
   toImageRecord,
   toImageUrlsInIdOrder,
   toProduct,
+  toStoreLinks,
+  type CanalVendaProdutoResponse,
   type Category,
   type ImagemResponse,
   type Product,
@@ -10,7 +12,8 @@ import {
   type ProdutoResponse,
 } from '@/entities/product';
 import { getFromApi } from '@/shared/api/getFromApi';
-import type { PhotoChanges, ProductFormValues } from './types';
+import type { SalesChannel } from '@/entities/sales-channel';
+import type { PhotoChanges, ProductFormValues, PurchaseLink } from './types';
 
 type CategoriaProdutoBody = { produtoId: number; categoriaId: number };
 
@@ -43,7 +46,19 @@ const unlinkCategory = (produtoId: number, categoriaId: number) =>
 const fetchCategoryLinks = (produtoId: number): Promise<CategoriaProdutoBody[]> =>
   getFromApi<CategoriaProdutoBody>(`/categoriaproduto?produtoId=${produtoId}`, { fresh: true, fromBrowser: true });
 
-export type EditableProduct = { product: Product; photos: ProductImageRecord[] | null };
+export type EditableProduct = {
+  product: Product;
+  photos: ProductImageRecord[] | null;
+  purchaseLinks: PurchaseLink[];
+};
+
+const fetchPurchaseLinks = async (produtoId: number): Promise<PurchaseLink[]> =>
+  (
+    await getFromApi<CanalVendaProdutoResponse>(`/canalvendaproduto?produtoId=${produtoId}`, {
+      fresh: true,
+      fromBrowser: true,
+    })
+  ).map((vinculo) => ({ salesChannelId: vinculo.canalVendaId, url: vinculo.link }));
 
 export const loadProductForEdit = async (
   product: Product,
@@ -52,9 +67,10 @@ export const loadProductForEdit = async (
   const productId = product.id;
   const [produto] = await getFromApi<ProdutoResponse>(`/produto?id=${productId}`, { fresh: true, fromBrowser: true });
   if (!produto) return null;
-  const [[firstLink], photos] = await Promise.all([
+  const [[firstLink], photos, purchaseLinks] = await Promise.all([
     fetchCategoryLinks(productId),
     fetchProductImageRecords(productId, { fresh: true, fromBrowser: true }).catch(() => null),
+    fetchPurchaseLinks(productId),
   ]);
   return {
     product: toProduct(
@@ -64,6 +80,7 @@ export const loadProductForEdit = async (
       product.storeLinks,
     ),
     photos,
+    purchaseLinks,
   };
 };
 
@@ -194,4 +211,36 @@ export const syncProductImages = async (
     : [...product.images, ...toImageUrlsInIdOrder(uploadedPhotos)];
   const images = hasUnreadableUpload ? await reloadImages(product.id, knownImages) : knownImages;
   return { product: { ...product, images }, failedPhotoCount };
+};
+
+export class PurchaseLinkError extends Error {}
+
+const isSameLink = (first: PurchaseLink, second: PurchaseLink) =>
+  first.salesChannelId === second.salesChannelId && first.url === second.url;
+
+const toVinculo = (produtoId: number, link: PurchaseLink): CanalVendaProdutoResponse => ({
+  produtoId,
+  canalVendaId: link.salesChannelId,
+  link: link.url,
+});
+
+export const syncPurchaseLinks = async (
+  product: Product,
+  currentLinks: readonly PurchaseLink[],
+  desiredLinks: readonly PurchaseLink[],
+  salesChannels: readonly SalesChannel[],
+): Promise<Product> => {
+  const removedLinks = currentLinks.filter((current) => !desiredLinks.some((desired) => isSameLink(current, desired)));
+  const addedLinks = desiredLinks.filter((desired) => !currentLinks.some((current) => isSameLink(current, desired)));
+  try {
+    for (const link of removedLinks) await callApi('DELETE', '/canalvendaproduto', toVinculo(product.id, link));
+    for (const link of addedLinks) await callApi('POST', '/canalvendaproduto', toVinculo(product.id, link));
+  } catch {
+    throw new PurchaseLinkError(`Links de compra do produto ${product.id} não foram salvos`);
+  }
+  const storeLinks = toStoreLinks(
+    desiredLinks.map((link) => toVinculo(product.id, link)),
+    salesChannels.map((salesChannel) => ({ id: salesChannel.id, nome: salesChannel.name })),
+  );
+  return { ...product, storeLinks };
 };

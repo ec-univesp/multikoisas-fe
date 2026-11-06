@@ -1,6 +1,23 @@
-import type { ProductFormErrors, ProductFormValues } from './types';
+import type { ProductFormErrors, ProductFormValues, PurchaseLinkDraft } from './types';
 
 const isNonEmptyText = (value: string): boolean => value.trim().length > 0;
+
+const isHttpsUrl = (text: string): boolean => {
+  try {
+    return new URL(text.trim()).protocol === 'https:';
+  } catch {
+    return false;
+  }
+};
+
+const validatePurchaseLinks = (purchaseLinks: readonly PurchaseLinkDraft[]): string | undefined => {
+  if (purchaseLinks.some((link) => !isNonEmptyText(link.salesChannelId) || !isHttpsUrl(link.url))) {
+    return 'Escolha a loja e cole um link que comece com https://.';
+  }
+  const salesChannelIds = purchaseLinks.map((link) => link.salesChannelId);
+  if (new Set(salesChannelIds).size !== salesChannelIds.length) return 'Cada loja só pode aparecer uma vez.';
+  return undefined;
+};
 
 export const validateProductForm = (values: ProductFormValues): ProductFormErrors => {
   const errors: ProductFormErrors = {};
@@ -8,6 +25,8 @@ export const validateProductForm = (values: ProductFormValues): ProductFormError
   if (!isNonEmptyText(values.name)) errors.name = 'Informe o nome do produto.';
   if (!isNonEmptyText(values.categoryId)) errors.categoryId = 'Escolha a categoria do produto.';
   if (!isNonEmptyText(values.description)) errors.description = 'Informe a descrição do produto.';
+  const purchaseLinksError = validatePurchaseLinks(values.purchaseLinks);
+  if (purchaseLinksError) errors.purchaseLinks = purchaseLinksError;
 
   return errors;
 };
