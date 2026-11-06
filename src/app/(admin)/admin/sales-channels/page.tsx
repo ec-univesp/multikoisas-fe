@@ -7,11 +7,11 @@ export const metadata: Metadata = {
   description: 'Lojas e redes onde os produtos da vitrine da MultiKoisas são vendidos.',
 };
 
-const CanaisPage = () => (
+const SalesChannelsPage = () => (
   <div>
     <PageBreadcrumb pageTitle="Canais de venda" />
     <SalesChannelAdminScreen />
   </div>
 );
 
-export default CanaisPage;
+export default SalesChannelsPage;

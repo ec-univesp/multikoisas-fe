@@ -26,6 +26,6 @@ describe('fetchSalesChannels', () => {
 
   it('fails with the path and status when the api errors', async () => {
     server.use(http.get('*/canalvenda', () => new HttpResponse(null, { status: 500 })));
-    await expect(fetchSalesChannels()).rejects.toThrow('/canalvenda respondeu 500');
+    await expect(fetchSalesChannels()).rejects.toThrow('/canalvenda responded 500');
   });
 });

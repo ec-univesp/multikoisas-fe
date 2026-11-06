@@ -127,8 +127,8 @@ describe('verifyCredentials', () => {
 
     expect(console.warn).toHaveBeenCalledTimes(2);
     expect(vi.mocked(console.warn).mock.calls).toEqual([
-      ['ADMIN_USERS: entrada de índice 1 mal formada, ignorada.'],
-      ['ADMIN_USERS: entrada de índice 3 mal formada, ignorada.'],
+      ['ADMIN_USERS: entry at index 1 is malformed and was ignored.'],
+      ['ADMIN_USERS: entry at index 3 is malformed and was ignored.'],
     ]);
   });
 

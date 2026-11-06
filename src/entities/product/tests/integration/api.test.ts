@@ -111,7 +111,7 @@ describe('fetchProducts', () => {
 
   it('fails with the path and status when the api errors', async () => {
     server.use(http.get('*/produto', () => new HttpResponse(null, { status: 503 })));
-    await expect(fetchProducts()).rejects.toThrow('/produto respondeu 503');
+    await expect(fetchProducts()).rejects.toThrow('/produto responded 503');
   });
 });
 

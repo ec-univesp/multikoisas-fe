@@ -10,7 +10,7 @@ export {
   toProduct,
   toStoreLinks,
 } from './api';
-export type { CanalVendaProdutoResponse, ImagemResponse, ProductImageRecord, ProdutoResponse } from './api';
+export type { ApiPurchaseLink, ApiProductImage, ProductImageRecord, ApiProduct } from './api';
 export { ProductCard } from './ProductCard';
 export { ProductImage } from './ProductImage';
 export { toStoresPhrase } from './toStoresPhrase';

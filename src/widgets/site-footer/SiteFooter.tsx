@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { fetchSocialNetworks, SocialNetworkLinks, type SocialNetwork } from '@/entities/social-network';
-import { VitrineLink } from '@/features/vitrine-filter';
+import { ShowcaseLink } from '@/features/showcase-filter';
 import { BrandMark } from '@/shared/ui/BrandMark';
 
 const loadSocialNetworks = (): Promise<SocialNetwork[]> => fetchSocialNetworks().catch(() => []);
@@ -31,10 +31,10 @@ export const SiteFooter = async () => {
               </Link>
             </li>
             <li>
-              <VitrineLink className={shortcutClassName} />
+              <ShowcaseLink className={shortcutClassName} />
             </li>
             <li>
-              <Link href="/#sobre" className={shortcutClassName}>
+              <Link href="/#about" className={shortcutClassName}>
                 A loja
               </Link>
             </li>

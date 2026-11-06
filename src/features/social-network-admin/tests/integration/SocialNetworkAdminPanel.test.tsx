@@ -36,12 +36,12 @@ const fillForm = async (user: User, name: string, url: string) => {
   await user.click(screen.getByRole('button', { name: 'Salvar rede' }));
 };
 
-// Caminho feliz de quando o back corrigir o POST, que hoje responde 409 a todo cadastro.
+// Happy path for when the back end fixes the POST, which today answers 409 to every create.
 const acceptNewSocialNetworks = () =>
   server.use(
     http.post<never, { descricao: string; link: string }>('*/socialnetwork', async ({ request }) => {
       const { descricao, link } = await request.json();
-      apiDatabase.redesSociais.push({ id: apiDatabase.nextId++, descricao, link });
+      apiDatabase.socialNetworks.push({ id: apiDatabase.nextId++, descricao, link });
       return new HttpResponse(null, { status: 201 });
     }),
   );
@@ -77,7 +77,7 @@ describe('SocialNetworkAdminPanel', () => {
     expect(await screen.findByText('Facebook')).toBeInTheDocument();
     expect(screen.getByText('3 redes cadastradas')).toBeInTheDocument();
     expect(screen.queryByLabelText('Nome da rede')).not.toBeInTheDocument();
-    expect(apiDatabase.redesSociais).toContainEqual({
+    expect(apiDatabase.socialNetworks).toContainEqual({
       id: 100,
       descricao: 'Facebook',
       link: 'https://facebook.com/multikoisas',
@@ -136,7 +136,7 @@ describe('SocialNetworkAdminPanel', () => {
   it('treats a 409 as created when the name shows up in the reloaded list', async () => {
     server.use(
       http.post('*/socialnetwork', () => {
-        apiDatabase.redesSociais.push({ id: 50, descricao: 'Facebook', link: 'https://facebook.com/multikoisas' });
+        apiDatabase.socialNetworks.push({ id: 50, descricao: 'Facebook', link: 'https://facebook.com/multikoisas' });
         return HttpResponse.text('Esta rede social já está cadastrada.', { status: 409 });
       }),
     );
@@ -220,7 +220,7 @@ describe('SocialNetworkAdminPanel', () => {
   });
 
   it('fixes the link of a social network, keeping its own name allowed', async () => {
-    apiDatabase.redesSociais.push({ id: 3, descricao: 'Minha Loja', link: 'loja.com' });
+    apiDatabase.socialNetworks.push({ id: 3, descricao: 'Minha Loja', link: 'loja.com' });
     const user = userEvent.setup();
     renderPanel([...socialNetworks, { id: 3, name: 'Minha Loja', url: 'loja.com' }]);
 
@@ -231,12 +231,12 @@ describe('SocialNetworkAdminPanel', () => {
 
     expect(await screen.findByText('https://loja.com')).toBeInTheDocument();
     expect(screen.queryByText('Link sem https, não aparece na vitrine')).not.toBeInTheDocument();
-    expect(apiDatabase.redesSociais).toContainEqual({ id: 3, descricao: 'Minha Loja', link: 'https://loja.com' });
+    expect(apiDatabase.socialNetworks).toContainEqual({ id: 3, descricao: 'Minha Loja', link: 'https://loja.com' });
     expect(apiRequests).toEqual(['PUT /api/socialnetwork/Minha%20Loja']);
   });
 
   it('sends only the link when the original name was kept, even with odd spacing', async () => {
-    apiDatabase.redesSociais.push({ id: 3, descricao: 'Minha  Loja', link: 'loja.com' });
+    apiDatabase.socialNetworks.push({ id: 3, descricao: 'Minha  Loja', link: 'loja.com' });
     const user = userEvent.setup();
     renderPanel([...socialNetworks, { id: 3, name: 'Minha  Loja', url: 'loja.com' }]);
 
@@ -246,7 +246,7 @@ describe('SocialNetworkAdminPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Salvar rede' }));
 
     expect(await screen.findByText('https://loja.com')).toBeInTheDocument();
-    expect(apiDatabase.redesSociais).toContainEqual({ id: 3, descricao: 'Minha  Loja', link: 'https://loja.com' });
+    expect(apiDatabase.socialNetworks).toContainEqual({ id: 3, descricao: 'Minha  Loja', link: 'https://loja.com' });
   });
 
   it('renames a social network when the api accepts the new name', async () => {
@@ -322,7 +322,7 @@ describe('SocialNetworkAdminPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Apagar' }));
 
     expect(await screen.findByText('Nenhuma rede cadastrada.')).toBeInTheDocument();
-    expect(apiDatabase.redesSociais.map((redeSocial) => redeSocial.descricao)).toEqual(['Instagram']);
+    expect(apiDatabase.socialNetworks.map((socialNetwork) => socialNetwork.descricao)).toEqual(['Instagram']);
     expect(apiRequests).toEqual(['DELETE /api/socialnetwork/Shopee']);
   });
 

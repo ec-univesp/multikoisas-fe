@@ -10,7 +10,7 @@ const instagramNetwork = { id: 1, descricao: 'Instagram', link: 'https://www.ins
 describe('AboutSection', () => {
   it('opens the page with the store as the single page title, anchored for the header link', async () => {
     const { container } = render(await AboutSection());
-    expect(container.querySelector('section#sobre')).toBeInTheDocument();
+    expect(container.querySelector('section#about')).toBeInTheDocument();
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
     expect(
       screen.getByRole('heading', {

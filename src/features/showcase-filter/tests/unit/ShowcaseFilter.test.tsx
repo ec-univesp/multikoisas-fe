@@ -2,8 +2,8 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { Product } from '@/entities/product';
-import { VitrineFilter } from '../../VitrineFilter';
-import { VitrineSearchField, VitrineSearchProvider } from '../../VitrineSearch';
+import { ShowcaseFilter } from '../../ShowcaseFilter';
+import { ShowcaseSearchField, ShowcaseSearchProvider } from '../../ShowcaseSearch';
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
@@ -29,17 +29,17 @@ const categories = ['Banheiros', 'Utensílios de Cozinha'];
 
 const renderFilter = () =>
   render(
-    <VitrineSearchProvider>
+    <ShowcaseSearchProvider>
       <header>
-        <VitrineSearchField id="header-search" label="Buscar produto no cabeçalho" />
+        <ShowcaseSearchField id="header-search" label="Buscar produto no cabeçalho" />
       </header>
-      <VitrineFilter products={products} categories={categories} />
-    </VitrineSearchProvider>,
+      <ShowcaseFilter products={products} categories={categories} />
+    </ShowcaseSearchProvider>,
   );
 
 const productNames = () => screen.queryAllByRole('heading', { level: 3 }).map((heading) => heading.textContent);
 
-describe('VitrineFilter', () => {
+describe('ShowcaseFilter', () => {
   it('lists every product with the all categories chip pressed and the item count', () => {
     renderFilter();
     expect(screen.getByRole('button', { name: 'Todas as categorias' })).toHaveAttribute('aria-pressed', 'true');
@@ -91,9 +91,9 @@ describe('VitrineFilter', () => {
 
   it('does not offer to clear filters when the catalog is empty', () => {
     render(
-      <VitrineSearchProvider>
-        <VitrineFilter products={[]} categories={[]} />
-      </VitrineSearchProvider>,
+      <ShowcaseSearchProvider>
+        <ShowcaseFilter products={[]} categories={[]} />
+      </ShowcaseSearchProvider>,
     );
     expect(screen.getByText('Nenhum produto encontrado.')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Limpar filtros' })).not.toBeInTheDocument();
@@ -103,11 +103,11 @@ describe('VitrineFilter', () => {
     const { rerender } = renderFilter();
     await userEvent.click(screen.getByRole('button', { name: 'Utensílios de Cozinha' }));
     await userEvent.type(screen.getByRole('searchbox', { name: 'Buscar produto na vitrine' }), 'panela');
-    rerender(<VitrineSearchProvider />);
+    rerender(<ShowcaseSearchProvider />);
     rerender(
-      <VitrineSearchProvider>
-        <VitrineFilter products={products} categories={categories} />
-      </VitrineSearchProvider>,
+      <ShowcaseSearchProvider>
+        <ShowcaseFilter products={products} categories={categories} />
+      </ShowcaseSearchProvider>,
     );
     expect(screen.getByRole('button', { name: 'Utensílios de Cozinha' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('searchbox', { name: 'Buscar produto na vitrine' })).toHaveValue('panela');
