@@ -17,6 +17,7 @@ const salesChannels: SalesChannel[] = [
   { id: 2, name: 'Shopee' },
   { id: 3, name: 'Instagram' },
   { id: 4, name: 'Facebook' },
+  { id: 8, name: 'MagaLu' },
 ];
 
 const buildProduct = (overrides: Partial<Product>): Product => ({
@@ -57,8 +58,13 @@ const purchaseLinksOf = (produtoId: number) =>
 const linksOf = (produtoId: number) =>
   apiDatabase.categoriaProduto.filter((link) => link.produtoId === produtoId);
 
-const renderPanel = (products: Product[] = [buildProduct({})]) =>
-  render(<ProductAdminPanel initialProducts={products} categories={categories} salesChannels={salesChannels} />);
+const renderPanel = (products: Product[] = [buildProduct({})], availableSalesChannels = salesChannels) =>
+  render(
+    <ProductAdminPanel initialProducts={products} categories={categories} salesChannels={availableSalesChannels} />,
+  );
+
+const optionsOf = (select: HTMLElement) =>
+  Array.from(select.querySelectorAll('option:not([disabled])')).map((option) => option.textContent);
 
 const fillProductForm = async (
   user: ReturnType<typeof userEvent.setup>,
@@ -709,14 +715,14 @@ describe('ProductAdminPanel', () => {
       await user.type(shopeeLink, 'https://shopee.com.br/garrafa-nova');
       await user.click(screen.getByRole('button', { name: 'Remover loja 2' }));
       await user.click(screen.getByRole('button', { name: 'Adicionar loja' }));
-      await user.selectOptions(screen.getByLabelText('Loja 2'), '4');
-      await user.type(screen.getByLabelText('Link da loja 2'), 'https://facebook.com/garrafa');
+      await user.selectOptions(screen.getByLabelText('Loja 2'), '8');
+      await user.type(screen.getByLabelText('Link da loja 2'), 'https://magazineluiza.com.br/garrafa');
       await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
 
       await vi.waitFor(() => expect(screen.queryByLabelText('Loja 1')).not.toBeInTheDocument());
       expect(purchaseLinksOf(1)).toEqual([
         { produtoId: 1, canalVendaId: 2, link: 'https://shopee.com.br/garrafa-nova' },
-        { produtoId: 1, canalVendaId: 4, link: 'https://facebook.com/garrafa' },
+        { produtoId: 1, canalVendaId: 8, link: 'https://magazineluiza.com.br/garrafa' },
       ]);
       expect(apiRequests).toEqual([
         'GET /api/produto?id=1',
@@ -795,6 +801,106 @@ describe('ProductAdminPanel', () => {
       expect(
         screen.getByText('Produto salvo, mas os links de compra não foram atualizados. Edite o produto para tentar de novo.'),
       ).toHaveAttribute('role', 'alert');
+    });
+
+    it('offers only the stores that become a buy button, keeping a channel already saved on the product', async () => {
+      const user = userEvent.setup();
+      renderPanel();
+
+      await user.click(screen.getByRole('button', { name: 'Editar Garrafa Térmica 1L' }));
+      expect(await screen.findByLabelText('Loja 2')).toHaveValue('3');
+      expect(optionsOf(screen.getByLabelText('Loja 2'))).toEqual(['Shopee', 'Instagram', 'MagaLu']);
+      await user.click(screen.getByRole('button', { name: 'Adicionar loja' }));
+      expect(optionsOf(screen.getByLabelText('Loja 3'))).toEqual(['Shopee', 'MagaLu']);
+    });
+
+    it('shows the links the api really kept when changing a link fails halfway', async () => {
+      respondWith('post', '*/canalvendaproduto', 500);
+      const user = userEvent.setup();
+      renderPanel([buildProduct({ storeLinks: [{ store: 'shopee', url: 'https://shopee.com.br/garrafa-termica' }] })]);
+
+      await user.click(screen.getByRole('button', { name: 'Editar Garrafa Térmica 1L' }));
+      const shopeeLink = await screen.findByLabelText('Link da loja 1');
+      await user.clear(shopeeLink);
+      await user.type(shopeeLink, 'https://shopee.com.br/garrafa-nova');
+      await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+      expect(
+        await screen.findByText(
+          'Produto salvo, mas os links de compra não foram atualizados. Edite o produto para tentar de novo.',
+        ),
+      ).toBeInTheDocument();
+      expect(screen.queryByText('Shopee')).not.toBeInTheDocument();
+      expect(purchaseLinksOf(1)).toEqual([{ produtoId: 1, canalVendaId: 3, link: 'https://www.instagram.com/p/garrafa' }]);
+    });
+
+    it('keeps the store links untouched when nothing changed, even without the store list', async () => {
+      const user = userEvent.setup();
+      renderPanel([buildProduct({ storeLinks: [{ store: 'shopee', url: 'https://shopee.com.br/garrafa-termica' }] })], []);
+
+      await user.click(screen.getByRole('button', { name: 'Editar Garrafa Térmica 1L' }));
+      expect(
+        await screen.findByText('Não foi possível carregar as lojas. Recarregue a página para mexer nos links.'),
+      ).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Adicionar loja' })).not.toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+      await vi.waitFor(() => expect(screen.queryByLabelText('Loja 1')).not.toBeInTheDocument());
+      expect(screen.getByText('Shopee')).toBeInTheDocument();
+      expect(apiRequests.filter((request) => request.includes('canalvendaproduto') && !request.startsWith('GET'))).toEqual([]);
+    });
+
+    it('tells every failure when both the category and the links fail on create', async () => {
+      respondWith('post', '*/categoriaproduto', 500);
+      respondWith('post', '*/canalvendaproduto', 500);
+      const user = userEvent.setup();
+      renderPanel([]);
+
+      await user.click(screen.getByRole('button', { name: 'Novo produto' }));
+      await fillProductForm(user, { name: 'Vassoura', categoryId: '2', description: 'Macia.' });
+      await user.click(screen.getByRole('button', { name: 'Adicionar loja' }));
+      await user.selectOptions(screen.getByLabelText('Loja 1'), '2');
+      await user.type(screen.getByLabelText('Link da loja 1'), 'https://shopee.com.br/vassoura');
+      await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+      expect(await screen.findByText(/Produto salvo, mas sem categoria\./)).toHaveTextContent(
+        'Produto salvo, mas sem categoria. Edite o produto para escolher de novo. Produto salvo, mas os links de compra não foram atualizados. Edite o produto para tentar de novo.',
+      );
+    });
+
+    it('points the invalid row out to assistive technology', async () => {
+      const user = userEvent.setup();
+      renderPanel([]);
+
+      await user.click(screen.getByRole('button', { name: 'Novo produto' }));
+      await fillProductForm(user, { name: 'Vassoura', categoryId: '2', description: 'Macia.' });
+      await user.click(screen.getByRole('button', { name: 'Adicionar loja' }));
+      await user.selectOptions(screen.getByLabelText('Loja 1'), '2');
+      await user.type(screen.getByLabelText('Link da loja 1'), 'https://shopee.com.br/ok');
+      await user.click(screen.getByRole('button', { name: 'Adicionar loja' }));
+      await user.type(screen.getByLabelText('Link da loja 2'), 'sem-https');
+      await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+      const message = screen.getByText('Escolha a loja e cole um link que comece com https://.');
+      expect(screen.getByLabelText('Link da loja 2')).toHaveAttribute('aria-invalid', 'true');
+      expect(screen.getByLabelText('Link da loja 2')).toHaveAttribute('aria-describedby', message.id);
+      expect(screen.getByLabelText('Link da loja 1')).not.toHaveAttribute('aria-invalid');
+    });
+
+    it('locks the store choice while the product is being saved', async () => {
+      hang('post', '*/produto');
+      const user = userEvent.setup();
+      renderPanel([]);
+
+      await user.click(screen.getByRole('button', { name: 'Novo produto' }));
+      await fillProductForm(user, { name: 'Vassoura', categoryId: '2', description: 'Macia.' });
+      await user.click(screen.getByRole('button', { name: 'Adicionar loja' }));
+      await user.selectOptions(screen.getByLabelText('Loja 1'), '2');
+      await user.type(screen.getByLabelText('Link da loja 1'), 'https://shopee.com.br/vassoura');
+      await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+      expect(await screen.findByRole('button', { name: 'Salvando...' })).toBeDisabled();
+      expect(screen.getByLabelText('Loja 1')).toBeDisabled();
     });
   });
 });

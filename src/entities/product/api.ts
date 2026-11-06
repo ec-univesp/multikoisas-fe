@@ -34,6 +34,9 @@ const toImageUrls = (imagens: readonly ImagemResponse[]): string[] => toImageUrl
 
 const isStoreSlug = (slug: string): slug is StoreSlug => Object.hasOwn(STORE_PRESENTATION, slug);
 
+export const isStoreChannelName = (name: string): boolean => isStoreSlug(toBaseSlug(name));
+
+// ponytail: canal sem apresentação em STORE_PRESENTATION (Instagram, TikTok) não vira botão de compra.
 export const toStoreLinks = (
   vinculos: readonly CanalVendaProdutoResponse[],
   canaisVenda: readonly CanalVendaResponse[],
