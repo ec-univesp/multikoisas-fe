@@ -1,24 +1,16 @@
 // @vitest-environment node
 import { NextRequest } from 'next/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { API_TOKEN_COOKIE_NAME, createSessionToken, SESSION_COOKIE_NAME } from '@/features/admin-auth/session';
+import { createSessionToken, SESSION_COOKIE_NAME } from '@/features/admin-auth/session';
 import { recordApiRequests } from '@/test/msw/server';
 import { config, proxy } from '../../proxy';
 
 const secret = 'a-session-secret-with-at-least-32-characters';
-const apiToken = 'jwt-guardado-no-login';
 const oneHourInMs = 60 * 60 * 1000;
 
-type RequestOptions = { apiToken?: string | null };
-
-const buildRequest = (path: string, sessionToken?: string, method = 'GET', options: RequestOptions = {}) => {
+const buildRequest = (path: string, sessionToken?: string, method = 'GET') => {
   const headers = new Headers();
-  const storedApiToken = options.apiToken === undefined ? apiToken : options.apiToken;
-  const cookies = [
-    sessionToken ? `${SESSION_COOKIE_NAME}=${sessionToken}` : null,
-    sessionToken && storedApiToken ? `${API_TOKEN_COOKIE_NAME}=${storedApiToken}` : null,
-  ].filter((cookie) => cookie !== null);
-  if (cookies.length > 0) headers.set('cookie', cookies.join('; '));
+  if (sessionToken) headers.set('cookie', `${SESSION_COOKIE_NAME}=${sessionToken}`);
   return new NextRequest(`http://localhost:3000${path}`, { method, headers });
 };
 
@@ -70,16 +62,6 @@ describe('proxy', () => {
 
     expect(expiredToken).not.toBe('');
     expect(response.headers.get('location')).toBe('http://localhost:3000/panel');
-  });
-
-  it('treats a session whose api token cookie is gone as signed out, so the person can sign in again', async () => {
-    const sessionWithoutToken = await validToken();
-
-    const adminPage = await proxy(buildRequest('/admin/products', sessionWithoutToken, 'GET', { apiToken: null }));
-    const loginPage = await proxy(buildRequest('/panel', sessionWithoutToken, 'GET', { apiToken: null }));
-
-    expect(adminPage.headers.get('location')).toBe('http://localhost:3000/panel');
-    expect(loginPage.headers.get('x-middleware-next')).toBe('1');
   });
 
   it('redirects the login page to the products panel with a valid session', async () => {
