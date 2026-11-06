@@ -58,7 +58,7 @@ describe('SalesChannelAdminPanel', () => {
     expect(screen.getByText('Nenhum canal cadastrado.')).toBeInTheDocument();
   });
 
-  it('creates the sales channel with the next id and the trimmed name and lists it', async () => {
+  it('creates the sales channel with the trimmed name, lets the api pick the id and lists it', async () => {
     const user = userEvent.setup();
     renderPanel();
 
@@ -66,19 +66,8 @@ describe('SalesChannelAdminPanel', () => {
 
     expect(await screen.findByText('Mercado Livre')).toBeInTheDocument();
     expect(screen.getByText('5 canais cadastrados')).toBeInTheDocument();
-    expect(apiDatabase.canaisVenda).toContainEqual({ id: 6, nome: 'Mercado Livre' });
+    expect(apiDatabase.canaisVenda).toContainEqual({ id: 100, nome: 'Mercado Livre' });
     expect(apiRequests).toEqual(['POST /api/canalvenda']);
-  });
-
-  it('starts the ids at 1 when there is no sales channel yet', async () => {
-    apiDatabase.canaisVenda = [];
-    const user = userEvent.setup();
-    renderPanel([]);
-
-    await submitNewSalesChannel(user, 'Shopee');
-
-    expect(await screen.findByText('1 canal cadastrado')).toBeInTheDocument();
-    expect(apiDatabase.canaisVenda).toEqual([{ id: 1, nome: 'Shopee' }]);
   });
 
   it('requires a name before calling the api', async () => {
@@ -111,47 +100,15 @@ describe('SalesChannelAdminPanel', () => {
     expect(apiRequests).toEqual([]);
   });
 
-  it('reloads the list and keeps the form open when someone else took the next id', async () => {
-    apiDatabase.canaisVenda.push({ id: 6, nome: 'Kwai' });
-    const user = userEvent.setup();
-    renderPanel();
-
-    await submitNewSalesChannel(user, 'Mercado Livre');
-
-    expect(await screen.findByText('Não foi possível salvar o canal. Tente de novo.')).toBeInTheDocument();
-    expect(await screen.findByText('Kwai')).toBeInTheDocument();
-    expect(screen.getByLabelText('Nome do canal')).toHaveValue('Mercado Livre');
-
-    await user.click(screen.getByRole('button', { name: 'Salvar canal' }));
-
-    expect(await screen.findByText('Mercado Livre')).toBeInTheDocument();
-    expect(apiDatabase.canaisVenda).toContainEqual({ id: 7, nome: 'Mercado Livre' });
-    expect(apiRequests).toEqual(['POST /api/canalvenda', 'GET /api/canalvenda', 'POST /api/canalvenda']);
-  });
-
-  it('skips the taken id on the next try even when the list cannot be reloaded', async () => {
-    apiDatabase.canaisVenda.push({ id: 6, nome: 'Kwai' });
-    server.use(http.get('*/canalvenda', () => new HttpResponse(null, { status: 500 }), { once: true }));
-    const user = userEvent.setup();
-    renderPanel();
-
-    await submitNewSalesChannel(user, 'Mercado Livre');
-    expect(await screen.findByText('Não foi possível salvar o canal. Tente de novo.')).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Salvar canal' }));
-
-    expect(await screen.findByText('Mercado Livre')).toBeInTheDocument();
-    expect(apiDatabase.canaisVenda).toContainEqual({ id: 7, nome: 'Mercado Livre' });
-  });
-
   it('closes the form when the channel turns out to be already created', async () => {
     apiDatabase.canaisVenda.push({ id: 6, nome: 'Mercado Livre' });
     const user = userEvent.setup();
     renderPanel();
 
-    await submitNewSalesChannel(user, 'mercado livre');
+    await submitNewSalesChannel(user, 'Mercado Livre');
 
     expect(
-      await screen.findByText('O canal "mercado livre" já tinha sido criado. A lista foi atualizada.'),
+      await screen.findByText('O canal "Mercado Livre" já tinha sido criado. A lista foi atualizada.'),
     ).toHaveAttribute('role', 'alert');
     expect(screen.getByText('Mercado Livre')).toBeInTheDocument();
     expect(screen.queryByLabelText('Nome do canal')).not.toBeInTheDocument();
@@ -195,14 +152,14 @@ describe('SalesChannelAdminPanel', () => {
 
   it('deletes the sales channel in the api after confirmation', async () => {
     const user = userEvent.setup();
-    renderPanel([{ id: 2, name: 'Shopee' }]);
+    renderPanel([{ id: 4, name: 'Facebook' }]);
 
-    await user.click(screen.getByRole('button', { name: 'Apagar Shopee' }));
+    await user.click(screen.getByRole('button', { name: 'Apagar Facebook' }));
     await user.click(screen.getByRole('button', { name: 'Apagar' }));
 
     expect(await screen.findByText('Nenhum canal cadastrado.')).toBeInTheDocument();
-    expect(apiDatabase.canaisVenda.map((canalVenda) => canalVenda.id)).toEqual([3, 4, 5]);
-    expect(apiRequests).toEqual(['DELETE /api/canalvenda/2']);
+    expect(apiDatabase.canaisVenda.map((canalVenda) => canalVenda.id)).toEqual([2, 3, 5]);
+    expect(apiRequests).toEqual(['DELETE /api/canalvenda/4']);
   });
 
   it('drops a sales channel that was already deleted elsewhere', async () => {
@@ -217,8 +174,7 @@ describe('SalesChannelAdminPanel', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
-  it('explains that a channel with linked products cannot be deleted (api answers 500)', async () => {
-    respondWith('delete', '*/canalvenda/:id', 500);
+  it('explains that a channel with linked products cannot be deleted (api answers 409)', async () => {
     const user = userEvent.setup();
     renderPanel();
 

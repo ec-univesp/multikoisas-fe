@@ -9,11 +9,13 @@ import {
   type ProductImageRecord,
   type ProdutoResponse,
 } from '@/entities/product';
+import { getFromApi } from '@/shared/api/getFromApi';
 import type { PhotoChanges, ProductFormValues } from './types';
 
 type CategoriaProdutoBody = { produtoId: number; categoriaId: number };
 
 const HTTP_NOT_FOUND = 404;
+const HTTP_CONFLICT = 409;
 
 const toRequestBody = (body: unknown): RequestInit => {
   if (body === undefined) return {};
@@ -38,13 +40,8 @@ const linkCategory = (produtoId: number, categoriaId: number) =>
 const unlinkCategory = (produtoId: number, categoriaId: number) =>
   callApi('DELETE', '/categoriaproduto', { produtoId, categoriaId } satisfies CategoriaProdutoBody);
 
-const fetchCategoryLinks = async (produtoId: number): Promise<CategoriaProdutoBody[]> => {
-  const response = await fetch(`/api/categoriaproduto?produtoId=${produtoId}`);
-  // A API responde 404, e não [], para produto sem categoria (UNIV-28 no santi).
-  if (response.status === HTTP_NOT_FOUND) return [];
-  if (!response.ok) throw new Error(`GET /categoriaproduto respondeu ${response.status}`);
-  return response.json();
-};
+const fetchCategoryLinks = (produtoId: number): Promise<CategoriaProdutoBody[]> =>
+  getFromApi<CategoriaProdutoBody>(`/categoriaproduto?produtoId=${produtoId}`, { fresh: true, fromBrowser: true });
 
 export type EditableProduct = { product: Product; photos: ProductImageRecord[] | null };
 
@@ -53,10 +50,8 @@ export const loadProductForEdit = async (
   categories: readonly Category[],
 ): Promise<EditableProduct | null> => {
   const productId = product.id;
-  const response = await fetch(`/api/produto/${productId}`, { cache: 'no-store' });
-  if (response.status === HTTP_NOT_FOUND) return null;
-  if (!response.ok) throw new Error(`GET /produto/${productId} respondeu ${response.status}`);
-  const produto: ProdutoResponse = await response.json();
+  const [produto] = await getFromApi<ProdutoResponse>(`/produto?id=${productId}`, { fresh: true, fromBrowser: true });
+  if (!produto) return null;
   const [[firstLink], photos] = await Promise.all([
     fetchCategoryLinks(productId),
     fetchProductImageRecords(productId, { fresh: true, fromBrowser: true }).catch(() => null),
@@ -125,17 +120,19 @@ export const updateProduct = async (
   return toProduct(produto, category, product.images, product.storeLinks);
 };
 
+// A API apaga categorias, links e fotos junto, mas responde 409 se faltar categoria ou link de compra.
+export class ProductDeleteRefusedError extends Error {}
+
 export const deleteProduct = async (product: Product): Promise<void> => {
-  const links = await fetchCategoryLinks(product.id);
-  for (const link of links) await unlinkCategory(link.produtoId, link.categoriaId);
-  await callApi('DELETE', `/produto/${product.id}`);
+  const response = await fetch(`/api/produto/${product.id}`, { method: 'DELETE' });
+  if (response.status === HTTP_CONFLICT) throw new ProductDeleteRefusedError(`DELETE /produto/${product.id} respondeu 409`);
+  if (!response.ok) throw new Error(`DELETE /produto/${product.id} respondeu ${response.status}`);
 };
 
 const uploadProductImage = async (produtoId: number, file: File): Promise<ProductImageRecord | null> => {
   const form = new FormData();
-  form.append('produtoId', String(produtoId));
   form.append('file', file);
-  const response = await callApi('POST', '/imagem', form);
+  const response = await callApi('POST', `/imagem?produtoId=${produtoId}`, form);
   try {
     const imagem: ImagemResponse = await response.json();
     return toImageRecord(imagem);
@@ -146,7 +143,8 @@ const uploadProductImage = async (produtoId: number, file: File): Promise<Produc
 
 const deleteProductImage = async (produtoId: number, imageId: number) => {
   const response = await fetch('/api/imagem', { method: 'DELETE', ...toRequestBody({ id: imageId, produtoId }) });
-  if (!response.ok && response.status !== HTTP_NOT_FOUND) {
+  // Foto que já não existe volta 409 na API atual (404 na anterior).
+  if (!response.ok && response.status !== HTTP_NOT_FOUND && response.status !== HTTP_CONFLICT) {
     throw new Error(`DELETE /imagem respondeu ${response.status}`);
   }
 };

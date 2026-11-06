@@ -9,7 +9,7 @@ import { SalesChannelFormModal, normalizeSalesChannelName } from './SalesChannel
 import { DeleteSalesChannelModal } from './DeleteSalesChannelModal';
 import { SalesChannelTable } from './SalesChannelTable';
 import {
-  SalesChannelIdTakenError,
+  SalesChannelNameTakenError,
   SalesChannelInUseError,
   createSalesChannel,
   deleteSalesChannel,
@@ -19,15 +19,11 @@ type SalesChannelAdminPanelProps = {
   initialSalesChannels: readonly SalesChannel[];
 };
 
-const nextSalesChannelId = (salesChannels: readonly SalesChannel[]): number =>
-  Math.max(0, ...salesChannels.map((salesChannel) => salesChannel.id)) + 1;
-
 export const SalesChannelAdminPanel = ({ initialSalesChannels }: SalesChannelAdminPanelProps) => {
   const [salesChannels, setSalesChannels] = useState<SalesChannel[]>([...initialSalesChannels]);
   const [deletingSalesChannel, setDeletingSalesChannel] = useState<SalesChannel | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
-  const [lowestFreeId, setLowestFreeId] = useState(1);
 
   const formModal = useModal();
   const deleteModal = useModal();
@@ -50,13 +46,11 @@ export const SalesChannelAdminPanel = ({ initialSalesChannels }: SalesChannelAdm
 
   const saveSalesChannel = async (name: string) => {
     setFeedbackMessage(null);
-    const attemptedId = Math.max(lowestFreeId, nextSalesChannelId(salesChannels));
     try {
-      const createdSalesChannel = await createSalesChannel({ id: attemptedId, name });
+      const createdSalesChannel = await createSalesChannel(name);
       setSalesChannels((currentSalesChannels) => [...currentSalesChannels, createdSalesChannel]);
     } catch (error) {
-      if (!(error instanceof SalesChannelIdTakenError)) throw error;
-      setLowestFreeId(attemptedId + 1);
+      if (!(error instanceof SalesChannelNameTakenError)) throw error;
       const latestSalesChannels = await reloadSalesChannels();
       const isAlreadyCreated = latestSalesChannels?.some(
         (salesChannel) => normalizeSalesChannelName(salesChannel.name) === normalizeSalesChannelName(name),
