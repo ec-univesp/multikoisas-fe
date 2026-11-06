@@ -2,14 +2,14 @@
 
 import Link from 'next/link';
 import { SocialNetworkLinks, useSocialNetworks } from '@/entities/social-network';
-import { STORE_SETTINGS, type StoreSettings } from '@/entities/store-settings';
+import { STORE_SETTINGS, type StoreSettingsValues } from '@/entities/store-settings';
 import { ShowcaseLink } from '@/features/showcase-filter';
 import { BrandMark } from '@/shared/ui/BrandMark';
 
 const headingClassName = 'text-sm font-bold tracking-wider text-store-yellow uppercase';
 const shortcutClassName = 'flex min-h-11 items-center text-blue-100 hover:text-store-yellow';
 
-export const SiteFooter = ({ settings = STORE_SETTINGS }: { settings?: StoreSettings }) => {
+export const SiteFooter = ({ settings = STORE_SETTINGS }: { settings?: StoreSettingsValues }) => {
   const socialNetworksState = useSocialNetworks();
   const socialNetworks = socialNetworksState.status === 'ready' ? socialNetworksState.data : [];
   const address = settings.address?.trim();

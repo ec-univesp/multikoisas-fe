@@ -1,11 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import type { StoreSettings } from '@/entities/store-settings';
+import type { StoreSettingsValues } from '@/entities/store-settings';
 import { GoogleReviewsBadge } from '../../GoogleReviewsBadge';
 
 const REVIEWS_URL = 'https://g.page/r/multikoisas/review';
 
-const settingsWith = (overrides: Partial<StoreSettings>): StoreSettings => ({
+const settingsWith = (overrides: Partial<StoreSettingsValues>): StoreSettingsValues => ({
   address: null,
   googleReviewsUrl: REVIEWS_URL,
   googleRating: null,

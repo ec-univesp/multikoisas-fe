@@ -1,4 +1,4 @@
-type BrandMarkProps = { compact?: boolean; tone?: 'onLight' | 'onDark' };
+export type BrandMarkProps = { compact?: boolean; tone?: 'onLight' | 'onDark' };
 
 const WORDMARK_CLASS_NAMES = {
   onLight: { multi: 'text-store-navy', koisas: 'ml-0.5 rounded-md bg-store-navy px-1.5 text-store-yellow' },
