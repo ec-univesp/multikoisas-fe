@@ -142,4 +142,20 @@ describe('fetchProductImageRecords', () => {
       { id: 22, url: null },
     ]);
   });
+
+  it('answers no photos when the api says the product has none', async () => {
+    expect(await fetchProductImageRecords(5, { fresh: true, fromBrowser: true })).toEqual([]);
+  });
+});
+
+describe('empty lists from the api', () => {
+  it('keeps every product when the api answers the purchase links with 204 and the categories with 404', async () => {
+    server.use(
+      http.get('*/canalvendaproduto', () => new HttpResponse(null, { status: 204 })),
+      http.get('*/categoriaproduto', () => new HttpResponse(null, { status: 404 })),
+    );
+    const products = await fetchProducts();
+    expect(products).toHaveLength(3);
+    expect(products.every((product) => product.storeLinks.length === 0 && product.categoryId === null)).toBe(true);
+  });
 });

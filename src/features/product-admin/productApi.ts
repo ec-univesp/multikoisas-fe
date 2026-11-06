@@ -9,6 +9,7 @@ import {
   type ProductImageRecord,
   type ProdutoResponse,
 } from '@/entities/product';
+import { getFromApi } from '@/shared/api/getFromApi';
 import type { PhotoChanges, ProductFormValues } from './types';
 
 type CategoriaProdutoBody = { produtoId: number; categoriaId: number };
@@ -38,13 +39,8 @@ const linkCategory = (produtoId: number, categoriaId: number) =>
 const unlinkCategory = (produtoId: number, categoriaId: number) =>
   callApi('DELETE', '/categoriaproduto', { produtoId, categoriaId } satisfies CategoriaProdutoBody);
 
-const fetchCategoryLinks = async (produtoId: number): Promise<CategoriaProdutoBody[]> => {
-  const response = await fetch(`/api/categoriaproduto?produtoId=${produtoId}`);
-  // A API responde 404, e não [], para produto sem categoria (UNIV-28 no santi).
-  if (response.status === HTTP_NOT_FOUND) return [];
-  if (!response.ok) throw new Error(`GET /categoriaproduto respondeu ${response.status}`);
-  return response.json();
-};
+const fetchCategoryLinks = (produtoId: number): Promise<CategoriaProdutoBody[]> =>
+  getFromApi<CategoriaProdutoBody>(`/categoriaproduto?produtoId=${produtoId}`, { fresh: true, fromBrowser: true });
 
 export type EditableProduct = { product: Product; photos: ProductImageRecord[] | null };
 
@@ -53,10 +49,8 @@ export const loadProductForEdit = async (
   categories: readonly Category[],
 ): Promise<EditableProduct | null> => {
   const productId = product.id;
-  const response = await fetch(`/api/produto/${productId}`, { cache: 'no-store' });
-  if (response.status === HTTP_NOT_FOUND) return null;
-  if (!response.ok) throw new Error(`GET /produto/${productId} respondeu ${response.status}`);
-  const produto: ProdutoResponse = await response.json();
+  const [produto] = await getFromApi<ProdutoResponse>(`/produto?id=${productId}`, { fresh: true, fromBrowser: true });
+  if (!produto) return null;
   const [[firstLink], photos] = await Promise.all([
     fetchCategoryLinks(productId),
     fetchProductImageRecords(productId, { fresh: true, fromBrowser: true }).catch(() => null),
@@ -133,9 +127,8 @@ export const deleteProduct = async (product: Product): Promise<void> => {
 
 const uploadProductImage = async (produtoId: number, file: File): Promise<ProductImageRecord | null> => {
   const form = new FormData();
-  form.append('produtoId', String(produtoId));
   form.append('file', file);
-  const response = await callApi('POST', '/imagem', form);
+  const response = await callApi('POST', `/imagem?produtoId=${produtoId}`, form);
   try {
     const imagem: ImagemResponse = await response.json();
     return toImageRecord(imagem);

@@ -98,9 +98,9 @@ describe('ProductAdminPanel', () => {
 
     expect(await screen.findByLabelText('Nome do produto')).toHaveValue('Garrafa Térmica Nova');
     expect(apiRequests).toEqual([
-      'GET /api/produto/1',
+      'GET /api/produto?id=1',
       'GET /api/categoriaproduto?produtoId=1',
-      'GET /api/imagem/1',
+      'GET /api/imagem?produtoId=1',
     ]);
   });
 
@@ -139,7 +139,7 @@ describe('ProductAdminPanel', () => {
   });
 
   it('opens the edit with the photos it already had when the api photos fail', async () => {
-    server.use(http.get('*/imagem/:produtoId', () => new HttpResponse(null, { status: 500 })));
+    server.use(http.get('*/imagem', () => new HttpResponse(null, { status: 500 })));
     const user = userEvent.setup();
     renderPanel([buildProduct({ images: ['https://avphmmvnlrbidhjrzozx.supabase.co/storage/v1/object/public/imagem/antiga.webp'] })]);
 
@@ -193,9 +193,9 @@ describe('ProductAdminPanel', () => {
       descricaoProduto: 'Mantém a temperatura por 12 horas.\nAmpola de vidro.',
     });
     expect(apiRequests).toEqual([
-      'GET /api/produto/1',
+      'GET /api/produto?id=1',
       'GET /api/categoriaproduto?produtoId=1',
-      'GET /api/imagem/1',
+      'GET /api/imagem?produtoId=1',
       'PUT /api/produto/1',
     ]);
   });
@@ -392,8 +392,8 @@ describe('ProductAdminPanel', () => {
       expect(apiRequests).toEqual([
         'POST /api/produto',
         'POST /api/categoriaproduto',
-        'POST /api/imagem',
-        'POST /api/imagem',
+        'POST /api/imagem?produtoId=100',
+        'POST /api/imagem?produtoId=100',
       ]);
       expect(photoIdsOf(100)).toEqual([101, 102]);
       expect(screen.queryByLabelText('Fotos')).not.toBeInTheDocument();
@@ -415,7 +415,7 @@ describe('ProductAdminPanel', () => {
       await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
 
       expect(await screen.findByAltText('Vassoura')).toBeInTheDocument();
-      expect(apiRequests.filter((request) => request === 'POST /api/imagem')).toHaveLength(1);
+      expect(apiRequests.filter((request) => request === 'POST /api/imagem?produtoId=100')).toHaveLength(1);
       expect(photoIdsOf(100)).toEqual([101]);
     });
 
@@ -496,7 +496,7 @@ describe('ProductAdminPanel', () => {
         'src',
         expect.stringContaining('garrafa-tampa.jpeg'),
       );
-      expect(apiRequests.slice(3)).toEqual(['PUT /api/produto/1', 'DELETE /api/imagem', 'POST /api/imagem']);
+      expect(apiRequests.slice(3)).toEqual(['PUT /api/produto/1', 'DELETE /api/imagem', 'POST /api/imagem?produtoId=1']);
       expect(photoIdsOf(1)).toEqual([12, 11, 100]);
     });
 
@@ -545,7 +545,7 @@ describe('ProductAdminPanel', () => {
     });
 
     it('warns that the current photos could not be loaded and still accepts new ones', async () => {
-      server.use(http.get('*/imagem/:produtoId', () => new HttpResponse(null, { status: 500 })));
+      server.use(http.get('*/imagem', () => new HttpResponse(null, { status: 500 })));
       const user = userEvent.setup();
       renderPanel();
 
