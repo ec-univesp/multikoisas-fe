@@ -1,22 +1,13 @@
 import { render, screen, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it, vi } from 'vitest';
-import type { StoreSettings } from '@/entities/store-settings';
 import { ShowcaseSearchProvider } from '@/features/showcase-filter';
 import { server } from '@/test/msw/server';
 import { SiteHeader } from '../../SiteHeader';
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
-const renderHeader = async (props?: { settings: StoreSettings }) =>
-  render(<ShowcaseSearchProvider>{await SiteHeader(props)}</ShowcaseSearchProvider>);
-
-const settingsWithReviews: StoreSettings = {
-  address: null,
-  googleReviewsUrl: 'https://g.page/r/multikoisas/review',
-  googleRating: 4.8,
-  googleReviewCount: 123,
-};
+const renderHeader = async () => render(<ShowcaseSearchProvider>{await SiteHeader()}</ShowcaseSearchProvider>);
 
 describe('SiteHeader', () => {
   it('shows the notice bar, the brand, the search and the section links', async () => {
@@ -128,17 +119,8 @@ describe('SiteHeader', () => {
     expect(screen.queryByRole('link', { name: 'Falar no WhatsApp' })).not.toBeInTheDocument();
   });
 
-  it('hides the google reviews badge while the store has no reviews link', async () => {
-    await renderHeader({
-      settings: { address: null, googleReviewsUrl: null, googleRating: null, googleReviewCount: null },
-    });
+  it('leaves the google reviews badge out of the header, since it floats on the page', async () => {
+    await renderHeader();
     expect(screen.queryByRole('link', { name: /no Google/ })).not.toBeInTheDocument();
-  });
-
-  it('shows the google reviews badge in the top bar when the store has a reviews link', async () => {
-    await renderHeader({ settings: settingsWithReviews });
-    expect(
-      screen.getByRole('link', { name: 'Nota 4,8 de 5 no Google, 123 avaliações. Abre em outra aba.' }),
-    ).toHaveAttribute('href', 'https://g.page/r/multikoisas/review');
   });
 });

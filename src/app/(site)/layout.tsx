@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { ShowcaseSearchProvider } from '@/features/showcase-filter';
+import { GoogleReviewsBadge } from '@/widgets/google-reviews-badge';
 import { SiteFooter } from '@/widgets/site-footer';
 import { SiteHeader } from '@/widgets/site-header';
 import { WhatsAppFloatingButton } from '@/widgets/whatsapp-floating-button';
@@ -21,6 +22,7 @@ export default function SiteLayout({ children }: Readonly<{ children: React.Reac
         <main className="flex-1">{children}</main>
       </ShowcaseSearchProvider>
       <SiteFooter />
+      <GoogleReviewsBadge />
       <WhatsAppFloatingButton />
     </div>
   );
