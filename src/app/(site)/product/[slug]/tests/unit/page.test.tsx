@@ -1,8 +1,16 @@
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { http, HttpResponse } from 'msw';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { server } from '@/test/msw/server';
 import ProductPage, { metadata } from '../../page';
 
 const renderProductPage = async (slug: string) => render(await ProductPage({ params: Promise.resolve({ slug }) }));
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+  document.title = '';
+});
 
 describe('ProductPage', () => {
   it('names the page without depending on the product data', () => {
@@ -51,5 +59,23 @@ describe('ProductPage', () => {
     await renderProductPage('balde-12l-6');
     expect(await screen.findByRole('heading', { name: 'Página não encontrada' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Voltar para a vitrine' })).toHaveAttribute('href', '/showcase');
+  });
+
+  it('names the browser tab after the product it found', async () => {
+    await renderProductPage('garrafa-termica-1l-1');
+    await waitFor(() => expect(document.title).toBe('Garrafa Térmica 1L | MultiKoisas'));
+  });
+
+  it('offers to try again when the catalog cannot be loaded, instead of saying the product does not exist', async () => {
+    const reload = vi.fn();
+    vi.stubGlobal('location', { ...window.location, reload });
+    server.use(http.get('*/produto', () => new HttpResponse(null, { status: 500 })));
+
+    await renderProductPage('garrafa-termica-1l-1');
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível carregar o produto.');
+    expect(screen.queryByRole('heading', { name: 'Página não encontrada' })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }));
+    expect(reload).toHaveBeenCalledTimes(1);
   });
 });
