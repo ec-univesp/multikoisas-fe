@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vitest/config';
 
@@ -14,7 +15,7 @@ const svgAsReactComponentStub = (): Plugin => ({
 
 export default defineConfig({
   plugins: [svgAsReactComponentStub(), react()],
-  resolve: { alias: { '@': new URL('./src', import.meta.url).pathname } },
+  resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
