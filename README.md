@@ -210,7 +210,7 @@ src/
   features/
     product-admin/   cadastro de produtos no painel
     category-admin/  cadastro de categorias no painel
-    vitrine-filter/  filtro por categoria e busca da vitrine
+    showcase-filter/ filtro por categoria e busca da vitrine
   entities/
     product/       o produto: tipo, leitura da API (api.ts) e card
   components/      biblioteca de componentes do projeto (botão, tabela, modal, formulário...)
