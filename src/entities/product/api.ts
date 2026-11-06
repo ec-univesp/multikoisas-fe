@@ -10,7 +10,7 @@ export type ApiProductImage = { id: number; produtoId: number; imagemUrl: string
 export type ProductImageRecord = { id: number; url: string | null };
 type ApiSalesChannel = { id: number; nome: string };
 export type ApiPurchaseLink = { produtoId: number; canalVendaId: number; link: string };
-type Catalog = { products: Product[]; categories: Category[]; salesChannels: { id: number; name: string }[] };
+export type Catalog = { products: Product[]; categories: Category[]; salesChannels: { id: number; name: string }[] };
 
 const UNCATEGORIZED = 'Sem categoria';
 
@@ -117,6 +117,3 @@ export const fetchCatalog = async (options: FetchOptions = {}): Promise<Catalog>
 
 export const fetchProducts = async (options: FetchOptions = {}): Promise<Product[]> =>
   (await fetchCatalog(options)).products;
-
-export const fetchProductBySlug = async (slug: string): Promise<Product | undefined> =>
-  (await fetchProducts()).find((product) => product.slug === slug);

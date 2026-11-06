@@ -2,11 +2,22 @@ import { render, screen, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
 import { server } from '@/test/msw/server';
+import { waitForLoaded } from '@/test/waitForLoaded';
 import { HowToBuy } from '../../HowToBuy';
 
-const renderHowToBuy = async () => render(await HowToBuy());
+const renderHowToBuy = async () => {
+  const view = render(<HowToBuy />);
+  await waitForLoaded();
+  return view;
+};
 
 describe('HowToBuy', () => {
+  it('shows the steps right away and marks them busy while the stores load', () => {
+    const { container } = render(<HowToBuy />);
+    expect(container.querySelector('section')).toHaveAttribute('aria-busy', 'true');
+    expect(screen.getByRole('list', { name: 'Como comprar' })).toBeInTheDocument();
+  });
+
   it('titles the steps below the store title, without a second page title', async () => {
     await renderHowToBuy();
     expect(

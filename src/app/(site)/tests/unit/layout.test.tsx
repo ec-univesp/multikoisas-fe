@@ -1,6 +1,7 @@
 import { Children, isValidElement, type ReactElement, type ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
 import { ShowcaseSearchProvider } from '@/features/showcase-filter';
+import { LocalApiProvider } from '@/shared/local-api/LocalApiProvider';
 import { GoogleReviewsBadge } from '@/widgets/google-reviews-badge';
 import { SiteHeader } from '@/widgets/site-header';
 import { WhatsAppFloatingButton } from '@/widgets/whatsapp-floating-button';
@@ -37,5 +38,14 @@ describe('SiteLayout', () => {
     const [badge, whatsApp] = Children.toArray(floating?.props.children);
     expect(isValidElement(badge) && badge.type).toBe(GoogleReviewsBadge);
     expect(isValidElement(whatsApp) && whatsApp.type).toBe(WhatsAppFloatingButton);
+  });
+
+  it('waits for the local api around the whole site but forces the light theme before it starts', () => {
+    const layout = SiteLayout({ children: <p>página</p> });
+    const provider = findElementByType(layout, LocalApiProvider);
+    expect(findElementByType(provider, ShowcaseSearchProvider)).toBeDefined();
+    expect(findElementByType(provider, 'aside')).toBeDefined();
+    expect(findElementByType(provider, 'script')).toBeUndefined();
+    expect(findElementByType(layout, 'script')).toBeDefined();
   });
 });
