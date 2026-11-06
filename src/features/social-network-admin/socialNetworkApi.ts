@@ -9,6 +9,7 @@ const HTTP_NOT_FOUND = 404;
 const HTTP_CONFLICT = 409;
 
 export class SocialNetworkNameTakenError extends Error {}
+export class SocialNetworkChangedElsewhereError extends Error {}
 
 const toSocialNetwork = (socialNetwork: SocialNetworkResponse): SocialNetwork => ({
   id: socialNetwork.id,
@@ -19,12 +20,19 @@ const toSocialNetwork = (socialNetwork: SocialNetworkResponse): SocialNetwork =>
 const pathOf = (socialNetwork: SocialNetwork): string =>
   `/api/socialnetwork/${encodeURIComponent(socialNetwork.name)}`;
 
-const sendToApi = (method: string, path: string, { name, url }: SocialNetworkValues): Promise<Response> =>
+const sendToApi = (method: string, path: string, body: { descricao?: string; link: string }): Promise<Response> =>
   fetch(path, {
     method,
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ descricao: name, link: url }),
+    body: JSON.stringify(body),
   });
+
+const conflictErrorOf = async (response: Response, request: string): Promise<Error> => {
+  const message = await response.text();
+  if (message.includes('já está cadastrada')) return new SocialNetworkNameTakenError(`${request} respondeu 409`);
+  if (message.includes('não encontrad')) return new SocialNetworkChangedElsewhereError(`${request} respondeu 409`);
+  return new Error(`${request} respondeu 409`);
+};
 
 export const fetchAllSocialNetworks = async (): Promise<SocialNetwork[]> =>
   (await getFromApi<SocialNetworkResponse>('/socialnetwork', { fresh: true, fromBrowser: true })).map(
@@ -32,17 +40,20 @@ export const fetchAllSocialNetworks = async (): Promise<SocialNetwork[]> =>
   );
 
 export const createSocialNetwork = async (values: SocialNetworkValues): Promise<void> => {
-  const response = await sendToApi('POST', '/api/socialnetwork', values);
+  const response = await sendToApi('POST', '/api/socialnetwork', { descricao: values.name, link: values.url });
   if (response.status === HTTP_CONFLICT) throw new SocialNetworkNameTakenError('POST /socialnetwork respondeu 409');
   if (!response.ok) throw new Error(`POST /socialnetwork respondeu ${response.status}`);
 };
 
 export const updateSocialNetwork = async (
   socialNetwork: SocialNetwork,
-  values: SocialNetworkValues,
+  { name, url }: SocialNetworkValues,
 ): Promise<SocialNetwork> => {
-  const response = await sendToApi('PUT', pathOf(socialNetwork), values);
-  if (!response.ok) throw new Error(`PUT ${pathOf(socialNetwork)} respondeu ${response.status}`);
+  const body = name === socialNetwork.name ? { link: url } : { descricao: name, link: url };
+  const request = `PUT ${pathOf(socialNetwork)}`;
+  const response = await sendToApi('PUT', pathOf(socialNetwork), body);
+  if (response.status === HTTP_CONFLICT) throw await conflictErrorOf(response, request);
+  if (!response.ok) throw new Error(`${request} respondeu ${response.status}`);
   return toSocialNetwork(await response.json());
 };
 
