@@ -50,6 +50,7 @@ beforeEach(() => {
       onChange,
       images,
       imageUrl: (id) => `http://localhost/local-images/${id}`,
+      reproduceApiBugs: true,
     }),
     createLocalImagesHandler(images),
   );
@@ -123,11 +124,92 @@ describe('local api handlers', () => {
   });
 
   it('leaves page routes alone when mounted under /api', async () => {
-    const handlers = createApiHandlers(database, { baseUrl: '/api', onChange, images, imageUrl: String });
+    const handlers = createApiHandlers(database, {
+      baseUrl: '/api',
+      onChange,
+      images,
+      imageUrl: String,
+      reproduceApiBugs: true,
+    });
     const answerTo = (path: string) => getResponse(handlers, new Request(new URL(path, location.origin)));
     expect(await answerTo('/api/produto?id=1')).toBeDefined();
     for (const pagePath of ['/produto?id=1', '/produto/balde', '/categoria', '/admin/products']) {
       expect(await answerTo(pagePath)).toBeUndefined();
     }
+  });
+});
+
+describe('local api handlers without the api bugs', () => {
+  beforeEach(() => {
+    server.use(
+      ...createApiHandlers(database, {
+        baseUrl: '/api',
+        onChange,
+        images,
+        imageUrl: (id) => `http://localhost/local-images/${id}`,
+        reproduceApiBugs: false,
+      }),
+    );
+  });
+
+  it('creates a social network and refuses only a name already taken', async () => {
+    const created = await send('POST', '/api/socialnetwork', { descricao: 'TikTok', link: 'https://tiktok.com/@mk' });
+    expect(created.status).toBe(201);
+    expect(await created.json()).toEqual({ id: 5, descricao: 'TikTok', link: 'https://tiktok.com/@mk' });
+    expect(database.socialNetworks).toContainEqual({ id: 5, descricao: 'TikTok', link: 'https://tiktok.com/@mk' });
+    expect(onChange).toHaveBeenCalledTimes(1);
+
+    const taken = await send('POST', '/api/socialnetwork', { descricao: 'Instagram', link: 'https://instagram.com/x' });
+    expect(taken.status).toBe(409);
+    expect(await taken.text()).toBe('Esta rede social já está cadastrada.');
+    expect((await send('POST', '/api/socialnetwork', { descricao: 'instagram', link: 'https://i.co' })).status).toBe(
+      201,
+    );
+    expect((await send('POST', '/api/socialnetwork', { descricao: ' ', link: 'https://t.co' })).status).toBe(400);
+  });
+
+  it('renames a social network and refuses only a name taken by another network', async () => {
+    database.socialNetworks.push({ id: 9, descricao: 'Shopee', link: 'https://shopee.com.br/mk' });
+
+    const kept = await send('PUT', '/api/socialnetwork/Instagram', {
+      descricao: 'Instagram',
+      link: 'https://instagram.com/novo',
+    });
+    expect(kept.status).toBe(200);
+    expect(await kept.json()).toEqual({ id: 3, descricao: 'Instagram', link: 'https://instagram.com/novo' });
+
+    const renamed = await send('PUT', '/api/socialnetwork/Instagram', { descricao: 'Insta' });
+    expect(await renamed.json()).toEqual({ id: 3, descricao: 'Insta', link: 'https://instagram.com/novo' });
+    expect(onChange).toHaveBeenCalledTimes(2);
+
+    expect((await send('PUT', '/api/socialnetwork/Insta', { descricao: 'Shopee' })).status).toBe(409);
+    expect((await send('PUT', '/api/socialnetwork/Instagram', { descricao: 'Novo' })).status).toBe(409);
+    expect(database.socialNetworks.map((socialNetwork) => socialNetwork.descricao)).toEqual(['Insta', 'Shopee']);
+  });
+
+  it('deletes a product without purchase link nor category along with its photos', async () => {
+    database.purchaseLinks = [];
+    database.productCategories = [];
+    await uploadPhoto(1, 'frente');
+    database.productImages.push({ id: 7, produtoId: 8, imagemUrl: 'http://localhost/local-images/7' });
+    await images.save(7, new Blob(['outro'], { type: 'image/png' }));
+
+    expect((await send('DELETE', '/api/produto/1')).status).toBe(200);
+    expect(database.products).toEqual([]);
+    expect(database.productImages.map((productImage) => productImage.id)).toEqual([7]);
+    expect(await images.get(5)).toBeUndefined();
+    expect(await images.get(7)).toBeDefined();
+  });
+
+  it('deletes the category and purchase links of a deleted product', async () => {
+    expect((await send('DELETE', '/api/produto/1')).status).toBe(200);
+    expect(database.productCategories).toEqual([]);
+    expect(database.purchaseLinks).toEqual([]);
+    expect(onChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('answers 404 when deleting a product that does not exist', async () => {
+    expect((await send('DELETE', '/api/produto/99')).status).toBe(404);
+    expect(onChange).not.toHaveBeenCalled();
   });
 });

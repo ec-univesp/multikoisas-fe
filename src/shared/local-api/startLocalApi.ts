@@ -14,6 +14,7 @@ const startWorker = async () => {
       onChange: () => saveDatabase(database),
       images: imageStore,
       imageUrl: (id) => `${window.location.origin}/local-images/${id}`,
+      reproduceApiBugs: false,
     }),
     createLocalImagesHandler(imageStore),
   );

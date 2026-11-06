@@ -41,6 +41,11 @@ describe('startLocalApi', () => {
     );
     expect(localStorage.getItem(STORAGE_KEY)).toContain('Jardim');
 
+    const socialNetwork = { descricao: 'TikTok', link: 'https://tiktok.com/@multikoisas' };
+    expect((await fetch('/api/socialnetwork', { method: 'POST', body: JSON.stringify(socialNetwork) })).status).toBe(
+      201,
+    );
+
     const uploaded = await fetch('/api/imagem?produtoId=1', {
       method: 'POST',
       headers: { 'Content-Type': 'multipart/form-data; boundary=limite' },
@@ -55,7 +60,7 @@ describe('startLocalApi', () => {
       ].join('\r\n'),
     });
     const { imagemUrl } = await uploaded.json();
-    expect(imagemUrl).toBe(`${location.origin}/local-images/28`);
+    expect(imagemUrl).toBe(`${location.origin}/local-images/29`);
     expect(await (await fetch(imagemUrl)).text()).toBe('png');
   });
 });

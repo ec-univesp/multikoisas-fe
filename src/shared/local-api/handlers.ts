@@ -7,6 +7,7 @@ export type ApiHandlerOptions = {
   images: Pick<ImageStore, 'save' | 'remove'>;
   imageUrl: (id: number) => string;
   baseUrl?: string;
+  reproduceApiBugs: boolean;
 };
 
 // Spring Boot default error body for ResponseStatusException.
@@ -38,7 +39,7 @@ const MAX_UPLOAD_BYTES = 1_048_576;
 
 export const createApiHandlers = (
   database: ApiDatabase,
-  { onChange, images, imageUrl, baseUrl = '*' }: ApiHandlerOptions,
+  { onChange, images, imageUrl, baseUrl = '*', reproduceApiBugs }: ApiHandlerOptions,
 ) => {
   const saved = (response: Response) => {
     onChange();
@@ -69,12 +70,17 @@ export const createApiHandlers = (
     }),
 
     // The API deletes photos, links and categories along; without a purchase link or a category it rolls back and answers 409.
-    http.delete(`${baseUrl}/produto/:id`, async ({ params }) => {
+    http.delete(`${baseUrl}/produto/:id`, async ({ request, params }) => {
       const id = Number(params.id);
       const hasPurchaseLink = database.purchaseLinks.some((link) => link.produtoId === id);
       const hasCategory = database.productCategories.some((link) => link.produtoId === id);
-      if (!hasPurchaseLink) return HttpResponse.text('Nao existe vinculo com o produto.', { status: 409 });
-      if (!hasCategory) return HttpResponse.text('Nao existe vínculo com esse produto.', { status: 409 });
+      if (reproduceApiBugs && !hasPurchaseLink) {
+        return HttpResponse.text('Nao existe vinculo com o produto.', { status: 409 });
+      }
+      if (reproduceApiBugs && !hasCategory) {
+        return HttpResponse.text('Nao existe vínculo com esse produto.', { status: 409 });
+      }
+      if (!database.products.some((product) => product.id === id)) return springError(404, 'Not Found', request);
       const productPhotos = database.productImages.filter((productImage) => productImage.produtoId === id);
       await Promise.all(productPhotos.map((productImage) => images.remove(productImage.id)));
       database.productImages = database.productImages.filter((productImage) => productImage.produtoId !== id);
@@ -208,7 +214,11 @@ export const createApiHandlers = (
     http.post<never, SocialNetworkBody>(`${baseUrl}/socialnetwork`, async ({ request }) => {
       const { descricao, link } = await request.json();
       if (!descricao?.trim() || !link?.trim()) return springError(400, 'Bad Request', request);
-      return HttpResponse.text(SOCIAL_NETWORK_TAKEN, { status: 409 });
+      const isTaken = database.socialNetworks.some((socialNetwork) => socialNetwork.descricao === descricao);
+      if (reproduceApiBugs || isTaken) return HttpResponse.text(SOCIAL_NETWORK_TAKEN, { status: 409 });
+      const socialNetwork = { id: database.nextId++, descricao, link };
+      database.socialNetworks.push(socialNetwork);
+      return saved(HttpResponse.json(socialNetwork, { status: 201 }));
     }),
 
     http.put<{ description: string }, SocialNetworkBody>(
@@ -217,7 +227,13 @@ export const createApiHandlers = (
         const { descricao, link } = await request.json();
         const socialNetwork = database.socialNetworks.find((candidate) => candidate.descricao === params.description);
         if (!socialNetwork) return HttpResponse.text('Descrição não encontrado.', { status: 409 });
-        if (descricao?.trim()) return HttpResponse.text(SOCIAL_NETWORK_TAKEN, { status: 409 });
+        const isTakenByAnother = database.socialNetworks.some(
+          (candidate) => candidate !== socialNetwork && candidate.descricao === descricao,
+        );
+        if (descricao?.trim() && (reproduceApiBugs || isTakenByAnother)) {
+          return HttpResponse.text(SOCIAL_NETWORK_TAKEN, { status: 409 });
+        }
+        if (descricao?.trim()) socialNetwork.descricao = descricao;
         if (link?.trim()) socialNetwork.link = link;
         return saved(HttpResponse.json(socialNetwork));
       },
