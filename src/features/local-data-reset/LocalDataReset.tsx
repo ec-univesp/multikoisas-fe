@@ -9,6 +9,7 @@ import { resetDatabase } from '@/shared/local-api/persistence';
 export const LocalDataReset = () => {
   const resetModal = useModal();
   const [isResetting, setIsResetting] = useState(false);
+  const [hasFailed, setHasFailed] = useState(false);
 
   const closeUnlessResetting = () => {
     if (!isResetting) resetModal.closeModal();
@@ -16,8 +17,15 @@ export const LocalDataReset = () => {
 
   const restoreSampleData = async () => {
     setIsResetting(true);
-    await resetDatabase();
-    window.location.reload();
+    setHasFailed(false);
+    try {
+      await resetDatabase();
+      window.location.reload();
+    } catch {
+      setHasFailed(true);
+    } finally {
+      setIsResetting(false);
+    }
   };
 
   return (
@@ -34,6 +42,11 @@ export const LocalDataReset = () => {
           <p className="mb-6 text-sm text-gray-500">
             Isso apaga tudo que foi cadastrado neste navegador e volta para os dados de exemplo.
           </p>
+          {hasFailed && (
+            <p role="alert" className="mb-4 text-sm text-error-500">
+              Não foi possível restaurar os dados. Recarregue a página e tente de novo.
+            </p>
+          )}
           <div className="flex items-center justify-end gap-3">
             <Button size="sm" variant="outline" onClick={resetModal.closeModal} disabled={isResetting}>
               Cancelar
