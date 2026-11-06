@@ -2,23 +2,23 @@
 
 import Link from 'next/link';
 import { SocialNetworkLinks, useSocialNetworks } from '@/entities/social-network';
-import { STORE_SETTINGS, type StoreSettingsValues } from '@/entities/store-settings';
+import { StoreLogo, useStoreSettings, type StoreSettingsValues } from '@/entities/store-settings';
 import { ShowcaseLink } from '@/features/showcase-filter';
-import { BrandMark } from '@/shared/ui/BrandMark';
 
 const headingClassName = 'text-sm font-bold tracking-wider text-store-yellow uppercase';
 const shortcutClassName = 'flex min-h-11 items-center text-blue-100 hover:text-store-yellow';
 
-export const SiteFooter = ({ settings = STORE_SETTINGS }: { settings?: StoreSettingsValues }) => {
+export const SiteFooter = ({ settings }: { settings?: StoreSettingsValues }) => {
+  const savedSettings = useStoreSettings().settings;
   const socialNetworksState = useSocialNetworks();
   const socialNetworks = socialNetworksState.status === 'ready' ? socialNetworksState.data : [];
-  const address = settings.address?.trim();
+  const address = (settings ?? savedSettings).address?.trim();
   return (
     <footer aria-busy={socialNetworksState.status === 'loading'} className="bg-store-navy text-blue-100">
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 md:grid-cols-3 lg:px-8">
         <div>
           <Link href="/" className="inline-flex">
-            <BrandMark tone="onDark" />
+            <StoreLogo tone="onDark" />
           </Link>
           <p className="mt-3 max-w-xs text-sm">Utilidades para casa, cozinha, limpeza e organização, num lugar só.</p>
           {address && <address className="mt-3 max-w-xs text-sm not-italic">{address}</address>}
