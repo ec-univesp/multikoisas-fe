@@ -148,6 +148,7 @@ O painel (`/admin`) pede login em `/panel`. Os usuários e as senhas ficam em va
 | --- | --- |
 | `ADMIN_USERS` | lista de usuários do painel, uma entrada `usuário=hash` por pessoa, separadas por vírgula |
 | `SESSION_SECRET` | texto aleatório com 32 caracteres ou mais, por exemplo `openssl rand -base64 48` |
+| `MULTIKOISAS_API_USERNAME` e `MULTIKOISAS_API_PASSWORD` | conta com papel ADMIN na multikoisas-api; o painel entra com ela para gravar. Sem elas, salvar no painel mostra erro |
 
 Para gerar a entrada de uma pessoa, rode o comando abaixo com o usuário dela, digite a senha quando pedir (ela não aparece na tela) e copie a linha impressa:
 

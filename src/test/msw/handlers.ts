@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw';
-import { apiDatabase, SUPABASE_IMAGES, type CategoriaProdutoRow } from './apiDatabase';
+import { apiDatabase, SUPABASE_IMAGES, type CanalVendaProdutoRow, type CategoriaProdutoRow } from './apiDatabase';
 
 // Corpo de erro padrão do Spring Boot para ResponseStatusException.
 const springError = (status: number, error: string, request: Request) =>
@@ -8,19 +8,38 @@ const springError = (status: number, error: string, request: Request) =>
     { status },
   );
 
+// A API responde 404 sem corpo para lista vazia; /canalvendaproduto responde 204.
+const listResponse = <Row,>(rows: readonly Row[], emptyStatus = 404) =>
+  rows.length === 0 ? new HttpResponse(null, { status: emptyStatus }) : HttpResponse.json(rows);
+
+const queryOf = (request: Request) => new URL(request.url).searchParams;
+
+const matchesNumber = (filter: string | null, value: number) => filter === null || value === Number(filter);
+
+const matchesText = (filter: string | null, value: string) =>
+  filter === null || filter.trim() === '' || value.toLowerCase() === filter.trim().toLowerCase();
+
 type NomeBody = { nome?: string };
-type CanalVendaBody = { id?: number; nome?: string };
 type ProdutoBody = { nome?: string; descricaoProduto?: string };
 type ImagemBody = { id?: number; produtoId?: number };
+type RedeSocialBody = { descricao?: string; link?: string };
 
 const MAX_UPLOAD_BYTES = 1_048_576;
 
-export const handlers = [
-  http.get('*/produto', () => HttpResponse.json(apiDatabase.produtos)),
+export const TEST_API_CREDENTIALS = { username: 'api-admin', password: 'api-secret', token: 'jwt-de-teste' };
 
-  http.get('*/produto/:id', ({ request, params }) => {
-    const produto = apiDatabase.produtos.find((candidate) => candidate.id === Number(params.id));
-    return produto ? HttpResponse.json(produto) : springError(404, 'Not Found', request);
+export const handlers = [
+  http.post<never, { username?: string; password?: string }>('*/auth/login', async ({ request }) => {
+    const { username, password } = await request.json();
+    if (username !== TEST_API_CREDENTIALS.username || password !== TEST_API_CREDENTIALS.password) {
+      return springError(403, 'Forbidden', request);
+    }
+    return HttpResponse.json({ token: TEST_API_CREDENTIALS.token });
+  }),
+
+  http.get('*/produto', ({ request }) => {
+    const id = queryOf(request).get('id');
+    return listResponse(apiDatabase.produtos.filter((produto) => matchesNumber(id, produto.id)));
   }),
 
   http.post<never, ProdutoBody>('*/produto', async ({ request }) => {
@@ -37,24 +56,39 @@ export const handlers = [
     const produto = apiDatabase.produtos.find((candidate) => candidate.id === Number(params.id));
     if (!produto) return springError(404, 'Not Found', request);
     Object.assign(produto, { nome, descricaoProduto });
-    return new HttpResponse(null, { status: 204 });
+    return HttpResponse.json(produto);
   }),
 
-  http.delete('*/produto/:id', ({ request, params }) => {
+  // A API apaga fotos, links e categorias junto; sem link de compra ou sem categoria ela desfaz tudo e responde 409.
+  http.delete('*/produto/:id', ({ params }) => {
     const id = Number(params.id);
-    if (!apiDatabase.produtos.some((produto) => produto.id === id)) return springError(404, 'Not Found', request);
-    if (apiDatabase.categoriaProduto.some((link) => link.produtoId === id)) {
-      return springError(409, 'Conflict', request);
-    }
+    const hasPurchaseLink = apiDatabase.canalVendaProduto.some((link) => link.produtoId === id);
+    const hasCategory = apiDatabase.categoriaProduto.some((link) => link.produtoId === id);
+    if (!hasPurchaseLink) return HttpResponse.text('Nao existe vinculo com o produto.', { status: 409 });
+    if (!hasCategory) return HttpResponse.text('Nao existe vínculo com esse produto.', { status: 409 });
+    apiDatabase.imagens = apiDatabase.imagens.filter((imagem) => imagem.produtoId !== id);
+    apiDatabase.canalVendaProduto = apiDatabase.canalVendaProduto.filter((link) => link.produtoId !== id);
+    apiDatabase.categoriaProduto = apiDatabase.categoriaProduto.filter((link) => link.produtoId !== id);
     apiDatabase.produtos = apiDatabase.produtos.filter((produto) => produto.id !== id);
-    return new HttpResponse(null, { status: 204 });
+    return HttpResponse.json({ message: `O produto ${id} deletado com sucesso.` });
   }),
 
-  http.get('*/categoria', () => HttpResponse.json(apiDatabase.categorias)),
+  http.get('*/categoria', ({ request }) => {
+    const query = queryOf(request);
+    return listResponse(
+      apiDatabase.categorias.filter(
+        (categoria) =>
+          matchesNumber(query.get('categoriaId'), categoria.id) && matchesText(query.get('nome'), categoria.nome),
+      ),
+    );
+  }),
 
   http.post<never, NomeBody>('*/categoria', async ({ request }) => {
     const { nome } = await request.json();
     if (!nome?.trim()) return springError(400, 'Bad Request', request);
+    if (apiDatabase.categorias.some((categoria) => categoria.nome === nome)) {
+      return HttpResponse.text('Já existe uma categoria com esse nome.', { status: 409 });
+    }
     const categoria = { id: apiDatabase.nextId++, nome };
     apiDatabase.categorias.push(categoria);
     return HttpResponse.json(categoria, { status: 201 });
@@ -80,17 +114,14 @@ export const handlers = [
   }),
 
   http.get('*/categoriaproduto', ({ request }) => {
-    const query = new URL(request.url).searchParams;
-    const produto = query.get('produtoId');
-    const categoria = query.get('categoriaId');
-    const links = apiDatabase.categoriaProduto.filter(
-      (link) =>
-        (produto === null || link.produtoId === Number(produto)) &&
-        (categoria === null || link.categoriaId === Number(categoria)),
+    const query = queryOf(request);
+    return listResponse(
+      apiDatabase.categoriaProduto.filter(
+        (link) =>
+          matchesNumber(query.get('produtoId'), link.produtoId) &&
+          matchesNumber(query.get('categoriaId'), link.categoriaId),
+      ),
     );
-    // A API responde 404 sem corpo para lista vazia (UNIV-28 no santi).
-    if (links.length === 0) return new HttpResponse(null, { status: 404 });
-    return HttpResponse.json(links);
   }),
 
   http.post<never, CategoriaProdutoRow>('*/categoriaproduto', async ({ request }) => {
@@ -104,7 +135,7 @@ export const handlers = [
       return HttpResponse.text('Produto ou categoria inexistente. Verifique os IDs informados.', { status: 409 });
     }
     apiDatabase.categoriaProduto.push({ produtoId, categoriaId });
-    return HttpResponse.json({ mensagem: 'Categoria associada ao produto com sucesso.' }, { status: 201 });
+    return HttpResponse.json({ produtoId, categoriaId }, { status: 201 });
   }),
 
   http.delete<never, CategoriaProdutoRow>('*/categoriaproduto', async ({ request }) => {
@@ -112,21 +143,21 @@ export const handlers = [
     const remaining = apiDatabase.categoriaProduto.filter(
       (link) => !(link.produtoId === produtoId && link.categoriaId === categoriaId),
     );
-    // A API responde 409, e não 404, para vínculo inexistente (UNIV-29 no santi).
     if (remaining.length === apiDatabase.categoriaProduto.length) {
-      return HttpResponse.text('O vínculo entre este produto e categoria não existe.', { status: 409 });
+      return HttpResponse.text('O vínculo entre o produto e a categoria nao existe.', { status: 409 });
     }
     apiDatabase.categoriaProduto = remaining;
     return HttpResponse.json({ mensagem: 'Categoria desassociada do produto com sucesso.' });
   }),
 
-  http.get('*/imagem', () => HttpResponse.json(apiDatabase.imagens)),
-
-  http.get('*/imagem/:produtoId', ({ params }) =>
-    HttpResponse.json(apiDatabase.imagens.filter((imagem) => imagem.produtoId === Number(params.produtoId))),
-  ),
+  http.get('*/imagem', ({ request }) => {
+    const produtoId = queryOf(request).get('produtoId');
+    return listResponse(apiDatabase.imagens.filter((imagem) => matchesNumber(produtoId, imagem.produtoId)));
+  }),
 
   http.post('*/imagem', async ({ request }) => {
+    const produtoId = queryOf(request).get('produtoId');
+    if (produtoId === null) return springError(400, 'Bad Request', request);
     const form = await request.formData();
     const file = form.get('file');
     if (file === null || typeof file === 'string') return springError(400, 'Bad Request', request);
@@ -134,7 +165,7 @@ export const handlers = [
     if (file.size > MAX_UPLOAD_BYTES) return springError(413, 'Payload Too Large', request);
     const id = apiDatabase.nextId++;
     // O jsdom do Vitest troca o nome do arquivo por "blob" no multipart.
-    const imagem = { id, produtoId: Number(form.get('produtoId')), imagemUrl: `${SUPABASE_IMAGES}/upload-${id}` };
+    const imagem = { id, produtoId: Number(produtoId), imagemUrl: `${SUPABASE_IMAGES}/upload-${id}` };
     apiDatabase.imagens.push(imagem);
     return HttpResponse.json(imagem, { status: 201 });
   }),
@@ -142,38 +173,128 @@ export const handlers = [
   http.delete<never, ImagemBody>('*/imagem', async ({ request }) => {
     const { id, produtoId } = await request.json();
     const remaining = apiDatabase.imagens.filter((imagem) => !(imagem.id === id && imagem.produtoId === produtoId));
-    if (remaining.length === apiDatabase.imagens.length) return springError(404, 'Not Found', request);
+    if (remaining.length === apiDatabase.imagens.length) {
+      return HttpResponse.text('Imagem não encontrada ou não pertence a este produto.', { status: 409 });
+    }
     apiDatabase.imagens = remaining;
     return new HttpResponse(null, { status: 204 });
   }),
 
-  http.get('*/socialnetwork', () => HttpResponse.json(apiDatabase.redesSociais)),
+  http.get('*/socialnetwork', ({ request }) => {
+    const name = queryOf(request).get('name');
+    return listResponse(apiDatabase.redesSociais.filter((redeSocial) => matchesText(name, redeSocial.descricao)));
+  }),
 
-  http.get('*/canalvenda', () => HttpResponse.json(apiDatabase.canaisVenda)),
-
-  http.get('*/canalvendaproduto', () => HttpResponse.json(apiDatabase.canalVendaProduto)),
-
-  // A API exige o id no corpo: ela não gera o id do canal.
-  http.post<never, CanalVendaBody>('*/canalvenda', async ({ request }) => {
-    const { id, nome } = await request.json();
-    if (typeof id !== 'number' || !Number.isInteger(id) || !nome?.trim()) return springError(400, 'Bad Request', request);
-    if (apiDatabase.canaisVenda.some((canalVenda) => canalVenda.id === id)) {
-      return springError(409, 'Conflict', request);
+  http.post<never, RedeSocialBody>('*/socialnetwork', async ({ request }) => {
+    const { descricao, link } = await request.json();
+    if (!descricao?.trim() || !link?.trim()) return springError(400, 'Bad Request', request);
+    if (apiDatabase.redesSociais.some((redeSocial) => matchesText(descricao, redeSocial.descricao))) {
+      return HttpResponse.text('Esta rede social já está cadastrada.', { status: 409 });
     }
-    const canalVenda = { id, nome };
+    apiDatabase.redesSociais.push({ id: apiDatabase.nextId++, descricao: descricao.trim(), link: link.trim() });
+    return new HttpResponse(null, { status: 201 });
+  }),
+
+  http.put<{ description: string }, RedeSocialBody>('*/socialnetwork/:description', async ({ request, params }) => {
+    const { descricao, link } = await request.json();
+    const redeSocial = apiDatabase.redesSociais.find((candidate) => matchesText(params.description, candidate.descricao));
+    if (!redeSocial) return HttpResponse.text('Descrição não encontrado.', { status: 409 });
+    if (descricao?.trim()) redeSocial.descricao = descricao.trim();
+    if (link?.trim()) redeSocial.link = link.trim();
+    return HttpResponse.json(redeSocial);
+  }),
+
+  http.delete<{ description: string }>('*/socialnetwork/:description', ({ request, params }) => {
+    const remaining = apiDatabase.redesSociais.filter(
+      (redeSocial) => !matchesText(params.description, redeSocial.descricao),
+    );
+    if (remaining.length === apiDatabase.redesSociais.length) return springError(404, 'Not Found', request);
+    apiDatabase.redesSociais = remaining;
+    return HttpResponse.json({ message: `Rede social ${params.description} deletada com sucesso.` });
+  }),
+
+  http.get('*/canalvenda', ({ request }) => {
+    const query = queryOf(request);
+    return listResponse(
+      apiDatabase.canaisVenda.filter(
+        (canalVenda) => matchesNumber(query.get('id'), canalVenda.id) && matchesText(query.get('nome'), canalVenda.nome),
+      ),
+    );
+  }),
+
+  http.post<never, NomeBody>('*/canalvenda', async ({ request }) => {
+    const { nome } = await request.json();
+    if (!nome?.trim()) return springError(400, 'Bad Request', request);
+    if (apiDatabase.canaisVenda.some((canalVenda) => canalVenda.nome === nome)) {
+      return HttpResponse.text('Já existe um canal com esse nome', { status: 409 });
+    }
+    const canalVenda = { id: apiDatabase.nextId++, nome };
     apiDatabase.canaisVenda.push(canalVenda);
     return HttpResponse.json(canalVenda, { status: 201 });
   }),
 
-  // O SecurityConfig da API publicada não libera PUT em /canalvenda (UNIV-16 no santi).
-  http.put('*/canalvenda/:id', ({ request }) => springError(403, 'Forbidden', request)),
+  http.put<{ id: string }, NomeBody>('*/canalvenda/:id', async ({ request, params }) => {
+    const { nome } = await request.json();
+    if (!nome?.trim()) return springError(400, 'Bad Request', request);
+    const canalVenda = apiDatabase.canaisVenda.find((candidate) => candidate.id === Number(params.id));
+    if (!canalVenda) return springError(404, 'Not Found', request);
+    canalVenda.nome = nome;
+    return new HttpResponse(null, { status: 204 });
+  }),
 
   http.delete('*/canalvenda/:id', ({ request, params }) => {
     const id = Number(params.id);
     if (!apiDatabase.canaisVenda.some((canalVenda) => canalVenda.id === id)) {
       return springError(404, 'Not Found', request);
     }
+    if (apiDatabase.canalVendaProduto.some((link) => link.canalVendaId === id)) {
+      return springError(409, 'Conflict', request);
+    }
     apiDatabase.canaisVenda = apiDatabase.canaisVenda.filter((canalVenda) => canalVenda.id !== id);
     return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.get('*/canalvendaproduto', ({ request }) => {
+    const query = queryOf(request);
+    return listResponse(
+      apiDatabase.canalVendaProduto.filter(
+        (link) =>
+          matchesNumber(query.get('produtoId'), link.produtoId) &&
+          matchesNumber(query.get('canalVendaId'), link.canalVendaId),
+      ),
+      204,
+    );
+  }),
+
+  http.post<never, CanalVendaProdutoRow>('*/canalvendaproduto', async ({ request }) => {
+    const { produtoId, canalVendaId, link } = await request.json();
+    if (!link?.trim()) return springError(400, 'Bad Request', request);
+    if (
+      apiDatabase.canalVendaProduto.some(
+        (candidate) => candidate.produtoId === produtoId && candidate.canalVendaId === canalVendaId,
+      )
+    ) {
+      return HttpResponse.text('Este produto já está associado a este canal de venda.', { status: 409 });
+    }
+    const produtoExists = apiDatabase.produtos.some((produto) => produto.id === produtoId);
+    const canalExists = apiDatabase.canaisVenda.some((canalVenda) => canalVenda.id === canalVendaId);
+    if (!produtoExists || !canalExists) {
+      return HttpResponse.text('Produto ou canal de venda inexistente. Verifique os IDs informados.', { status: 409 });
+    }
+    const row = { produtoId, canalVendaId, link };
+    apiDatabase.canalVendaProduto.push(row);
+    return HttpResponse.json(row, { status: 201 });
+  }),
+
+  http.delete<never, CanalVendaProdutoRow>('*/canalvendaproduto', async ({ request }) => {
+    const { produtoId, canalVendaId } = await request.json();
+    const remaining = apiDatabase.canalVendaProduto.filter(
+      (link) => !(link.produtoId === produtoId && link.canalVendaId === canalVendaId),
+    );
+    if (remaining.length === apiDatabase.canalVendaProduto.length) {
+      return HttpResponse.text('O vínculo entre este produto e canal de venda não existe.', { status: 409 });
+    }
+    apiDatabase.canalVendaProduto = remaining;
+    return HttpResponse.json({ mensagem: 'Canal de venda desassociado do produto com sucesso.' });
   }),
 ];

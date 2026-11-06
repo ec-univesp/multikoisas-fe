@@ -35,7 +35,7 @@ beforeEach(() => {
 const respondWith = (method: 'post' | 'delete', path: string, status: number) =>
   server.use(http[method](path, () => new HttpResponse(null, { status })));
 
-const hang = (method: 'get' | 'post', path: string) =>
+const hang = (method: 'get' | 'post' | 'delete', path: string) =>
   server.use(http[method](path, () => delay('infinite')));
 
 const photo = (name: string, type = 'image/png', size = 3) =>
@@ -43,6 +43,9 @@ const photo = (name: string, type = 'image/png', size = 3) =>
 
 const photoIdsOf = (produtoId: number) =>
   apiDatabase.imagens.filter((imagem) => imagem.produtoId === produtoId).map((imagem) => imagem.id);
+
+const purchaseLinksOf = (produtoId: number) =>
+  apiDatabase.canalVendaProduto.filter((link) => link.produtoId === produtoId);
 
 const linksOf = (produtoId: number) =>
   apiDatabase.categoriaProduto.filter((link) => link.produtoId === produtoId);
@@ -98,9 +101,9 @@ describe('ProductAdminPanel', () => {
 
     expect(await screen.findByLabelText('Nome do produto')).toHaveValue('Garrafa Térmica Nova');
     expect(apiRequests).toEqual([
-      'GET /api/produto/1',
+      'GET /api/produto?id=1',
       'GET /api/categoriaproduto?produtoId=1',
-      'GET /api/imagem/1',
+      'GET /api/imagem?produtoId=1',
     ]);
   });
 
@@ -139,7 +142,7 @@ describe('ProductAdminPanel', () => {
   });
 
   it('opens the edit with the photos it already had when the api photos fail', async () => {
-    server.use(http.get('*/imagem/:produtoId', () => new HttpResponse(null, { status: 500 })));
+    server.use(http.get('*/imagem', () => new HttpResponse(null, { status: 500 })));
     const user = userEvent.setup();
     renderPanel([buildProduct({ images: ['https://avphmmvnlrbidhjrzozx.supabase.co/storage/v1/object/public/imagem/antiga.webp'] })]);
 
@@ -193,9 +196,9 @@ describe('ProductAdminPanel', () => {
       descricaoProduto: 'Mantém a temperatura por 12 horas.\nAmpola de vidro.',
     });
     expect(apiRequests).toEqual([
-      'GET /api/produto/1',
+      'GET /api/produto?id=1',
       'GET /api/categoriaproduto?produtoId=1',
-      'GET /api/imagem/1',
+      'GET /api/imagem?produtoId=1',
       'PUT /api/produto/1',
     ]);
   });
@@ -273,7 +276,7 @@ describe('ProductAdminPanel', () => {
   });
 
   it('blocks a second confirmation while the product is being deleted', async () => {
-    hang('get', '*/categoriaproduto');
+    hang('delete', '*/produto/:id');
     const user = userEvent.setup();
     renderPanel();
 
@@ -323,7 +326,7 @@ describe('ProductAdminPanel', () => {
     expect(apiRequests).toEqual([]);
   });
 
-  it('unlinks the categories, deletes the product in the api and shows the empty state', async () => {
+  it('deletes the product in one call, which also drops its categories and store links', async () => {
     const user = userEvent.setup();
     renderPanel();
 
@@ -331,31 +334,29 @@ describe('ProductAdminPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Apagar' }));
 
     expect(await screen.findByText('Nenhum produto cadastrado.')).toBeInTheDocument();
-    expect(apiRequests).toEqual([
-      'GET /api/categoriaproduto?produtoId=1',
-      'DELETE /api/categoriaproduto',
-      'DELETE /api/produto/1',
-    ]);
+    expect(apiRequests).toEqual(['DELETE /api/produto/1']);
     expect(apiDatabase.produtos.map((produto) => produto.id)).not.toContain(1);
     expect(linksOf(1)).toEqual([]);
+    expect(purchaseLinksOf(1)).toEqual([]);
     expect(linksOf(7)).toEqual([
       { produtoId: 7, categoriaId: 2 },
       { produtoId: 7, categoriaId: 3 },
     ]);
   });
 
-  it('deletes a product without category even though the api answers 404 for its links', async () => {
+  it('explains that the api only deletes a product with category and store link', async () => {
     const user = userEvent.setup();
     renderPanel([buildProduct({ id: 5, slug: 'balde-5', name: 'Balde 12L', categoryId: null })]);
 
     await user.click(screen.getByRole('button', { name: 'Apagar Balde 12L' }));
     await user.click(screen.getByRole('button', { name: 'Apagar' }));
 
-    expect(await screen.findByText('Nenhum produto cadastrado.')).toBeInTheDocument();
-    expect(apiRequests).toEqual([
-      'GET /api/categoriaproduto?produtoId=5',
-      'DELETE /api/produto/5',
-    ]);
+    expect(
+      await screen.findByText(
+        'A API só apaga produto que tem categoria e link de compra. Edite o produto, complete os dois e tente de novo.',
+      ),
+    ).toHaveAttribute('role', 'alert');
+    expect(screen.getByText('Balde 12L', { selector: 'a' })).toBeInTheDocument();
   });
 
   it('keeps the product with a message when the api fails to delete it', async () => {
@@ -392,8 +393,8 @@ describe('ProductAdminPanel', () => {
       expect(apiRequests).toEqual([
         'POST /api/produto',
         'POST /api/categoriaproduto',
-        'POST /api/imagem',
-        'POST /api/imagem',
+        'POST /api/imagem?produtoId=100',
+        'POST /api/imagem?produtoId=100',
       ]);
       expect(photoIdsOf(100)).toEqual([101, 102]);
       expect(screen.queryByLabelText('Fotos')).not.toBeInTheDocument();
@@ -415,7 +416,7 @@ describe('ProductAdminPanel', () => {
       await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
 
       expect(await screen.findByAltText('Vassoura')).toBeInTheDocument();
-      expect(apiRequests.filter((request) => request === 'POST /api/imagem')).toHaveLength(1);
+      expect(apiRequests.filter((request) => request === 'POST /api/imagem?produtoId=100')).toHaveLength(1);
       expect(photoIdsOf(100)).toEqual([101]);
     });
 
@@ -496,7 +497,7 @@ describe('ProductAdminPanel', () => {
         'src',
         expect.stringContaining('garrafa-tampa.jpeg'),
       );
-      expect(apiRequests.slice(3)).toEqual(['PUT /api/produto/1', 'DELETE /api/imagem', 'POST /api/imagem']);
+      expect(apiRequests.slice(3)).toEqual(['PUT /api/produto/1', 'DELETE /api/imagem', 'POST /api/imagem?produtoId=1']);
       expect(photoIdsOf(1)).toEqual([12, 11, 100]);
     });
 
@@ -545,7 +546,7 @@ describe('ProductAdminPanel', () => {
     });
 
     it('warns that the current photos could not be loaded and still accepts new ones', async () => {
-      server.use(http.get('*/imagem/:produtoId', () => new HttpResponse(null, { status: 500 })));
+      server.use(http.get('*/imagem', () => new HttpResponse(null, { status: 500 })));
       const user = userEvent.setup();
       renderPanel();
 
