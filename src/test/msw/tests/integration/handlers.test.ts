@@ -88,8 +88,9 @@ describe('multikoisas-api handlers', () => {
     expect((await send('PUT', '/api/categoria/100', { nome: 'Nada' })).status).toBe(404);
   });
 
-  it('rejects a blank category name and the deletion of a category in use', async () => {
+  it('rejects a blank or repeated category name and the deletion of a category in use', async () => {
     expect((await send('POST', '/api/categoria', { nome: ' ' })).status).toBe(400);
+    expect((await send('POST', '/api/categoria', { nome: 'Banheiros' })).status).toBe(409);
     expect((await send('PUT', '/api/categoria/3', { nome: '' })).status).toBe(400);
     expect((await send('DELETE', '/api/categoria/3')).status).toBe(409);
   });
@@ -100,14 +101,26 @@ describe('multikoisas-api handlers', () => {
     expect(await created.json()).toEqual({ id: 100, nome: 'Vassoura', descricaoProduto: 'Macia.' });
     expect((await send('PUT', '/api/produto/100', { nome: 'Rodo', descricaoProduto: 'Firme.' })).status).toBe(200);
     expect(apiDatabase.produtos).toContainEqual({ id: 100, nome: 'Rodo', descricaoProduto: 'Firme.' });
-    expect((await send('DELETE', '/api/produto/100')).status).toBe(200);
-    expect((await send('DELETE', '/api/produto/100')).status).toBe(404);
+    expect((await send('DELETE', '/api/produto/100')).status).toBe(409);
   });
 
   it('rejects a blank product name and the deletion of a product with categories', async () => {
     expect((await send('POST', '/api/produto', { nome: '', descricaoProduto: 'x' })).status).toBe(400);
     expect((await send('PUT', '/api/produto/404', { nome: 'x', descricaoProduto: 'x' })).status).toBe(404);
-    expect((await send('DELETE', '/api/produto/1')).status).toBe(409);
+  });
+
+  it('deletes a product with its images, store links and categories, and refuses one without them', async () => {
+    const deleted = await send('DELETE', '/api/produto/1');
+    expect(deleted.status).toBe(200);
+    expect(apiDatabase.produtos.map((produto) => produto.id)).not.toContain(1);
+    expect(apiDatabase.categoriaProduto.some((link) => link.produtoId === 1)).toBe(false);
+    expect(apiDatabase.canalVendaProduto.some((link) => link.produtoId === 1)).toBe(false);
+    expect(apiDatabase.imagens.some((imagem) => imagem.produtoId === 1)).toBe(false);
+    for (const produtoId of [5, 404]) {
+      const refused = await send('DELETE', `/api/produto/${produtoId}`);
+      expect(refused.status).toBe(409);
+      expect(await refused.text()).toBe('Nao existe vinculo com o produto.');
+    }
   });
   it('reads a product by the id filter and answers 404 for an unknown id', async () => {
     expect(await (await send('GET', '/api/produto?id=5')).json()).toEqual([
@@ -128,7 +141,8 @@ describe('multikoisas-api handlers', () => {
 
   it('rejects a sales channel with a blank or repeated name and the deletion of a channel in use', async () => {
     expect((await send('POST', '/api/canalvenda', { nome: ' ' })).status).toBe(400);
-    const conflict = await send('POST', '/api/canalvenda', { nome: 'shopee' });
+    expect((await send('POST', '/api/canalvenda', { nome: 'shopee' })).status).toBe(201);
+    const conflict = await send('POST', '/api/canalvenda', { nome: 'Shopee' });
     expect(conflict.status).toBe(409);
     expect(await conflict.text()).toBe('Já existe um canal com esse nome');
     expect((await send('DELETE', '/api/canalvenda/2')).status).toBe(409);
@@ -202,7 +216,7 @@ describe('multikoisas-api handlers', () => {
   it('deletes an image by id and product', async () => {
     expect((await send('DELETE', '/api/imagem', { id: 20, produtoId: 7 })).status).toBe(204);
     expect(apiDatabase.imagens.map((image) => image.id)).not.toContain(20);
-    expect((await send('DELETE', '/api/imagem', { id: 20, produtoId: 7 })).status).toBe(404);
-    expect((await send('DELETE', '/api/imagem', { id: 21, produtoId: 1 })).status).toBe(404);
+    expect((await send('DELETE', '/api/imagem', { id: 20, produtoId: 7 })).status).toBe(409);
+    expect((await send('DELETE', '/api/imagem', { id: 21, produtoId: 1 })).status).toBe(409);
   });
 });

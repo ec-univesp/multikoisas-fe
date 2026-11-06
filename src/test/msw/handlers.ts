@@ -59,12 +59,16 @@ export const handlers = [
     return HttpResponse.json(produto);
   }),
 
-  http.delete('*/produto/:id', ({ request, params }) => {
+  // A API apaga fotos, links e categorias junto; sem link de compra ou sem categoria ela desfaz tudo e responde 409.
+  http.delete('*/produto/:id', ({ params }) => {
     const id = Number(params.id);
-    if (!apiDatabase.produtos.some((produto) => produto.id === id)) return springError(404, 'Not Found', request);
-    if (apiDatabase.categoriaProduto.some((link) => link.produtoId === id)) {
-      return springError(409, 'Conflict', request);
-    }
+    const hasPurchaseLink = apiDatabase.canalVendaProduto.some((link) => link.produtoId === id);
+    const hasCategory = apiDatabase.categoriaProduto.some((link) => link.produtoId === id);
+    if (!hasPurchaseLink) return HttpResponse.text('Nao existe vinculo com o produto.', { status: 409 });
+    if (!hasCategory) return HttpResponse.text('Nao existe vínculo com esse produto.', { status: 409 });
+    apiDatabase.imagens = apiDatabase.imagens.filter((imagem) => imagem.produtoId !== id);
+    apiDatabase.canalVendaProduto = apiDatabase.canalVendaProduto.filter((link) => link.produtoId !== id);
+    apiDatabase.categoriaProduto = apiDatabase.categoriaProduto.filter((link) => link.produtoId !== id);
     apiDatabase.produtos = apiDatabase.produtos.filter((produto) => produto.id !== id);
     return HttpResponse.json({ message: `O produto ${id} deletado com sucesso.` });
   }),
@@ -82,6 +86,9 @@ export const handlers = [
   http.post<never, NomeBody>('*/categoria', async ({ request }) => {
     const { nome } = await request.json();
     if (!nome?.trim()) return springError(400, 'Bad Request', request);
+    if (apiDatabase.categorias.some((categoria) => categoria.nome === nome)) {
+      return HttpResponse.text('Já existe uma categoria com esse nome.', { status: 409 });
+    }
     const categoria = { id: apiDatabase.nextId++, nome };
     apiDatabase.categorias.push(categoria);
     return HttpResponse.json(categoria, { status: 201 });
@@ -166,7 +173,9 @@ export const handlers = [
   http.delete<never, ImagemBody>('*/imagem', async ({ request }) => {
     const { id, produtoId } = await request.json();
     const remaining = apiDatabase.imagens.filter((imagem) => !(imagem.id === id && imagem.produtoId === produtoId));
-    if (remaining.length === apiDatabase.imagens.length) return springError(404, 'Not Found', request);
+    if (remaining.length === apiDatabase.imagens.length) {
+      return HttpResponse.text('Imagem não encontrada ou não pertence a este produto.', { status: 409 });
+    }
     apiDatabase.imagens = remaining;
     return new HttpResponse(null, { status: 204 });
   }),
@@ -216,7 +225,7 @@ export const handlers = [
   http.post<never, NomeBody>('*/canalvenda', async ({ request }) => {
     const { nome } = await request.json();
     if (!nome?.trim()) return springError(400, 'Bad Request', request);
-    if (apiDatabase.canaisVenda.some((canalVenda) => matchesText(nome, canalVenda.nome))) {
+    if (apiDatabase.canaisVenda.some((canalVenda) => canalVenda.nome === nome)) {
       return HttpResponse.text('Já existe um canal com esse nome', { status: 409 });
     }
     const canalVenda = { id: apiDatabase.nextId++, nome };
