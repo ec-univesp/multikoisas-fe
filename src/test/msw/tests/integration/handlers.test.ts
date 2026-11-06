@@ -179,21 +179,34 @@ describe('multikoisas-api handlers', () => {
     ).toBe(409);
   });
 
-  it('creates, filters, updates and deletes a social network by its description', async () => {
-    expect(
-      (await send('POST', '/api/socialnetwork', { descricao: 'TikTok', link: 'https://tiktok.com/@mk' })).status,
-    ).toBe(201);
-    expect((await send('POST', '/api/socialnetwork', { descricao: 'tiktok', link: 'https://x' })).status).toBe(409);
+  it('refuses every new social network with 409, like the real api does today', async () => {
+    const refused = await send('POST', '/api/socialnetwork', { descricao: 'TikTok', link: 'https://tiktok.com/@mk' });
+    expect(refused.status).toBe(409);
+    expect(await refused.text()).toBe('Esta rede social já está cadastrada.');
     expect((await send('POST', '/api/socialnetwork', { descricao: '', link: 'https://x' })).status).toBe(400);
+    expect((await send('GET', '/api/socialnetwork?name=TikTok')).status).toBe(404);
+  });
+
+  it('finds, updates the link and deletes a social network by its exact description', async () => {
+    apiDatabase.redesSociais.push({ id: 7, descricao: 'TikTok', link: 'https://tiktok.com/@mk' });
+    expect((await send('GET', '/api/socialnetwork?name=tiktok')).status).toBe(404);
     expect(await (await send('GET', '/api/socialnetwork?name=TikTok')).json()).toEqual([
-      { id: 100, descricao: 'TikTok', link: 'https://tiktok.com/@mk' },
+      { id: 7, descricao: 'TikTok', link: 'https://tiktok.com/@mk' },
     ]);
     const updated = await send('PUT', '/api/socialnetwork/TikTok', { link: 'https://tiktok.com/@multikoisas' });
-    expect(await updated.json()).toEqual({ id: 100, descricao: 'TikTok', link: 'https://tiktok.com/@multikoisas' });
-    expect((await send('PUT', '/api/socialnetwork/Kwai', { link: 'https://x' })).status).toBe(409);
+    expect(await updated.json()).toEqual({ id: 7, descricao: 'TikTok', link: 'https://tiktok.com/@multikoisas' });
+    expect((await send('DELETE', '/api/socialnetwork/tiktok')).status).toBe(404);
     expect((await send('DELETE', '/api/socialnetwork/TikTok')).status).toBe(200);
-    expect((await send('DELETE', '/api/socialnetwork/TikTok')).status).toBe(404);
-    expect((await send('GET', '/api/socialnetwork?name=TikTok')).status).toBe(404);
+  });
+
+  it('refuses a rename with 409 and an unknown description with 409, like the real api', async () => {
+    apiDatabase.redesSociais.push({ id: 7, descricao: 'TikTok', link: 'https://tiktok.com/@mk' });
+    const renamed = await send('PUT', '/api/socialnetwork/TikTok', { descricao: 'Kwai', link: 'https://x' });
+    expect(renamed.status).toBe(409);
+    expect(await renamed.text()).toBe('Esta rede social já está cadastrada.');
+    const unknown = await send('PUT', '/api/socialnetwork/tiktok', { link: 'https://x' });
+    expect(unknown.status).toBe(409);
+    expect(await unknown.text()).toBe('Descrição não encontrado.');
   });
 
   it('hands a token only to the right API credentials', async () => {

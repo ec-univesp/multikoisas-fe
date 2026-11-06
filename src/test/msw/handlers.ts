@@ -24,6 +24,8 @@ type ProdutoBody = { nome?: string; descricaoProduto?: string };
 type ImagemBody = { id?: number; produtoId?: number };
 type RedeSocialBody = { descricao?: string; link?: string };
 
+const SOCIAL_NETWORK_TAKEN = 'Esta rede social já está cadastrada.';
+
 const MAX_UPLOAD_BYTES = 1_048_576;
 
 export const TEST_API_CREDENTIALS = { username: 'api-admin', password: 'api-secret', token: 'jwt-de-teste' };
@@ -182,34 +184,30 @@ export const handlers = [
 
   http.get('*/socialnetwork', ({ request }) => {
     const name = queryOf(request).get('name');
-    return listResponse(apiDatabase.redesSociais.filter((redeSocial) => matchesText(name, redeSocial.descricao)));
+    return listResponse(
+      apiDatabase.redesSociais.filter((redeSocial) => !name?.trim() || redeSocial.descricao === name),
+    );
   }),
 
+  // Bug da API: o serviço testa `findByName(...) != null` numa List, então todo cadastro e todo
+  // PUT com descricao preenchida respondem 409, exista ou não a rede.
   http.post<never, RedeSocialBody>('*/socialnetwork', async ({ request }) => {
     const { descricao, link } = await request.json();
     if (!descricao?.trim() || !link?.trim()) return springError(400, 'Bad Request', request);
-    if (apiDatabase.redesSociais.some((redeSocial) => matchesText(descricao, redeSocial.descricao))) {
-      return HttpResponse.text('Esta rede social já está cadastrada.', { status: 409 });
-    }
-    apiDatabase.redesSociais.push({ id: apiDatabase.nextId++, descricao: descricao.trim(), link: link.trim() });
-    return new HttpResponse(null, { status: 201 });
+    return HttpResponse.text(SOCIAL_NETWORK_TAKEN, { status: 409 });
   }),
 
   http.put<{ description: string }, RedeSocialBody>('*/socialnetwork/:description', async ({ request, params }) => {
     const { descricao, link } = await request.json();
-    const redeSocial = apiDatabase.redesSociais.find((candidate) =>
-      matchesText(params.description, candidate.descricao),
-    );
+    const redeSocial = apiDatabase.redesSociais.find((candidate) => candidate.descricao === params.description);
     if (!redeSocial) return HttpResponse.text('Descrição não encontrado.', { status: 409 });
-    if (descricao?.trim()) redeSocial.descricao = descricao.trim();
-    if (link?.trim()) redeSocial.link = link.trim();
+    if (descricao?.trim()) return HttpResponse.text(SOCIAL_NETWORK_TAKEN, { status: 409 });
+    if (link?.trim()) redeSocial.link = link;
     return HttpResponse.json(redeSocial);
   }),
 
   http.delete<{ description: string }>('*/socialnetwork/:description', ({ request, params }) => {
-    const remaining = apiDatabase.redesSociais.filter(
-      (redeSocial) => !matchesText(params.description, redeSocial.descricao),
-    );
+    const remaining = apiDatabase.redesSociais.filter((redeSocial) => redeSocial.descricao !== params.description);
     if (remaining.length === apiDatabase.redesSociais.length) return springError(404, 'Not Found', request);
     apiDatabase.redesSociais = remaining;
     return HttpResponse.json({ message: `Rede social ${params.description} deletada com sucesso.` });
