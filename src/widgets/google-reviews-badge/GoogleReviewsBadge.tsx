@@ -1,6 +1,6 @@
 import { Star } from 'lucide-react';
 import { isHttpsUrl } from '@/entities/social-network';
-import type { StoreSettings } from '@/entities/store-settings';
+import { STORE_SETTINGS, type StoreSettings } from '@/entities/store-settings';
 
 const NEW_TAB_NOTICE = 'Abre em outra aba.';
 
@@ -16,7 +16,7 @@ const accessibleNameOf = (rating: number, reviewCount: number | null): string =>
   return `${ratingPhrase}, ${formatReviewCount(reviewCount)}. ${NEW_TAB_NOTICE}`;
 };
 
-export const GoogleReviewsBadge = ({ settings, className = '' }: { settings: StoreSettings; className?: string }) => {
+export const GoogleReviewsBadge = ({ settings = STORE_SETTINGS }: { settings?: StoreSettings }) => {
   const { googleReviewsUrl, googleRating, googleReviewCount } = settings;
   if (!googleReviewsUrl || !isHttpsUrl(googleReviewsUrl)) return null;
 
@@ -33,7 +33,8 @@ export const GoogleReviewsBadge = ({ settings, className = '' }: { settings: Sto
           ? `Avaliações no Google. ${NEW_TAB_NOTICE}`
           : accessibleNameOf(googleRating, googleReviewCount)
       }
-      className={`flex h-11 w-fit shrink-0 items-center gap-1.5 rounded-lg bg-white/10 px-3 text-sm font-bold text-white hover:bg-white/20 ${className}`}
+      className="fixed right-4 bottom-20 z-40 flex h-11 items-center gap-1.5 rounded-full bg-store-navy px-4 text-sm font-bold text-white shadow-lg hover:brightness-110 focus-visible:ring-4 focus-visible:ring-store-yellow focus-visible:outline-none"
+      style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
     >
       <Star aria-hidden className="size-4 fill-store-yellow text-store-yellow" />
       {googleRating === null ? (
