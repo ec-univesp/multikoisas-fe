@@ -1,7 +1,9 @@
 import { Children, isValidElement, type ReactElement, type ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
-import { VitrineSearchProvider } from '@/features/vitrine-filter';
+import { ShowcaseSearchProvider } from '@/features/showcase-filter';
+import { GoogleReviewsBadge } from '@/widgets/google-reviews-badge';
 import { SiteHeader } from '@/widgets/site-header';
+import { WhatsAppFloatingButton } from '@/widgets/whatsapp-floating-button';
 import SiteLayout from '../../layout';
 
 type ElementWithChildren = ReactElement<{ children?: ReactNode }>;
@@ -17,11 +19,23 @@ const findElementByType = (node: ReactNode, type: unknown): ElementWithChildren 
 describe('SiteLayout', () => {
   it('shares the showcase search between the header and the page', () => {
     const page = <p>página</p>;
-    const provider = findElementByType(SiteLayout({ children: page }), VitrineSearchProvider);
+    const provider = findElementByType(SiteLayout({ children: page }), ShowcaseSearchProvider);
     expect(provider).toBeDefined();
     expect(findElementByType(provider, SiteHeader)).toBeDefined();
     const main = findElementByType(provider, 'main');
     expect(Children.toArray(main?.props.children)).toHaveLength(1);
     expect(findElementByType(main, 'p')?.props.children).toBe('página');
+  });
+
+  it('floats the google reviews badge above the WhatsApp button, centered on the right edge', () => {
+    const floating = findElementByType(SiteLayout({ children: <p>página</p> }), 'aside') as
+      ReactElement<{ children?: ReactNode; className?: string; 'aria-label'?: string }> | undefined;
+    expect(floating?.props['aria-label']).toBe('Contatos da loja');
+    expect(floating?.props.className?.split(' ')).toEqual(
+      expect.arrayContaining(['fixed', 'top-1/2', 'right-4', '-translate-y-1/2']),
+    );
+    const [badge, whatsApp] = Children.toArray(floating?.props.children);
+    expect(isValidElement(badge) && badge.type).toBe(GoogleReviewsBadge);
+    expect(isValidElement(whatsApp) && whatsApp.type).toBe(WhatsAppFloatingButton);
   });
 });

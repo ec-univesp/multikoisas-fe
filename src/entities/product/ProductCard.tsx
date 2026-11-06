@@ -15,7 +15,7 @@ export const ProductCard = ({
   imageSizes = '(max-width: 768px) 50vw, (max-width: 1280px) 33vw, 25vw',
 }: ProductCardProps) => {
   const coverImage = product.images[0] ?? PRODUCT_IMAGE_PLACEHOLDER;
-  const detailPath = `/produto/${product.slug}`;
+  const detailPath = `/product/${product.slug}`;
   const storeButtonsLayout = product.storeLinks.length > 1 ? 'grid gap-2 sm:grid-cols-2' : 'grid gap-2';
 
   return (
@@ -35,8 +35,10 @@ export const ProductCard = ({
           className="object-contain p-2"
         />
       </Link>
-      <span className="mt-3 line-clamp-1 text-xs font-semibold tracking-wider text-store-navy uppercase">{product.category}</span>
-      <h3 className="mt-1 line-clamp-2 font-semibold leading-tight text-gray-800">
+      <span className="mt-3 line-clamp-1 text-xs font-semibold tracking-wider text-store-navy uppercase">
+        {product.category}
+      </span>
+      <h3 className="mt-1 line-clamp-2 leading-tight font-semibold text-gray-800">
         <Link href={detailPath} className="hover:text-store-navy">
           {product.name}
         </Link>

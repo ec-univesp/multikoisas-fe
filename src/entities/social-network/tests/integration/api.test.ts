@@ -15,13 +15,24 @@ describe('fetchSocialNetworks', () => {
     ]);
   });
 
+  it('completes with https a link registered without it, like wa.me/...', async () => {
+    server.use(
+      http.get('*/socialnetwork', () =>
+        HttpResponse.json([{ id: 1, descricao: 'WhatsApp', link: ' wa.me/message/V4IAOMTCK5XHP1 ' }]),
+      ),
+    );
+    expect(await fetchSocialNetworks()).toEqual([
+      { id: 1, name: 'WhatsApp', url: 'https://wa.me/message/V4IAOMTCK5XHP1' },
+    ]);
+  });
+
   it('drops social networks whose link is not a valid https address', async () => {
     server.use(
       http.get('*/socialnetwork', () =>
         HttpResponse.json([
           { id: 1, descricao: 'Instagram', link: 'https://www.instagram.com/multikoisas' },
           { id: 2, descricao: 'Site', link: 'http://multikoisas.com.br' },
-          { id: 3, descricao: 'WhatsApp', link: 'wa.me/5500000000000' },
+          { id: 3, descricao: 'Vazio', link: '   ' },
           { id: 4, descricao: 'Script', link: 'javascript:alert(1)' },
         ]),
       ),
@@ -41,6 +52,6 @@ describe('fetchSocialNetworks', () => {
 
   it('fails with the path and status when the api errors', async () => {
     server.use(http.get('*/socialnetwork', () => new HttpResponse(null, { status: 500 })));
-    await expect(fetchSocialNetworks()).rejects.toThrow('/socialnetwork respondeu 500');
+    await expect(fetchSocialNetworks()).rejects.toThrow('/socialnetwork responded 500');
   });
 });

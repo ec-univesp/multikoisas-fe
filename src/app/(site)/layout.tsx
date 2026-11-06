@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
-import { VitrineSearchProvider } from '@/features/vitrine-filter';
+import { ShowcaseSearchProvider } from '@/features/showcase-filter';
+import { GoogleReviewsBadge } from '@/widgets/google-reviews-badge';
 import { SiteFooter } from '@/widgets/site-footer';
 import { SiteHeader } from '@/widgets/site-header';
+import { WhatsAppFloatingButton } from '@/widgets/whatsapp-floating-button';
 
 export const metadata: Metadata = {
   title: { default: 'MultiKoisas — Tudo em um só lugar', template: '%s | MultiKoisas' },
@@ -15,11 +17,18 @@ export default function SiteLayout({ children }: Readonly<{ children: React.Reac
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
       <script dangerouslySetInnerHTML={{ __html: forceLightTheme }} />
-      <VitrineSearchProvider>
+      <ShowcaseSearchProvider>
         <SiteHeader />
         <main className="flex-1">{children}</main>
-      </VitrineSearchProvider>
+      </ShowcaseSearchProvider>
       <SiteFooter />
+      <aside
+        aria-label="Contatos da loja"
+        className="fixed top-1/2 right-4 z-40 flex -translate-y-1/2 flex-col items-end gap-3"
+      >
+        <GoogleReviewsBadge />
+        <WhatsAppFloatingButton />
+      </aside>
     </div>
   );
 }

@@ -1,28 +1,61 @@
+import Link from 'next/link';
 import { fetchSocialNetworks, SocialNetworkLinks, type SocialNetwork } from '@/entities/social-network';
+import { STORE_SETTINGS, type StoreSettings } from '@/entities/store-settings';
+import { ShowcaseLink } from '@/features/showcase-filter';
+import { BrandMark } from '@/shared/ui/BrandMark';
 
 const loadSocialNetworks = (): Promise<SocialNetwork[]> => fetchSocialNetworks().catch(() => []);
 
-export const SiteFooter = async () => {
+const headingClassName = 'text-sm font-bold tracking-wider text-store-yellow uppercase';
+const shortcutClassName = 'flex min-h-11 items-center text-blue-100 hover:text-store-yellow';
+
+export const SiteFooter = async ({ settings = STORE_SETTINGS }: { settings?: StoreSettings } = {}) => {
   const socialNetworks = await loadSocialNetworks();
+  const address = settings.address?.trim();
   return (
-    <footer className="border-t border-gray-200 py-8">
-      <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 text-sm text-gray-500 sm:px-6">
+    <footer className="bg-store-navy text-blue-100">
+      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 md:grid-cols-3 lg:px-8">
+        <div>
+          <Link href="/" className="inline-flex">
+            <BrandMark tone="onDark" />
+          </Link>
+          <p className="mt-3 max-w-xs text-sm">Utilidades para casa, cozinha, limpeza e organização, num lugar só.</p>
+          {address && <address className="mt-3 max-w-xs text-sm not-italic">{address}</address>}
+        </div>
+
+        <nav aria-labelledby="site-footer-shortcuts">
+          <h2 id="site-footer-shortcuts" className={headingClassName}>
+            Navegue
+          </h2>
+          <ul className="mt-2">
+            <li>
+              <Link href="/" className={shortcutClassName}>
+                Início
+              </Link>
+            </li>
+            <li>
+              <ShowcaseLink className={shortcutClassName} />
+            </li>
+          </ul>
+        </nav>
+
         {socialNetworks.length > 0 && (
           <nav aria-labelledby="site-footer-social">
-            <h2 id="site-footer-social" className="font-medium text-gray-700">
+            <h2 id="site-footer-social" className={headingClassName}>
               Siga a MultiKoisas
             </h2>
             <SocialNetworkLinks
               socialNetworks={socialNetworks}
-              className="mt-2"
-              linkClassName="border border-gray-200 text-gray-700 hover:border-brand-500 hover:text-brand-500"
+              className="mt-3"
+              linkClassName="bg-white/10 text-sm font-semibold text-white hover:bg-store-yellow hover:text-store-navy-950"
             />
           </nav>
         )}
-        <p>
-          multikoisas — {new Date().getFullYear()}. Os produtos são vendidos pelas lojas parceiras.
-        </p>
       </div>
+
+      <p className="border-t border-white/10 px-4 py-4 text-center text-xs text-blue-100">
+        {`© ${new Date().getFullYear()} MultiKoisas. A venda e a entrega são feitas pelas lojas parceiras.`}
+      </p>
     </footer>
   );
 };

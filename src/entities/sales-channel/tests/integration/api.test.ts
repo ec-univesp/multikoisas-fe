@@ -14,6 +14,7 @@ describe('fetchSalesChannels', () => {
       { id: 3, name: 'Instagram' },
       { id: 4, name: 'Facebook' },
       { id: 5, name: 'TikTok' },
+      { id: 8, name: 'MagaLu' },
     ]);
   });
 
@@ -25,6 +26,6 @@ describe('fetchSalesChannels', () => {
 
   it('fails with the path and status when the api errors', async () => {
     server.use(http.get('*/canalvenda', () => new HttpResponse(null, { status: 500 })));
-    await expect(fetchSalesChannels()).rejects.toThrow('/canalvenda respondeu 500');
+    await expect(fetchSalesChannels()).rejects.toThrow('/canalvenda responded 500');
   });
 });

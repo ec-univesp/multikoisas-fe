@@ -15,14 +15,9 @@ const normalizeName = (name: string): string =>
     .replace(/\p{Diacritic}/gu, '')
     .toLocaleLowerCase('pt-BR');
 
-const validateCategoryName = (
-  name: string,
-  otherCategories: readonly Category[],
-): string | null => {
+const validateCategoryName = (name: string, otherCategories: readonly Category[]): string | null => {
   if (!name.trim()) return 'Informe o nome da categoria.';
-  const isRepeated = otherCategories.some(
-    (category) => normalizeName(category.name) === normalizeName(name),
-  );
+  const isRepeated = otherCategories.some((category) => normalizeName(category.name) === normalizeName(name));
   return isRepeated ? 'Já existe uma categoria com esse nome.' : null;
 };
 

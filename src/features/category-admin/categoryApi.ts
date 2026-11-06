@@ -1,6 +1,6 @@
 import type { Category } from '@/entities/product';
 
-type CategoriaResponse = { id: number; nome: string };
+type ApiCategory = { id: number; nome: string };
 
 const HTTP_NOT_FOUND = 404;
 const HTTP_CONFLICT = 409;
@@ -15,15 +15,15 @@ const callApi = async (method: string, path: string, body?: unknown): Promise<Re
     headers: body ? { 'Content-Type': 'application/json' } : undefined,
     body: body ? JSON.stringify(body) : undefined,
   });
-  if (response.status === HTTP_NOT_FOUND) throw new CategoryNotFoundError(`${method} ${path} respondeu 404`);
-  if (response.status === HTTP_CONFLICT) throw new CategoryInUseError(`${method} ${path} respondeu 409`);
-  if (!response.ok) throw new Error(`${method} ${path} respondeu ${response.status}`);
+  if (response.status === HTTP_NOT_FOUND) throw new CategoryNotFoundError(`${method} ${path} responded 404`);
+  if (response.status === HTTP_CONFLICT) throw new CategoryInUseError(`${method} ${path} responded 409`);
+  if (!response.ok) throw new Error(`${method} ${path} responded ${response.status}`);
   return response;
 };
 
 export const createCategory = async (name: string): Promise<Category> => {
-  const categoria: CategoriaResponse = await (await callApi('POST', '/categoria', { nome: name })).json();
-  return { id: categoria.id, name: categoria.nome };
+  const apiCategory: ApiCategory = await (await callApi('POST', '/categoria', { nome: name })).json();
+  return { id: apiCategory.id, name: apiCategory.nome };
 };
 
 export const renameCategory = async (category: Category, name: string): Promise<Category> => {

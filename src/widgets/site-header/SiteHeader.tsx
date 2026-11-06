@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { fetchProducts, toStoresPhrase, type Product } from '@/entities/product';
 import { fetchSocialNetworks, isWhatsApp, WhatsAppLink, type SocialNetwork } from '@/entities/social-network';
-import { VitrineLink, VitrineSearchField } from '@/features/vitrine-filter';
+import { ShowcaseLink, ShowcaseSearchField } from '@/features/showcase-filter';
 import { BrandMark } from '@/shared/ui/BrandMark';
 
 const loadProducts = (): Promise<Product[]> => fetchProducts().catch(() => []);
@@ -30,7 +30,7 @@ export const SiteHeader = async () => {
           </Link>
           {whatsApp && <WhatsAppLink url={whatsApp.url} className="lg:order-last" />}
           <div className="w-full lg:w-auto lg:max-w-xl lg:flex-1">
-            <VitrineSearchField id="site-header-search" label="Buscar produto no cabeçalho" />
+            <ShowcaseSearchField id="site-header-search" label="Buscar produto no cabeçalho" />
           </div>
         </div>
       </div>
@@ -40,14 +40,9 @@ export const SiteHeader = async () => {
             <Link href="/" className={navLinkClassName}>
               Início
             </Link>
-            <VitrineLink className={navLinkClassName} />
-            <Link href="/#sobre" className={navLinkClassName}>
-              A loja
-            </Link>
+            <ShowcaseLink className={navLinkClassName} />
           </nav>
-          {storesPhrase && (
-            <p className="px-3 text-sm font-medium text-gray-600 md:px-0">{`Compre ${storesPhrase}`}</p>
-          )}
+          {storesPhrase && <p className="px-3 text-sm font-medium text-gray-600 md:px-0">{`Compre ${storesPhrase}`}</p>}
         </div>
       </div>
     </header>

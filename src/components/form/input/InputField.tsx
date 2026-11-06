@@ -1,8 +1,8 @@
-import React, { FC } from "react";
-import { twMerge } from "tailwind-merge";
+import React, { type FC } from 'react';
+import { twMerge } from 'tailwind-merge';
 
 interface InputProps {
-  type?: "text" | "number" | "email" | "password" | "date" | "time" | string;
+  type?: 'text' | 'number' | 'email' | 'password' | 'date' | 'time' | string;
   id?: string;
   name?: string;
   autoComplete?: string;
@@ -13,6 +13,7 @@ interface InputProps {
   placeholder?: string;
   defaultValue?: string | number;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
   className?: string;
   min?: string;
   max?: string;
@@ -26,7 +27,7 @@ interface InputProps {
 }
 
 const Input: FC<InputProps> = ({
-  type = "text",
+  type = 'text',
   id,
   name,
   autoComplete,
@@ -37,7 +38,8 @@ const Input: FC<InputProps> = ({
   placeholder,
   defaultValue,
   onChange,
-  className = "",
+  onBlur,
+  className = '',
   min,
   max,
   step,
@@ -76,6 +78,7 @@ const Input: FC<InputProps> = ({
         placeholder={placeholder}
         defaultValue={defaultValue}
         onChange={onChange}
+        onBlur={onBlur}
         min={min}
         max={max}
         step={step}
@@ -87,15 +90,7 @@ const Input: FC<InputProps> = ({
 
       {/* Optional Hint Text */}
       {hint && (
-        <p
-          className={`mt-1.5 text-xs ${
-            error
-              ? "text-error-500"
-              : success
-              ? "text-success-500"
-              : "text-gray-500"
-          }`}
-        >
+        <p className={`mt-1.5 text-xs ${error ? 'text-error-500' : success ? 'text-success-500' : 'text-gray-500'}`}>
           {hint}
         </p>
       )}

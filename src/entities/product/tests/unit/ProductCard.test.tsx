@@ -26,7 +26,7 @@ describe('ProductCard', () => {
     const heading = screen.getByRole('heading', { name: 'Garrafa Térmica 1L' });
     expect(within(heading).getByRole('link', { name: 'Garrafa Térmica 1L' })).toHaveAttribute(
       'href',
-      '/produto/garrafa-termica-1l-1',
+      '/product/garrafa-termica-1l-1',
     );
     expect(screen.getByText('Mantém a temperatura.')).toHaveClass('line-clamp-3');
     expect(screen.getByAltText('Garrafa Térmica 1L')).toHaveAttribute('src', expect.stringContaining('garrafa.webp'));
@@ -34,7 +34,10 @@ describe('ProductCard', () => {
 
   it('keeps the default image sizes and accepts the ones the layout passes', () => {
     const { rerender } = render(<ProductCard product={product} />);
-    expect(screen.getByAltText('Garrafa Térmica 1L')).toHaveAttribute('sizes', '(max-width: 768px) 50vw, (max-width: 1280px) 33vw, 25vw');
+    expect(screen.getByAltText('Garrafa Térmica 1L')).toHaveAttribute(
+      'sizes',
+      '(max-width: 768px) 50vw, (max-width: 1280px) 33vw, 25vw',
+    );
     rerender(<ProductCard product={product} imageSizes="80vw" />);
     expect(screen.getByAltText('Garrafa Térmica 1L')).toHaveAttribute('sizes', '80vw');
   });
@@ -85,11 +88,11 @@ describe('ProductCard', () => {
     render(<ProductCard product={product} />);
     expect(screen.getByRole('link', { name: 'Opções de compra: Garrafa Térmica 1L' })).toHaveAttribute(
       'href',
-      '/produto/garrafa-termica-1l-1',
+      '/product/garrafa-termica-1l-1',
     );
     expect(screen.getByAltText('Garrafa Térmica 1L').closest('a')).toHaveAttribute(
       'href',
-      '/produto/garrafa-termica-1l-1',
+      '/product/garrafa-termica-1l-1',
     );
   });
 
