@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { resolveSessionSecret } from '@/features/admin-auth/authEnvironment';
+import { resolveSessionKey } from '@/features/admin-auth/authEnvironment';
 import { SESSION_COOKIE_NAME, verifySessionToken } from '@/features/admin-auth/session';
 
 const LOGIN_PATH = '/panel';
@@ -18,7 +18,7 @@ export const proxy = async (request: NextRequest) => {
 
   const hasValidSession = await verifySessionToken(
     request.cookies.get(SESSION_COOKIE_NAME)?.value,
-    resolveSessionSecret(process.env),
+    resolveSessionKey(process.env),
     Date.now(),
   );
 

@@ -3,8 +3,8 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { createHash, timingSafeEqual } from 'node:crypto';
-import { resolveSessionSecret } from './authEnvironment';
-import { createSessionToken, hasValidSecret, SESSION_COOKIE_NAME } from './session';
+import { resolvePanelUsername, resolveSessionKey } from './authEnvironment';
+import { createSessionToken, SESSION_COOKIE_NAME } from './session';
 
 export type LoginState = { error: string | null; username?: string };
 
@@ -12,6 +12,9 @@ const MISSING_FIELDS_MESSAGE = 'Informe usuário e senha.';
 const INVALID_CREDENTIALS_MESSAGE = 'Usuário ou senha incorretos.';
 const NOT_CONFIGURED_MESSAGE = 'O login do painel não está configurado neste ambiente.';
 const SESSION_DURATION_MILLISECONDS = 8 * 60 * 60 * 1000;
+const FAILED_LOGIN_DELAY_MILLISECONDS = 500;
+
+const waitAfterFailedLogin = () => new Promise((resolve) => setTimeout(resolve, FAILED_LOGIN_DELAY_MILLISECONDS));
 
 const digestOf = (text: string) => createHash('sha256').update(text).digest();
 
@@ -24,20 +27,21 @@ export const loginAction = async (_previousState: LoginState, formData: FormData
     return { error: MISSING_FIELDS_MESSAGE, username: typeof username === 'string' ? username : '' };
   }
 
-  const sessionSecret = resolveSessionSecret(process.env);
-  const panelUsername = process.env.PANEL_USERNAME;
+  const sessionKey = resolveSessionKey(process.env);
+  const panelUsername = resolvePanelUsername(process.env);
   const panelPassword = process.env.PANEL_PASSWORD;
-  if (!hasValidSecret(sessionSecret) || !panelUsername || !panelPassword) {
-    return { error: NOT_CONFIGURED_MESSAGE, username };
-  }
+  if (!sessionKey || !panelUsername || !panelPassword) return { error: NOT_CONFIGURED_MESSAGE, username };
 
   const usernameMatches = matches(username.trim(), panelUsername);
   const passwordMatches = matches(password, panelPassword);
-  if (!usernameMatches || !passwordMatches) return { error: INVALID_CREDENTIALS_MESSAGE, username };
+  if (!usernameMatches || !passwordMatches) {
+    await waitAfterFailedLogin();
+    return { error: INVALID_CREDENTIALS_MESSAGE, username };
+  }
 
   const now = Date.now();
   const expiresAt = now + SESSION_DURATION_MILLISECONDS;
-  const sessionToken = await createSessionToken(sessionSecret, now, expiresAt);
+  const sessionToken = await createSessionToken(sessionKey, now, expiresAt);
   if (!sessionToken) return { error: NOT_CONFIGURED_MESSAGE, username };
 
   const cookieStore = await cookies();
