@@ -2,6 +2,7 @@ import { render, screen, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
 import type { StoreSettingsValues } from '@/entities/store-settings';
+import { apiDatabase } from '@/test/msw/apiDatabase';
 import { server } from '@/test/msw/server';
 import { waitForLoaded } from '@/test/waitForLoaded';
 import { SiteFooter } from '../../SiteFooter';
@@ -98,5 +99,14 @@ describe('SiteFooter', () => {
     server.use(http.get('*/socialnetwork', () => new HttpResponse(null, { status: 404 })));
     await renderFooter();
     expect(screen.queryByRole('navigation', { name: 'Siga a MultiKoisas' })).not.toBeInTheDocument();
+  });
+
+  it('shows the saved address and logo when no settings are given', async () => {
+    apiDatabase.storeSettings.address = 'Rua Nova, 10 - Santo André - SP';
+    apiDatabase.storeSettings.logoUrl = '/local-images/5';
+    render(<SiteFooter />);
+    const footer = screen.getByRole('contentinfo');
+    expect(await within(footer).findByText('Rua Nova, 10 - Santo André - SP')).toBeInTheDocument();
+    expect(within(footer).getByRole('img', { name: 'MultiKoisas' })).toHaveAttribute('src', '/local-images/5');
   });
 });
