@@ -19,11 +19,14 @@ describe('LocalApiProvider', () => {
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 
-  it('still shows the page when the local api cannot start', async () => {
+  it('explains which browsers can run the site when the local api cannot start', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.mocked(startLocalApi).mockRejectedValue(new Error('no service worker'));
     render(<LocalApiProvider>Vitrine</LocalApiProvider>);
-    expect(await screen.findByText('Vitrine')).toBeInTheDocument();
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Este navegador não permite rodar o site. Use o Chrome, o Edge ou o Safari fora da janela anônima.',
+    );
+    expect(screen.queryByText('Vitrine')).not.toBeInTheDocument();
     expect(console.error).toHaveBeenCalled();
   });
 });
