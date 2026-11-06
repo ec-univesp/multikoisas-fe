@@ -26,6 +26,11 @@ export const StoreLogoField = () => {
   const [logoMessage, setLogoMessage] = useState<LogoMessage | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const previewUrlRef = useRef<string | null>(null);
+  const logoMessageRef = useRef<HTMLParagraphElement>(null);
+
+  useEffect(() => {
+    if (logoMessage?.kind === 'success') logoMessageRef.current?.focus();
+  }, [logoMessage]);
 
   const replacePreview = (nextFile: File | null) => {
     if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
@@ -125,6 +130,8 @@ export const StoreLogoField = () => {
         )}
         {logoMessage && (
           <p
+            ref={logoMessageRef}
+            tabIndex={-1}
             role={logoMessage.kind === 'success' ? 'status' : 'alert'}
             className={`text-sm ${logoMessage.kind === 'success' ? 'text-success-700' : 'text-error-500'}`}
           >
