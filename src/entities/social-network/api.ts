@@ -11,11 +11,17 @@ export const isHttpsUrl = (link: string): boolean => {
   }
 };
 
+// The store owner registered links like "wa.me/..." without the scheme.
+const withScheme = (link: string): string => {
+  const trimmedLink = link.trim();
+  return /^[a-z][a-z0-9+.-]*:/i.test(trimmedLink) ? trimmedLink : `https://${trimmedLink}`;
+};
+
 export const fetchSocialNetworks = async (options: FetchOptions = {}): Promise<SocialNetwork[]> =>
   (await getFromApi<SocialNetworkResponse>('/socialnetwork', options))
-    .filter((socialNetwork) => isHttpsUrl(socialNetwork.link))
     .map((socialNetwork) => ({
       id: socialNetwork.id,
       name: socialNetwork.descricao,
-      url: socialNetwork.link,
-    }));
+      url: withScheme(socialNetwork.link),
+    }))
+    .filter((socialNetwork) => isHttpsUrl(socialNetwork.url));
