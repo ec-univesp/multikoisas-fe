@@ -81,6 +81,35 @@ describe('local api persistence', () => {
     expect(reloaded.storeSettings.logoUrl).toBeNull();
   });
 
+  it.each([null, {}, 'Rua Nova'])('uses the default store settings when the saved ones are %j', (storeSettings) => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...loadDatabase(), storeSettings }));
+    expect(loadDatabase().storeSettings).toEqual({
+      address: 'Av. Prof. Luiz Inácio de Anhaia Melo, 2085 - Centreville, Santo André - SP',
+      googleReviewsUrl: expect.stringMatching(/^https:\/\/www\.google\.com\/maps\//),
+      googleRating: 4.7,
+      googleReviewCount: 387,
+      logoUrl: null,
+    });
+  });
+
+  it('keeps each valid saved store setting and replaces the ones with the wrong type', () => {
+    const storeSettings = {
+      address: null,
+      googleReviewsUrl: 7,
+      googleRating: '5',
+      googleReviewCount: 10,
+      logoUrl: '/local-images/9',
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...loadDatabase(), storeSettings }));
+    expect(loadDatabase().storeSettings).toEqual({
+      address: null,
+      googleReviewsUrl: expect.stringMatching(/^https:\/\/www\.google\.com\/maps\//),
+      googleRating: 4.7,
+      googleReviewCount: 10,
+      logoUrl: '/local-images/9',
+    });
+  });
+
   it('never hands out the seed itself', () => {
     loadDatabase().products.splice(0);
     expect(loadDatabase().products).toHaveLength(5);

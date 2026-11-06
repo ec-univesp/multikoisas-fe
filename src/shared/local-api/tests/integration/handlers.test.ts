@@ -330,6 +330,23 @@ describe('local api store settings', () => {
     expect(database.storeSettings.googleRating).toBe(4.7);
   });
 
+  it.each(['null', '[]', '"Rua Nova"'])('refuses the store settings body %s', async (body) => {
+    const refused = await fetch('/api/configuracao', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body,
+    });
+    expect(refused.status).toBe(400);
+    expect(database.storeSettings.googleRating).toBe(4.7);
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('keeps the omitted store settings and clears the ones sent empty', async () => {
+    const before = database.storeSettings;
+    expect((await send('PUT', '/api/configuracao', { googleRating: 3.5, address: null })).status).toBe(200);
+    expect(database.storeSettings).toEqual({ ...before, googleRating: 3.5, address: null });
+  });
+
   it('keeps an uploaded logo in the image store, serves it and forgets the previous one', async () => {
     const first = await uploadLogo('primeira');
     expect(first.status).toBe(200);

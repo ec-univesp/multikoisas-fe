@@ -35,10 +35,27 @@ export type ApiDatabase = {
   nextId: number;
 };
 
-export type DatabaseSeed = Omit<ApiDatabase, 'nextId' | 'storeSettings'> & { storeSettings?: StoreSettingsRow };
+export type DatabaseSeed = Omit<ApiDatabase, 'nextId' | 'storeSettings'> & { storeSettings?: unknown };
+
+const textOr = (value: unknown, fallback: string | null) =>
+  value === null || typeof value === 'string' ? value : fallback;
+
+const numberOr = (value: unknown, fallback: number | null) =>
+  value === null || typeof value === 'number' ? value : fallback;
+
+const toStoreSettingsRow = (saved: unknown): StoreSettingsRow => {
+  const fields = new Map<string, unknown>(typeof saved === 'object' && saved !== null ? Object.entries(saved) : []);
+  return {
+    address: textOr(fields.get('address'), DEFAULT_STORE_SETTINGS.address),
+    googleReviewsUrl: textOr(fields.get('googleReviewsUrl'), DEFAULT_STORE_SETTINGS.googleReviewsUrl),
+    googleRating: numberOr(fields.get('googleRating'), DEFAULT_STORE_SETTINGS.googleRating),
+    googleReviewCount: numberOr(fields.get('googleReviewCount'), DEFAULT_STORE_SETTINGS.googleReviewCount),
+    logoUrl: textOr(fields.get('logoUrl'), DEFAULT_STORE_SETTINGS.logoUrl),
+  };
+};
 
 export const createDatabase = (seed: DatabaseSeed): ApiDatabase => {
-  const rows = structuredClone({ storeSettings: DEFAULT_STORE_SETTINGS, ...seed });
+  const rows = { ...structuredClone(seed), storeSettings: toStoreSettingsRow(seed.storeSettings) };
   const ids = [
     ...rows.products,
     ...rows.categories,
