@@ -86,6 +86,27 @@ describe('loginAction', () => {
     expect(await verifySessionToken(sessionToken, secret, now + 3600 * 1000)).toBe(false);
   });
 
+  it('accepts a token whose expiry has a fraction of a second', async () => {
+    answerLoginWith(() => HttpResponse.json({ token: buildJwt({ exp: now / 1000 + 3600.5 }) }));
+
+    await expect(logInWithTestAccount()).rejects.toThrow('NEXT_REDIRECT /admin/products');
+
+    const sessionToken = cookieStore.set.mock.calls.find(([name]) => name === SESSION_COOKIE_NAME)?.[1];
+    expect(await verifySessionToken(sessionToken, secret, now + 3600 * 1000 - 1)).toBe(true);
+  });
+
+  it('does not send the password to the api when the session secret is missing', async () => {
+    vi.stubEnv('SESSION_SECRET', '');
+    const apiRequests = recordApiRequests();
+
+    expect(await logInWithTestAccount()).toEqual({
+      error: unavailableMessage,
+      username: TEST_API_CREDENTIALS.username,
+    });
+    expect(apiRequests).toEqual([]);
+    expect(cookieStore.set).not.toHaveBeenCalled();
+  });
+
   it('keeps the cookies for 2 hours when the token has no readable expiry', async () => {
     await expect(logInWithTestAccount()).rejects.toThrow('NEXT_REDIRECT /admin/products');
 

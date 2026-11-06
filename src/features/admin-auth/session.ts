@@ -4,7 +4,7 @@ export const API_TOKEN_COOKIE_NAME = 'multikoisas_api_token';
 const MINIMUM_SECRET_LENGTH = 32;
 const TOKEN_PATTERN = /^(\d+)\.([A-Za-z0-9_-]+)$/;
 
-const hasValidSecret = (secret: string | undefined): secret is string =>
+export const hasValidSecret = (secret: string | undefined): secret is string =>
   secret !== undefined && secret.length >= MINIMUM_SECRET_LENGTH;
 
 const importSigningKey = (secret: string) =>
