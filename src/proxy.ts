@@ -6,11 +6,22 @@ import { SESSION_COOKIE_NAME, verifySessionToken } from '@/features/admin-auth/s
 const LOGIN_PATH = '/panel';
 const PANEL_HOME_PATH = '/admin/produtos';
 const READ_METHODS = new Set(['GET', 'HEAD']);
+const PANEL_WRITABLE_RESOURCES = new Set([
+  'produto',
+  'categoria',
+  'categoriaproduto',
+  'imagem',
+  'canalvenda',
+  'canalvendaproduto',
+  'socialnetwork',
+]);
 
 const isAdminPath = (pathname: string) =>
   pathname === '/admin' || pathname.startsWith('/admin/') || pathname === '/store' || pathname.startsWith('/store/');
 
-const isApiPath = (pathname: string) => pathname.startsWith('/api/');
+const isApiPath = (pathname: string) => pathname === '/api' || pathname.startsWith('/api/');
+
+const isPanelWritableResource = (pathname: string) => PANEL_WRITABLE_RESOURCES.has(pathname.split('/')[2] ?? '');
 
 const forwardWithApiToken = async (request: NextRequest, environment: Record<string, string | undefined>) => {
   const apiToken = await getApiToken(environment, Date.now());
@@ -36,6 +47,7 @@ export const proxy = async (request: NextRequest) => {
 
   if (isApiPath(pathname)) {
     if (!hasValidSession) return NextResponse.json({ error: 'Entre no painel para salvar.' }, { status: 401 });
+    if (!isPanelWritableResource(pathname)) return NextResponse.json({ error: 'Gravação não permitida.' }, { status: 403 });
     return forwardWithApiToken(request, environment);
   }
   if (pathname === LOGIN_PATH && hasValidSession) return NextResponse.redirect(new URL(PANEL_HOME_PATH, request.url));

@@ -120,7 +120,7 @@ describe('syncProductImages', () => {
   });
 
   it('counts as removed a photo the api no longer has', async () => {
-    server.use(http.delete('*/imagem', () => new HttpResponse(null, { status: 404 })));
+    server.use(http.delete('*/imagem', () => HttpResponse.text('Imagem não encontrada ou não pertence a este produto.', { status: 409 })));
 
     const result = await syncProductImages(garrafa, garrafaPhotos, { removedPhotoIds: [10], newFiles: [] });
 

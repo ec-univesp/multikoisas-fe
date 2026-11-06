@@ -117,6 +117,31 @@ describe('proxy', () => {
       expect(forwardedAuthorization(response)).toBe(`Bearer ${TEST_API_CREDENTIALS.token}`);
     });
 
+    it.each(['/api/user', '/api/user/emerson', '/api/auth/login', '/api'])(
+      'refuses a write to %s, which the panel never makes, without using the api token',
+      async (path) => {
+        const apiRequests = recordApiRequests();
+
+        const response = await proxy(buildRequest(path, await validToken(), 'POST'));
+
+        expect(response.status).toBe(403);
+        expect(forwardedAuthorization(response)).toBeNull();
+        expect(apiRequests).toEqual([]);
+      },
+    );
+
+    it('logs into the api only once for writes that arrive together', async () => {
+      const apiRequests = recordApiRequests();
+      const token = await validToken();
+
+      await Promise.all([
+        proxy(buildRequest('/api/produto', token, 'POST')),
+        proxy(buildRequest('/api/categoria', token, 'POST')),
+      ]);
+
+      expect(apiRequests).toEqual(['POST /auth/login']);
+    });
+
     it('logs into the api once and reuses the token on the next writes', async () => {
       const apiRequests = recordApiRequests();
       const token = await validToken();
@@ -133,7 +158,7 @@ describe('proxy', () => {
       const apiRequests = recordApiRequests();
 
       await proxy(buildRequest('/api/produto', await validToken(), 'POST'));
-      vi.setSystemTime(Date.now() + 91 * 60 * 1000);
+      vi.setSystemTime(Date.now() + 11 * 60 * 1000);
       await proxy(buildRequest('/api/produto', await validToken(), 'POST'));
 
       expect(apiRequests).toEqual(['POST /auth/login', 'POST /auth/login']);
