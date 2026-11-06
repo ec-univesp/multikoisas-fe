@@ -1,0 +1,1 @@
+export { StoreLogoField } from './StoreLogoField';
