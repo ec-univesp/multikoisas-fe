@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect, useState } from 'react';
 import { useLoadOnMount, type LoadState } from '@/shared/api/useLoadOnMount';
 import { fetchStoreSettings, onStoreSettingsSaved } from './api';
