@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect, useState } from 'react';
 
 export type LoadState<Data> = { status: 'loading' } | { status: 'error' } | { status: 'ready'; data: Data };
