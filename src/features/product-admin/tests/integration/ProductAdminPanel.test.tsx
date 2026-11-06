@@ -4,12 +4,19 @@ import { delay, http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProductAdminPanel } from '../../ProductAdminPanel';
 import type { Category, Product } from '@/entities/product';
+import type { SalesChannel } from '@/entities/sales-channel';
 import { apiDatabase } from '@/test/msw/apiDatabase';
 import { recordApiRequests, server } from '@/test/msw/server';
 
 const categories: Category[] = [
   { id: 2, name: 'Utensílios de Cozinha' },
   { id: 3, name: 'Banheiros' },
+];
+
+const salesChannels: SalesChannel[] = [
+  { id: 2, name: 'Shopee' },
+  { id: 3, name: 'Instagram' },
+  { id: 4, name: 'Facebook' },
 ];
 
 const buildProduct = (overrides: Partial<Product>): Product => ({
@@ -51,7 +58,7 @@ const linksOf = (produtoId: number) =>
   apiDatabase.categoriaProduto.filter((link) => link.produtoId === produtoId);
 
 const renderPanel = (products: Product[] = [buildProduct({})]) =>
-  render(<ProductAdminPanel initialProducts={products} categories={categories} />);
+  render(<ProductAdminPanel initialProducts={products} categories={categories} salesChannels={salesChannels} />);
 
 const fillProductForm = async (
   user: ReturnType<typeof userEvent.setup>,
@@ -104,6 +111,7 @@ describe('ProductAdminPanel', () => {
       'GET /api/produto?id=1',
       'GET /api/categoriaproduto?produtoId=1',
       'GET /api/imagem?produtoId=1',
+      'GET /api/canalvendaproduto?produtoId=1',
     ]);
   });
 
@@ -199,6 +207,7 @@ describe('ProductAdminPanel', () => {
       'GET /api/produto?id=1',
       'GET /api/categoriaproduto?produtoId=1',
       'GET /api/imagem?produtoId=1',
+      'GET /api/canalvendaproduto?produtoId=1',
       'PUT /api/produto/1',
     ]);
   });
@@ -490,14 +499,14 @@ describe('ProductAdminPanel', () => {
 
       expect(screen.getByRole('button', { name: 'Desfazer remoção da foto 1' })).toBeInTheDocument();
       expect(screen.getByAltText('Foto 4')).toHaveAttribute('src', expect.stringMatching(/^blob:/));
-      expect(apiRequests).toHaveLength(3);
+      expect(apiRequests).toHaveLength(4);
       await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
 
       expect(await screen.findByAltText('Garrafa Térmica 1L')).toHaveAttribute(
         'src',
         expect.stringContaining('garrafa-tampa.jpeg'),
       );
-      expect(apiRequests.slice(3)).toEqual(['PUT /api/produto/1', 'DELETE /api/imagem', 'POST /api/imagem?produtoId=1']);
+      expect(apiRequests.slice(4)).toEqual(['PUT /api/produto/1', 'DELETE /api/imagem', 'POST /api/imagem?produtoId=1']);
       expect(photoIdsOf(1)).toEqual([12, 11, 100]);
     });
 
@@ -664,6 +673,128 @@ describe('ProductAdminPanel', () => {
         expect.stringContaining('garrafa-frente.webp'),
       );
       expect(photoIdsOf(1)).toEqual([12, 10, 11]);
+    });
+  });
+
+  describe('purchase links', () => {
+    it('creates the product with a link to buy it at the chosen store', async () => {
+      const user = userEvent.setup();
+      renderPanel([]);
+
+      await user.click(screen.getByRole('button', { name: 'Novo produto' }));
+      await fillProductForm(user, { name: 'Vassoura', categoryId: '2', description: 'Macia.' });
+      await user.click(screen.getByRole('button', { name: 'Adicionar loja' }));
+      await user.selectOptions(screen.getByLabelText('Loja 1'), '2');
+      await user.type(screen.getByLabelText('Link da loja 1'), ' https://shopee.com.br/vassoura ');
+      await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+      expect(await screen.findByText('Vassoura')).toBeInTheDocument();
+      expect(purchaseLinksOf(100)).toEqual([
+        { produtoId: 100, canalVendaId: 2, link: 'https://shopee.com.br/vassoura' },
+      ]);
+      expect(apiRequests).toEqual(['POST /api/produto', 'POST /api/categoriaproduto', 'POST /api/canalvendaproduto']);
+    });
+
+    it('shows the saved links when editing and saves only what changed', async () => {
+      const user = userEvent.setup();
+      renderPanel();
+
+      await user.click(screen.getByRole('button', { name: 'Editar Garrafa Térmica 1L' }));
+      expect(await screen.findByLabelText('Loja 1')).toHaveValue('2');
+      expect(screen.getByLabelText('Link da loja 1')).toHaveValue('https://shopee.com.br/garrafa-termica');
+      expect(screen.getByLabelText('Loja 2')).toHaveValue('3');
+
+      const shopeeLink = screen.getByLabelText('Link da loja 1');
+      await user.clear(shopeeLink);
+      await user.type(shopeeLink, 'https://shopee.com.br/garrafa-nova');
+      await user.click(screen.getByRole('button', { name: 'Remover loja 2' }));
+      await user.click(screen.getByRole('button', { name: 'Adicionar loja' }));
+      await user.selectOptions(screen.getByLabelText('Loja 2'), '4');
+      await user.type(screen.getByLabelText('Link da loja 2'), 'https://facebook.com/garrafa');
+      await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+      await vi.waitFor(() => expect(screen.queryByLabelText('Loja 1')).not.toBeInTheDocument());
+      expect(purchaseLinksOf(1)).toEqual([
+        { produtoId: 1, canalVendaId: 2, link: 'https://shopee.com.br/garrafa-nova' },
+        { produtoId: 1, canalVendaId: 4, link: 'https://facebook.com/garrafa' },
+      ]);
+      expect(apiRequests).toEqual([
+        'GET /api/produto?id=1',
+        'GET /api/categoriaproduto?produtoId=1',
+        'GET /api/imagem?produtoId=1',
+        'GET /api/canalvendaproduto?produtoId=1',
+        'PUT /api/produto/1',
+        'DELETE /api/canalvendaproduto',
+        'DELETE /api/canalvendaproduto',
+        'POST /api/canalvendaproduto',
+        'POST /api/canalvendaproduto',
+      ]);
+    });
+
+    it('updates the store button of the product after saving a new link', async () => {
+      const user = userEvent.setup();
+      renderPanel();
+
+      await user.click(screen.getByRole('button', { name: 'Editar Garrafa Térmica 1L' }));
+      await user.click(await screen.findByRole('button', { name: 'Remover loja 2' }));
+      await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
+      await user.click(await screen.findByRole('button', { name: 'Editar Garrafa Térmica 1L' }));
+
+      expect(await screen.findByLabelText('Loja 1')).toHaveValue('2');
+      expect(screen.queryByLabelText('Loja 2')).not.toBeInTheDocument();
+    });
+
+    it.each([
+      ['without a store', '', 'https://shopee.com.br/x', 'Escolha a loja e cole um link que comece com https://.'],
+      ['with a link that is not https', '2', 'shopee.com.br/x', 'Escolha a loja e cole um link que comece com https://.'],
+    ])('blocks a row %s before calling the api', async (_case, store, link, message) => {
+      const user = userEvent.setup();
+      renderPanel([]);
+
+      await user.click(screen.getByRole('button', { name: 'Novo produto' }));
+      await fillProductForm(user, { name: 'Vassoura', categoryId: '2', description: 'Macia.' });
+      await user.click(screen.getByRole('button', { name: 'Adicionar loja' }));
+      if (store) await user.selectOptions(screen.getByLabelText('Loja 1'), store);
+      await user.type(screen.getByLabelText('Link da loja 1'), link);
+      await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+      expect(screen.getByText(message)).toHaveAttribute('role', 'alert');
+      expect(apiRequests).toEqual([]);
+    });
+
+    it('blocks the same store twice before calling the api', async () => {
+      const user = userEvent.setup();
+      renderPanel([]);
+
+      await user.click(screen.getByRole('button', { name: 'Novo produto' }));
+      await fillProductForm(user, { name: 'Vassoura', categoryId: '2', description: 'Macia.' });
+      for (const row of [1, 2]) {
+        await user.click(screen.getByRole('button', { name: 'Adicionar loja' }));
+        await user.selectOptions(screen.getByLabelText(`Loja ${row}`), '2');
+        await user.type(screen.getByLabelText(`Link da loja ${row}`), `https://shopee.com.br/${row}`);
+      }
+      await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+      expect(screen.getByText('Cada loja só pode aparecer uma vez.')).toHaveAttribute('role', 'alert');
+      expect(apiRequests).toEqual([]);
+    });
+
+    it('keeps the saved product and warns when the links could not be saved', async () => {
+      respondWith('post', '*/canalvendaproduto', 403);
+      const user = userEvent.setup();
+      renderPanel([]);
+
+      await user.click(screen.getByRole('button', { name: 'Novo produto' }));
+      await fillProductForm(user, { name: 'Vassoura', categoryId: '2', description: 'Macia.' });
+      await user.click(screen.getByRole('button', { name: 'Adicionar loja' }));
+      await user.selectOptions(screen.getByLabelText('Loja 1'), '2');
+      await user.type(screen.getByLabelText('Link da loja 1'), 'https://shopee.com.br/vassoura');
+      await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+      expect(await screen.findByText('Vassoura')).toBeInTheDocument();
+      expect(
+        screen.getByText('Produto salvo, mas os links de compra não foram atualizados. Edite o produto para tentar de novo.'),
+      ).toHaveAttribute('role', 'alert');
     });
   });
 });
