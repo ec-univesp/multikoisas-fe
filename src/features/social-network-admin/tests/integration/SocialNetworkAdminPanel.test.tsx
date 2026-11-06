@@ -36,7 +36,7 @@ const fillForm = async (user: User, name: string, url: string) => {
   await user.click(screen.getByRole('button', { name: 'Salvar rede' }));
 };
 
-// Caminho feliz de quando o back corrigir o POST, que hoje responde 409 a todo cadastro.
+// Happy path for when the back end fixes the POST, which today answers 409 to every create.
 const acceptNewSocialNetworks = () =>
   server.use(
     http.post<never, { descricao: string; link: string }>('*/socialnetwork', async ({ request }) => {

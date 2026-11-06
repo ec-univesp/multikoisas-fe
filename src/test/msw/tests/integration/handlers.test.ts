@@ -10,7 +10,7 @@ const send = (method: string, path: string, body?: unknown) =>
     body: body ? JSON.stringify(body) : undefined,
   });
 
-// O jsdom do Vitest troca o conteúdo de todo File no FormData: o multipart vai escrito à mão.
+// Vitest jsdom replaces the content of every File in FormData: the multipart body is written by hand.
 const uploadToProduct5 = (fileName: string, content: string) =>
   fetch('/api/imagem?produtoId=5', {
     method: 'POST',

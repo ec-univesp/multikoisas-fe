@@ -1,14 +1,14 @@
 import { http, HttpResponse } from 'msw';
 import { apiDatabase, SUPABASE_IMAGES, type PurchaseLinkRow, type ProductCategoryRow } from './apiDatabase';
 
-// Corpo de erro padrão do Spring Boot para ResponseStatusException.
+// Spring Boot default error body for ResponseStatusException.
 const springError = (status: number, error: string, request: Request) =>
   HttpResponse.json(
     { timestamp: new Date().toISOString(), status, error, path: new URL(request.url).pathname },
     { status },
   );
 
-// A API responde 404 sem corpo para lista vazia; /canalvendaproduto responde 204.
+// The API answers an empty list with a bodiless 404; /canalvendaproduto answers 204.
 const listResponse = <Row>(rows: readonly Row[], emptyStatus = 404) =>
   rows.length === 0 ? new HttpResponse(null, { status: emptyStatus }) : HttpResponse.json(rows);
 
@@ -61,7 +61,7 @@ export const handlers = [
     return HttpResponse.json(product);
   }),
 
-  // A API apaga fotos, links e categorias junto; sem link de compra ou sem categoria ela desfaz tudo e responde 409.
+  // The API deletes photos, links and categories along; without a purchase link or a category it rolls back and answers 409.
   http.delete('*/produto/:id', ({ params }) => {
     const id = Number(params.id);
     const hasPurchaseLink = apiDatabase.purchaseLinks.some((link) => link.produtoId === id);
@@ -170,7 +170,7 @@ export const handlers = [
     if (file.size === 0) return HttpResponse.text('O arquivo enviado está vazio.', { status: 409 });
     if (file.size > MAX_UPLOAD_BYTES) return springError(413, 'Payload Too Large', request);
     const id = apiDatabase.nextId++;
-    // O jsdom do Vitest troca o nome do arquivo por "blob" no multipart.
+    // Vitest jsdom replaces the file name with "blob" in the multipart body.
     const productImage = { id, produtoId: Number(produtoId), imagemUrl: `${SUPABASE_IMAGES}/upload-${id}` };
     apiDatabase.productImages.push(productImage);
     return HttpResponse.json(productImage, { status: 201 });
@@ -195,8 +195,8 @@ export const handlers = [
     );
   }),
 
-  // Bug da API: o serviço testa `findByName(...) != null` numa List, então todo cadastro e todo
-  // PUT com descricao preenchida respondem 409, exista ou não a rede.
+  // API bug: the service checks `findByName(...) != null` on a List, so every create and every
+  // PUT with descricao filled answer 409, whether the network exists or not.
   http.post<never, SocialNetworkBody>('*/socialnetwork', async ({ request }) => {
     const { descricao, link } = await request.json();
     if (!descricao?.trim() || !link?.trim()) return springError(400, 'Bad Request', request);

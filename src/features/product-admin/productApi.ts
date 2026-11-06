@@ -28,7 +28,7 @@ const toRequestBody = (body: unknown): RequestInit => {
 
 const callApi = async (method: string, path: string, body?: unknown): Promise<Response> => {
   const response = await fetch(`/api${path}`, { method, ...toRequestBody(body) });
-  if (!response.ok) throw new Error(`${method} ${path} respondeu ${response.status}`);
+  if (!response.ok) throw new Error(`${method} ${path} responded ${response.status}`);
   return response;
 };
 
@@ -103,7 +103,7 @@ export const loadProductForEdit = async (
 
 export class CategoryLinkError extends Error {
   constructor(readonly product: Product) {
-    super(`Produto ${product.id} salvo sem categoria`);
+    super(`Product ${product.id} saved without a category`);
   }
 }
 
@@ -149,14 +149,14 @@ export const updateProduct = async (
   return toProduct(apiProduct, category, product.images, product.storeLinks);
 };
 
-// A API apaga categorias, links e fotos junto, mas responde 409 se faltar categoria ou link de compra.
+// The API deletes categories, links and photos along, but answers 409 when the category or purchase link is missing.
 export class ProductDeleteRefusedError extends Error {}
 
 export const deleteProduct = async (product: Product): Promise<void> => {
   const response = await fetch(`/api/produto/${product.id}`, { method: 'DELETE' });
   if (response.status === HTTP_CONFLICT)
-    throw new ProductDeleteRefusedError(`DELETE /produto/${product.id} respondeu 409`);
-  if (!response.ok) throw new Error(`DELETE /produto/${product.id} respondeu ${response.status}`);
+    throw new ProductDeleteRefusedError(`DELETE /produto/${product.id} responded 409`);
+  if (!response.ok) throw new Error(`DELETE /produto/${product.id} responded ${response.status}`);
 };
 
 const uploadProductImage = async (produtoId: number, file: File): Promise<ProductImageRecord | null> => {
@@ -173,9 +173,9 @@ const uploadProductImage = async (produtoId: number, file: File): Promise<Produc
 
 const deleteProductImage = async (produtoId: number, imageId: number) => {
   const response = await fetch('/api/imagem', { method: 'DELETE', ...toRequestBody({ id: imageId, produtoId }) });
-  // Foto que já não existe volta 409 na API atual (404 na anterior).
+  // A photo that no longer exists answers 409 on the current API (404 on the previous one).
   if (!response.ok && response.status !== HTTP_NOT_FOUND && response.status !== HTTP_CONFLICT) {
-    throw new Error(`DELETE /imagem respondeu ${response.status}`);
+    throw new Error(`DELETE /imagem responded ${response.status}`);
   }
 };
 
@@ -228,7 +228,7 @@ export const syncProductImages = async (
 
 export class PurchaseLinkError extends Error {
   constructor(readonly product: Product) {
-    super(`Links de compra do produto ${product.id} não foram salvos`);
+    super(`Purchase links of product ${product.id} were not saved`);
   }
 }
 

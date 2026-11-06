@@ -28,9 +28,9 @@ const sendToApi = (method: string, path: string, body: { descricao?: string; lin
 
 const conflictErrorOf = async (response: Response, request: string): Promise<Error> => {
   const message = await response.text();
-  if (message.includes('já está cadastrada')) return new SocialNetworkNameTakenError(`${request} respondeu 409`);
-  if (message.includes('não encontrad')) return new SocialNetworkChangedElsewhereError(`${request} respondeu 409`);
-  return new Error(`${request} respondeu 409`);
+  if (message.includes('já está cadastrada')) return new SocialNetworkNameTakenError(`${request} responded 409`);
+  if (message.includes('não encontrad')) return new SocialNetworkChangedElsewhereError(`${request} responded 409`);
+  return new Error(`${request} responded 409`);
 };
 
 export const fetchAllSocialNetworks = async (): Promise<SocialNetwork[]> =>
@@ -38,8 +38,8 @@ export const fetchAllSocialNetworks = async (): Promise<SocialNetwork[]> =>
 
 export const createSocialNetwork = async (values: SocialNetworkValues): Promise<void> => {
   const response = await sendToApi('POST', '/api/socialnetwork', { descricao: values.name, link: values.url });
-  if (response.status === HTTP_CONFLICT) throw new SocialNetworkNameTakenError('POST /socialnetwork respondeu 409');
-  if (!response.ok) throw new Error(`POST /socialnetwork respondeu ${response.status}`);
+  if (response.status === HTTP_CONFLICT) throw new SocialNetworkNameTakenError('POST /socialnetwork responded 409');
+  if (!response.ok) throw new Error(`POST /socialnetwork responded ${response.status}`);
 };
 
 export const updateSocialNetwork = async (
@@ -50,13 +50,13 @@ export const updateSocialNetwork = async (
   const request = `PUT ${pathOf(socialNetwork)}`;
   const response = await sendToApi('PUT', pathOf(socialNetwork), body);
   if (response.status === HTTP_CONFLICT) throw await conflictErrorOf(response, request);
-  if (!response.ok) throw new Error(`${request} respondeu ${response.status}`);
+  if (!response.ok) throw new Error(`${request} responded ${response.status}`);
   return toSocialNetwork(await response.json());
 };
 
 export const deleteSocialNetwork = async (socialNetwork: SocialNetwork): Promise<void> => {
   const response = await fetch(pathOf(socialNetwork), { method: 'DELETE' });
   if (!response.ok && response.status !== HTTP_NOT_FOUND) {
-    throw new Error(`DELETE ${pathOf(socialNetwork)} respondeu ${response.status}`);
+    throw new Error(`DELETE ${pathOf(socialNetwork)} responded ${response.status}`);
   }
 };
