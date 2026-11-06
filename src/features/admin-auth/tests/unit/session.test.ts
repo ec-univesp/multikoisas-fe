@@ -12,7 +12,9 @@ describe('session token', () => {
     const token = await createSessionToken(secret, credentialsFingerprint, now);
 
     expect(token).toMatch(new RegExp(`^${now + eightHoursInMs}\\.[A-Za-z0-9_-]+$`));
-    expect(await verifySessionToken(token ?? undefined, secret, credentialsFingerprint, now + eightHoursInMs - 1)).toBe(true);
+    expect(await verifySessionToken(token ?? undefined, secret, credentialsFingerprint, now + eightHoursInMs - 1)).toBe(
+      true,
+    );
   });
 
   it('rejects a token whose signature was tampered with', async () => {
@@ -20,8 +22,12 @@ describe('session token', () => {
     const [expiresAt, signature] = token.split('.');
     const tamperedSignature = `${signature.startsWith('A') ? 'B' : 'A'}${signature.slice(1)}`;
 
-    expect(await verifySessionToken(`${expiresAt}.${tamperedSignature}`, secret, credentialsFingerprint, now)).toBe(false);
-    expect(await verifySessionToken(`${Number(expiresAt) + 1}.${signature}`, secret, credentialsFingerprint, now)).toBe(false);
+    expect(await verifySessionToken(`${expiresAt}.${tamperedSignature}`, secret, credentialsFingerprint, now)).toBe(
+      false,
+    );
+    expect(await verifySessionToken(`${Number(expiresAt) + 1}.${signature}`, secret, credentialsFingerprint, now)).toBe(
+      false,
+    );
   });
 
   it('rejects a token signed with another secret', async () => {
@@ -40,7 +46,9 @@ describe('session token', () => {
   it('rejects an expired token', async () => {
     const token = await createSessionToken(secret, credentialsFingerprint, now);
 
-    expect(await verifySessionToken(token ?? undefined, secret, credentialsFingerprint, now + eightHoursInMs)).toBe(false);
+    expect(await verifySessionToken(token ?? undefined, secret, credentialsFingerprint, now + eightHoursInMs)).toBe(
+      false,
+    );
   });
 
   it.each([undefined, '', 'no-dot', '123.', '.abc', 'abc.def', '1.2.3', '123.not+base64', '123.a'])(

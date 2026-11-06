@@ -13,9 +13,7 @@ describe('SiteHeader', () => {
   it('shows the notice bar, the brand, the search and the section links', async () => {
     await renderHeader();
     expect(
-      screen.getByText(
-        'Vitrine oficial MultiKoisas: escolha aqui e conclua a compra com segurança na loja parceira.',
-      ),
+      screen.getByText('Vitrine oficial MultiKoisas: escolha aqui e conclua a compra com segurança na loja parceira.'),
     ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /^multikoisas/i })).toHaveAttribute('href', '/');
     expect(screen.getByText('Tudo em um só lugar')).toBeInTheDocument();
@@ -85,9 +83,7 @@ describe('SiteHeader', () => {
   it('recognizes whatsapp by its address whatever the network is called', async () => {
     server.use(
       http.get('*/socialnetwork', () =>
-        HttpResponse.json([
-          { id: 4, descricao: 'Contato', link: 'https://api.whatsapp.com/send?phone=5500000000000' },
-        ]),
+        HttpResponse.json([{ id: 4, descricao: 'Contato', link: 'https://api.whatsapp.com/send?phone=5500000000000' }]),
       ),
     );
     await renderHeader();

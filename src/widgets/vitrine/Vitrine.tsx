@@ -10,7 +10,9 @@ export const Vitrine = async () => {
   return (
     <section className="mx-auto max-w-7xl px-4 pt-6 pb-12 lg:px-8">
       <VitrineHeading />
-      <p className="mt-1 mb-4 text-gray-600">Busque pelo nome ou escolha uma categoria. Abra o produto para ver todos os detalhes.</p>
+      <p className="mt-1 mb-4 text-gray-600">
+        Busque pelo nome ou escolha uma categoria. Abra o produto para ver todos os detalhes.
+      </p>
       <VitrineFilter products={products} categories={categories} />
     </section>
   );

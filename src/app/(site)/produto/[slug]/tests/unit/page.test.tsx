@@ -2,8 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import ProductPage from '../../page';
 
-const renderProductPage = async (slug: string) =>
-  render(await ProductPage({ params: Promise.resolve({ slug }) }));
+const renderProductPage = async (slug: string) => render(await ProductPage({ params: Promise.resolve({ slug }) }));
 
 describe('ProductPage', () => {
   it('shows every api photo of the product in id order', async () => {

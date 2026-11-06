@@ -22,7 +22,10 @@ const revokeAll = (previewUrls: Set<string>) => {
   previewUrls.clear();
 };
 
-const buildInitialFormValues = (product: Product | undefined, purchaseLinks: readonly PurchaseLink[]): ProductFormValues => ({
+const buildInitialFormValues = (
+  product: Product | undefined,
+  purchaseLinks: readonly PurchaseLink[],
+): ProductFormValues => ({
   name: product?.name ?? '',
   categoryId: product?.categoryId === null || !product ? '' : String(product.categoryId),
   description: product?.longDescription ?? '',
@@ -141,16 +144,14 @@ export const ProductFormModal = ({
 
   return (
     <Modal isOpen={isOpen} onClose={closeUnlessSaving} className="m-4 max-w-[700px]">
-      <div className="no-scrollbar relative w-full max-w-[700px] overflow-y-auto rounded-3xl bg-white p-4 lg:p-8">
+      <div className="relative no-scrollbar w-full max-w-[700px] overflow-y-auto rounded-3xl bg-white p-4 lg:p-8">
         <h4 className="mb-1 text-2xl font-semibold text-gray-800">
           {existingProduct ? 'Editar produto' : 'Novo produto'}
         </h4>
-        <p className="mb-6 text-sm text-gray-500">
-          Esses dados aparecem no card e na página de detalhes da vitrine.
-        </p>
+        <p className="mb-6 text-sm text-gray-500">Esses dados aparecem no card e na página de detalhes da vitrine.</p>
 
         <form onSubmit={handleSubmit} noValidate>
-          <div className="custom-scrollbar flex max-h-[60vh] flex-col gap-5 overflow-y-auto px-1 pb-2">
+          <div className="flex custom-scrollbar max-h-[60vh] flex-col gap-5 overflow-y-auto px-1 pb-2">
             <div>
               <Label htmlFor="product-name">Nome do produto</Label>
               <Input
