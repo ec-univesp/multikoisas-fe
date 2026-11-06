@@ -9,7 +9,7 @@ const secret = 'a-session-secret-with-at-least-32-characters';
 const apiToken = 'jwt-guardado-no-login';
 const oneHourInMs = 60 * 60 * 1000;
 
-type RequestOptions = { apiToken?: string | null; authorization?: string };
+type RequestOptions = { apiToken?: string | null; authorization?: string; origin?: string };
 
 const buildRequest = (path: string, sessionToken?: string, method = 'GET', options: RequestOptions = {}) => {
   const headers = new Headers();
@@ -20,6 +20,7 @@ const buildRequest = (path: string, sessionToken?: string, method = 'GET', optio
   ].filter((cookie) => cookie !== null);
   if (cookies.length > 0) headers.set('cookie', cookies.join('; '));
   if (options.authorization) headers.set('authorization', options.authorization);
+  if (options.origin) headers.set('origin', options.origin);
   return new NextRequest(`http://localhost:3000${path}`, { method, headers });
 };
 
@@ -75,6 +76,16 @@ describe('proxy', () => {
     expect(response.headers.get('location')).toBe('http://localhost:3000/panel');
   });
 
+  it('treats a session whose api token cookie is gone as signed out, so the person can sign in again', async () => {
+    const sessionWithoutToken = await validToken();
+
+    const adminPage = await proxy(buildRequest('/admin/products', sessionWithoutToken, 'GET', { apiToken: null }));
+    const loginPage = await proxy(buildRequest('/panel', sessionWithoutToken, 'GET', { apiToken: null }));
+
+    expect(adminPage.headers.get('location')).toBe('http://localhost:3000/panel');
+    expect(loginPage.headers.get('x-middleware-next')).toBe('1');
+  });
+
   it('redirects the login page to the products panel with a valid session', async () => {
     const response = await proxy(buildRequest('/panel', await validToken()));
 
@@ -125,6 +136,23 @@ describe('proxy', () => {
       expect(await response.json()).toEqual({ error: 'Entre no painel para salvar.' });
       expect(forwardedAuthorization(response)).toBeNull();
       expect(apiRequests).toEqual([]);
+    });
+
+    it('refuses a write sent from another site before using the api token', async () => {
+      const response = await proxy(
+        buildRequest('/api/produto', await validToken(), 'POST', { origin: 'https://outro-site.example' }),
+      );
+
+      expect(response.status).toBe(403);
+      expect(forwardedAuthorization(response)).toBeNull();
+    });
+
+    it('forwards a write sent from the panel itself', async () => {
+      const response = await proxy(
+        buildRequest('/api/produto', await validToken(), 'POST', { origin: 'http://localhost:3000' }),
+      );
+
+      expect(forwardedAuthorization(response)).toBe(`Bearer ${apiToken}`);
     });
 
     it('forwards a write with the api token stored at login', async () => {

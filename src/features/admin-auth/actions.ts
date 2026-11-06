@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { API_URL } from '@/shared/api/getFromApi';
 import { resolveSessionSecret } from './authEnvironment';
-import { API_TOKEN_COOKIE_NAME, createSessionToken, SESSION_COOKIE_NAME } from './session';
+import { API_TOKEN_COOKIE_NAME, createSessionToken, hasValidSecret, SESSION_COOKIE_NAME } from './session';
 
 export type LoginState = { error: string | null; username?: string };
 
@@ -38,7 +38,7 @@ const logIntoApi = async (username: string, password: string): Promise<ApiLoginR
 const readTokenExpiry = (token: string): number | null => {
   try {
     const { exp }: { exp?: unknown } = JSON.parse(Buffer.from(token.split('.')[1] ?? '', 'base64url').toString());
-    return typeof exp === 'number' && Number.isFinite(exp) ? exp * 1000 : null;
+    return typeof exp === 'number' && Number.isFinite(exp) ? Math.floor(exp * 1000) : null;
   } catch {
     return null;
   }
@@ -51,6 +51,9 @@ export const loginAction = async (_previousState: LoginState, formData: FormData
     return { error: MISSING_FIELDS_MESSAGE, username: typeof username === 'string' ? username : '' };
   }
 
+  const sessionSecret = resolveSessionSecret(process.env);
+  if (!hasValidSecret(sessionSecret)) return { error: UNAVAILABLE_MESSAGE, username };
+
   const loginResult = await logIntoApi(username, password);
   if ('error' in loginResult) return { error: loginResult.error, username };
 
@@ -59,7 +62,7 @@ export const loginAction = async (_previousState: LoginState, formData: FormData
     readTokenExpiry(loginResult.token) ?? now + DEFAULT_TOKEN_DURATION_MILLISECONDS,
     now + MAXIMUM_SESSION_DURATION_MILLISECONDS,
   );
-  const sessionToken = await createSessionToken(resolveSessionSecret(process.env), now, expiresAt);
+  const sessionToken = await createSessionToken(sessionSecret, now, expiresAt);
   if (!sessionToken) return { error: UNAVAILABLE_MESSAGE, username };
 
   const cookieOptions = {

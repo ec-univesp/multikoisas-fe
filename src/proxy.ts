@@ -32,17 +32,25 @@ const forwardWithApiToken = (request: NextRequest) => {
   return NextResponse.next({ request: { headers } });
 };
 
+const isFromAnotherSite = (request: NextRequest) => {
+  const origin = request.headers.get('origin');
+  return origin !== null && origin !== request.nextUrl.origin;
+};
+
 export const proxy = async (request: NextRequest) => {
   const { pathname } = request.nextUrl;
   if (isApiPath(pathname) && READ_METHODS.has(request.method)) return NextResponse.next();
 
-  const hasValidSession = await verifySessionToken(
-    request.cookies.get(SESSION_COOKIE_NAME)?.value,
-    resolveSessionSecret(process.env),
-    Date.now(),
-  );
+  const hasValidSession =
+    request.cookies.has(API_TOKEN_COOKIE_NAME) &&
+    (await verifySessionToken(
+      request.cookies.get(SESSION_COOKIE_NAME)?.value,
+      resolveSessionSecret(process.env),
+      Date.now(),
+    ));
 
   if (isApiPath(pathname)) {
+    if (isFromAnotherSite(request)) return NextResponse.json({ error: 'Gravação não permitida.' }, { status: 403 });
     if (!hasValidSession) return signInToSave();
     if (!isPanelWritableResource(pathname))
       return NextResponse.json({ error: 'Gravação não permitida.' }, { status: 403 });
