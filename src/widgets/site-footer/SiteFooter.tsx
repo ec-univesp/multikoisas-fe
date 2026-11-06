@@ -1,19 +1,20 @@
+'use client';
+
 import Link from 'next/link';
-import { fetchSocialNetworks, SocialNetworkLinks, type SocialNetwork } from '@/entities/social-network';
+import { SocialNetworkLinks, useSocialNetworks } from '@/entities/social-network';
 import { STORE_SETTINGS, type StoreSettings } from '@/entities/store-settings';
 import { ShowcaseLink } from '@/features/showcase-filter';
 import { BrandMark } from '@/shared/ui/BrandMark';
 
-const loadSocialNetworks = (): Promise<SocialNetwork[]> => fetchSocialNetworks().catch(() => []);
-
 const headingClassName = 'text-sm font-bold tracking-wider text-store-yellow uppercase';
 const shortcutClassName = 'flex min-h-11 items-center text-blue-100 hover:text-store-yellow';
 
-export const SiteFooter = async ({ settings = STORE_SETTINGS }: { settings?: StoreSettings } = {}) => {
-  const socialNetworks = await loadSocialNetworks();
+export const SiteFooter = ({ settings = STORE_SETTINGS }: { settings?: StoreSettings }) => {
+  const socialNetworksState = useSocialNetworks();
+  const socialNetworks = socialNetworksState.status === 'ready' ? socialNetworksState.data : [];
   const address = settings.address?.trim();
   return (
-    <footer className="bg-store-navy text-blue-100">
+    <footer aria-busy={socialNetworksState.status === 'loading'} className="bg-store-navy text-blue-100">
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 md:grid-cols-3 lg:px-8">
         <div>
           <Link href="/" className="inline-flex">

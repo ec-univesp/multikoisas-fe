@@ -1,22 +1,22 @@
+'use client';
+
 import Link from 'next/link';
-import { fetchProducts, toStoresPhrase, type Product } from '@/entities/product';
-import { fetchSocialNetworks, isWhatsApp, WhatsAppLink, type SocialNetwork } from '@/entities/social-network';
+import { toStoresPhrase, useCatalog } from '@/entities/product';
+import { isWhatsApp, useSocialNetworks, WhatsAppLink } from '@/entities/social-network';
 import { ShowcaseLink, ShowcaseSearchField } from '@/features/showcase-filter';
 import { BrandMark } from '@/shared/ui/BrandMark';
-
-const loadProducts = (): Promise<Product[]> => fetchProducts().catch(() => []);
-const loadSocialNetworks = (): Promise<SocialNetwork[]> => fetchSocialNetworks().catch(() => []);
 
 const navLinkClassName =
   'flex h-11 shrink-0 items-center rounded-lg px-3 text-sm font-semibold text-gray-700 hover:bg-white hover:text-store-navy';
 
-export const SiteHeader = async () => {
-  const [products, socialNetworks] = await Promise.all([loadProducts(), loadSocialNetworks()]);
-  const whatsApp = socialNetworks.find(isWhatsApp);
-  const storesPhrase = toStoresPhrase(products);
+export const SiteHeader = () => {
+  const catalog = useCatalog();
+  const socialNetworks = useSocialNetworks();
+  const whatsApp = socialNetworks.status === 'ready' ? socialNetworks.data.find(isWhatsApp) : undefined;
+  const storesPhrase = catalog.status === 'ready' ? toStoresPhrase(catalog.data.products) : null;
 
   return (
-    <header>
+    <header aria-busy={catalog.status === 'loading' || socialNetworks.status === 'loading'}>
       <p className="bg-store-yellow px-4 py-2 text-center text-sm font-semibold text-store-navy-950">
         Vitrine oficial MultiKoisas: escolha aqui e conclua a compra com segurança na loja parceira.
       </p>
@@ -42,6 +42,7 @@ export const SiteHeader = async () => {
             </Link>
             <ShowcaseLink className={navLinkClassName} />
           </nav>
+          {catalog.status === 'loading' && <span data-testid="stores-phrase-placeholder" className="block h-5" />}
           {storesPhrase && <p className="px-3 text-sm font-medium text-gray-600 md:px-0">{`Compre ${storesPhrase}`}</p>}
         </div>
       </div>

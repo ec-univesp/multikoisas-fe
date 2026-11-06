@@ -3,13 +3,32 @@ import { http, HttpResponse } from 'msw';
 import { describe, expect, it, vi } from 'vitest';
 import { ShowcaseSearchProvider } from '@/features/showcase-filter';
 import { server } from '@/test/msw/server';
+import { waitForLoaded } from '@/test/waitForLoaded';
 import { SiteHeader } from '../../SiteHeader';
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
-const renderHeader = async () => render(<ShowcaseSearchProvider>{await SiteHeader()}</ShowcaseSearchProvider>);
+const renderHeader = async () => {
+  render(
+    <ShowcaseSearchProvider>
+      <SiteHeader />
+    </ShowcaseSearchProvider>,
+  );
+  await waitForLoaded();
+};
 
 describe('SiteHeader', () => {
+  it('marks the header busy and keeps the store strip line while the data loads', () => {
+    render(
+      <ShowcaseSearchProvider>
+        <SiteHeader />
+      </ShowcaseSearchProvider>,
+    );
+    expect(screen.getByRole('banner')).toHaveAttribute('aria-busy', 'true');
+    expect(screen.getByTestId('stores-phrase-placeholder')).toHaveClass('h-5');
+    expect(screen.getByRole('searchbox', { name: 'Buscar produto no cabeçalho' })).toBeInTheDocument();
+  });
+
   it('shows the notice bar, the brand, the search and the section links', async () => {
     await renderHeader();
     expect(
