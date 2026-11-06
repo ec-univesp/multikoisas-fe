@@ -1,4 +1,4 @@
-import { createDatabase, type ApiDatabase } from './database';
+import { createDatabase, type ApiDatabase, type DatabaseSeed } from './database';
 import { imageStore } from './imageStore';
 import seed from './seed.json';
 
@@ -15,7 +15,7 @@ const TABLES = [
 ] as const;
 
 // ponytail: checks the tables, not each row; a hand-edited broken row needs the reset.
-const isDatabase = (value: unknown): value is ApiDatabase => {
+const isDatabase = (value: unknown): value is DatabaseSeed & { nextId: number } => {
   if (typeof value !== 'object' || value === null) return false;
   const fields = new Map<string, unknown>(Object.entries(value));
   return typeof fields.get('nextId') === 'number' && TABLES.every((table) => Array.isArray(fields.get(table)));
@@ -32,7 +32,8 @@ const readSaved = (): unknown => {
 export const loadDatabase = (): ApiDatabase => {
   const saved = readSaved();
   if (!isDatabase(saved)) return createDatabase(seed);
-  return { ...saved, nextId: Math.max(saved.nextId, createDatabase(saved).nextId) };
+  const database = createDatabase(saved);
+  return { ...database, nextId: Math.max(saved.nextId, database.nextId) };
 };
 
 export const reloadDatabase = (database: ApiDatabase) => {
