@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { ShowcaseSearchProvider } from '@/features/showcase-filter';
+import { LocalApiProvider } from '@/shared/local-api/LocalApiProvider';
 import { GoogleReviewsBadge } from '@/widgets/google-reviews-badge';
 import { SiteFooter } from '@/widgets/site-footer';
 import { SiteHeader } from '@/widgets/site-header';
@@ -17,18 +18,20 @@ export default function SiteLayout({ children }: Readonly<{ children: React.Reac
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
       <script dangerouslySetInnerHTML={{ __html: forceLightTheme }} />
-      <ShowcaseSearchProvider>
-        <SiteHeader />
-        <main className="flex-1">{children}</main>
-      </ShowcaseSearchProvider>
-      <SiteFooter />
-      <aside
-        aria-label="Contatos da loja"
-        className="fixed top-1/2 right-4 z-40 flex -translate-y-1/2 flex-col items-end gap-3"
-      >
-        <GoogleReviewsBadge />
-        <WhatsAppFloatingButton />
-      </aside>
+      <LocalApiProvider>
+        <ShowcaseSearchProvider>
+          <SiteHeader />
+          <main className="flex-1">{children}</main>
+        </ShowcaseSearchProvider>
+        <SiteFooter />
+        <aside
+          aria-label="Contatos da loja"
+          className="fixed top-1/2 right-4 z-40 flex -translate-y-1/2 flex-col items-end gap-3"
+        >
+          <GoogleReviewsBadge />
+          <WhatsAppFloatingButton />
+        </aside>
+      </LocalApiProvider>
     </div>
   );
 }
