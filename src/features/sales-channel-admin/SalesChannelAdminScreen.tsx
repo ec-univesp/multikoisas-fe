@@ -5,10 +5,7 @@ import Button from '@/components/ui/button/Button';
 import { fetchSalesChannels, type SalesChannel } from '@/entities/sales-channel';
 import { SalesChannelAdminPanel } from './SalesChannelAdminPanel';
 
-type LoadState =
-  | { status: 'loading' }
-  | { status: 'error' }
-  | { status: 'ready'; salesChannels: SalesChannel[] };
+type LoadState = { status: 'loading' } | { status: 'error' } | { status: 'ready'; salesChannels: SalesChannel[] };
 
 const loadSalesChannels = async (): Promise<LoadState> => {
   try {

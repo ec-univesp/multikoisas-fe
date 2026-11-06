@@ -9,7 +9,7 @@ const springError = (status: number, error: string, request: Request) =>
   );
 
 // A API responde 404 sem corpo para lista vazia; /canalvendaproduto responde 204.
-const listResponse = <Row,>(rows: readonly Row[], emptyStatus = 404) =>
+const listResponse = <Row>(rows: readonly Row[], emptyStatus = 404) =>
   rows.length === 0 ? new HttpResponse(null, { status: emptyStatus }) : HttpResponse.json(rows);
 
 const queryOf = (request: Request) => new URL(request.url).searchParams;
@@ -217,7 +217,8 @@ export const handlers = [
     const query = queryOf(request);
     return listResponse(
       apiDatabase.canaisVenda.filter(
-        (canalVenda) => matchesNumber(query.get('id'), canalVenda.id) && matchesText(query.get('nome'), canalVenda.nome),
+        (canalVenda) =>
+          matchesNumber(query.get('id'), canalVenda.id) && matchesText(query.get('nome'), canalVenda.nome),
       ),
     );
   }),
@@ -281,13 +282,13 @@ export const handlers = [
     if (!produtoExists || !canalExists) {
       return HttpResponse.text('Produto ou canal de venda inexistente. Verifique os IDs informados.', { status: 409 });
     }
-    const row = { produtoId, canalVendaId, link };
-    apiDatabase.canalVendaProduto.push(row);
-    return HttpResponse.json(row, { status: 201 });
+    apiDatabase.canalVendaProduto.push({ produtoId, canalVendaId, link });
+    return HttpResponse.json({ mensagem: 'Canal de venda associado ao produto com sucesso.' }, { status: 201 });
   }),
 
   http.delete<never, CanalVendaProdutoRow>('*/canalvendaproduto', async ({ request }) => {
-    const { produtoId, canalVendaId } = await request.json();
+    const { produtoId, canalVendaId, link } = await request.json();
+    if (!link?.trim()) return springError(400, 'Bad Request', request);
     const remaining = apiDatabase.canalVendaProduto.filter(
       (link) => !(link.produtoId === produtoId && link.canalVendaId === canalVendaId),
     );

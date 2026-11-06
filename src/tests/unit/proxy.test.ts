@@ -100,15 +100,18 @@ describe('proxy', () => {
       expect(forwardedAuthorization(response)).toBeNull();
     });
 
-    it.each(['POST', 'PUT', 'DELETE'])('refuses a %s without a panel session before reaching the api', async (method) => {
-      const apiRequests = recordApiRequests();
+    it.each(['POST', 'PUT', 'DELETE'])(
+      'refuses a %s without a panel session before reaching the api',
+      async (method) => {
+        const apiRequests = recordApiRequests();
 
-      const response = await proxy(buildRequest('/api/produto/1', undefined, method));
+        const response = await proxy(buildRequest('/api/produto/1', undefined, method));
 
-      expect(response.status).toBe(401);
-      expect(await response.json()).toEqual({ error: 'Entre no painel para salvar.' });
-      expect(apiRequests).toEqual([]);
-    });
+        expect(response.status).toBe(401);
+        expect(await response.json()).toEqual({ error: 'Entre no painel para salvar.' });
+        expect(apiRequests).toEqual([]);
+      },
+    );
 
     it('forwards a write with the api token of the panel account', async () => {
       const response = await proxy(buildRequest('/api/produto', await validToken(), 'POST'));

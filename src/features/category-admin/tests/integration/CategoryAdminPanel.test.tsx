@@ -21,8 +21,7 @@ beforeEach(() => {
 const respondWith = (method: 'post' | 'delete', path: string, status: number) =>
   server.use(http[method](path, () => new HttpResponse(null, { status })));
 
-const hang = (method: 'post' | 'delete', path: string) =>
-  server.use(http[method](path, () => delay('infinite')));
+const hang = (method: 'post' | 'delete', path: string) => server.use(http[method](path, () => delay('infinite')));
 
 const unlinkProductsFrom = (categoriaId: number) => {
   apiDatabase.categoriaProduto = apiDatabase.categoriaProduto.filter((link) => link.categoriaId !== categoriaId);
@@ -178,9 +177,7 @@ describe('CategoryAdminPanel', () => {
 
     await submitNewCategory(user, 'Lavanderia');
 
-    expect(
-      await screen.findByText('Não foi possível salvar a categoria. Tente de novo.'),
-    ).toBeInTheDocument();
+    expect(await screen.findByText('Não foi possível salvar a categoria. Tente de novo.')).toBeInTheDocument();
     expect(screen.getByLabelText('Nome da categoria')).toBeInTheDocument();
     expect(screen.getByText('2 categorias cadastradas')).toBeInTheDocument();
   });
@@ -227,9 +224,7 @@ describe('CategoryAdminPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Apagar' }));
 
     expect(
-      await screen.findByText(
-        'Esta categoria tem produtos. Troque a categoria desses produtos antes de apagar.',
-      ),
+      await screen.findByText('Esta categoria tem produtos. Troque a categoria desses produtos antes de apagar.'),
     ).toHaveAttribute('role', 'alert');
     expect(screen.getByText('Banheiros')).toBeInTheDocument();
   });
@@ -243,9 +238,7 @@ describe('CategoryAdminPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Apagar' }));
 
     expect(
-      await screen.findByText(
-        'Não foi possível apagar a categoria. Recarregue a página e tente de novo.',
-      ),
+      await screen.findByText('Não foi possível apagar a categoria. Recarregue a página e tente de novo.'),
     ).toBeInTheDocument();
     expect(screen.getByText('Banheiros')).toBeInTheDocument();
   });

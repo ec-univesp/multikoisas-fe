@@ -44,7 +44,7 @@
   @apply w-full;
 }
 .flatpickr-calendar {
-  @apply mt-2 !bg-white !rounded-xl !p-5 !border !border-gray-200 dark:!border-gray-800 !text-gray-500 dark:!bg-gray-dark dark:!text-gray-400 dark:!shadow-theme-xl 2xsm:!w-auto;
+  @apply mt-2 !rounded-xl !border !border-gray-200 !bg-white !p-5 !text-gray-500 2xsm:!w-auto dark:!border-gray-800 dark:!bg-gray-dark dark:!text-gray-400 dark:!shadow-theme-xl;
 }
 
 .flatpickr-months .flatpickr-prev-month:hover svg,
@@ -70,11 +70,11 @@
 }
 
 .flatpickr-weekdays {
-  @apply h-auto mt-6 mb-4 !bg-transparent;
+  @apply mt-6 mb-4 h-auto !bg-transparent;
 }
 
 .flatpickr-calendar {
-  @apply mt-2 !bg-white !rounded-xl !p-5 !shadow-none !border !border-gray-200 dark:!border-white/5 !text-gray-500 dark:!bg-gray-dark dark:!text-gray-400 dark:!shadow-theme-xl 2xsm:!w-auto;
+  @apply mt-2 !rounded-xl !border !border-gray-200 !bg-white !p-5 !text-gray-500 !shadow-none 2xsm:!w-auto dark:!border-white/5 dark:!bg-gray-dark dark:!text-gray-400 dark:!shadow-theme-xl;
 }
 
 @media (max-width: 525px) {
@@ -86,7 +86,7 @@
 }
 
 .flatpickr-weekday {
-  @apply !text-theme-sm !font-medium !text-gray-500 dark:!text-gray-400 !bg-transparent;
+  @apply !bg-transparent !text-theme-sm !font-medium !text-gray-500 dark:!text-gray-400;
 }
 
 .flatpickr-day {
@@ -106,15 +106,13 @@
   background-image: none !important;
   font-weight: 500;
 }
-.flatpickr-month
-.flatpickr-current-month
-.flatpickr-monthDropdown-months:focus {
+.flatpickr-month .flatpickr-current-month .flatpickr-monthDropdown-months:focus {
   outline: none !important;
   border: 0 !important;
 }
 .flatpickr-months .flatpickr-prev-month,
 .flatpickr-months .flatpickr-next-month {
-  @apply !top-7 dark:!fill-white dark:!text-white !bg-transparent;
+  @apply !top-7 !bg-transparent dark:!fill-white dark:!text-white;
 }
 .flatpickr-months .flatpickr-prev-month.flatpickr-prev-month,
 .flatpickr-months .flatpickr-next-month.flatpickr-prev-month {
@@ -129,7 +127,7 @@
 }
 span.flatpickr-weekday,
 .flatpickr-months .flatpickr-month {
-  @apply dark:!fill-white dark:!text-white !bg-none;
+  @apply !bg-none dark:!fill-white dark:!text-white;
 }
 .flatpickr-innerContainer {
   @apply !border-b-0;
@@ -138,7 +136,9 @@ span.flatpickr-weekday,
   @apply !bg-none;
 }
 .flatpickr-day.inRange {
-  box-shadow: -5px 0 0 #f9fafb, 5px 0 0 #f9fafb !important;
+  box-shadow:
+    -5px 0 0 #f9fafb,
+    5px 0 0 #f9fafb !important;
   @apply dark:!shadow-datepicker;
 }
 .flatpickr-day.inRange,
@@ -203,7 +203,7 @@ span.flatpickr-weekday,
 }
 
 .fc .fc-view-harness {
-  @apply max-w-full overflow-x-auto custom-scrollbar;
+  @apply custom-scrollbar max-w-full overflow-x-auto;
 }
 .fc-dayGridMonth-view.fc-view.fc-daygrid {
   @apply min-w-[718px];
@@ -226,11 +226,11 @@ span.flatpickr-weekday,
 }
 
 .fc-button-group .fc-button.fc-prev-button:before {
-  @apply inline-block mt-1;
+  @apply mt-1 inline-block;
   content: url("data:image/svg+xml,%3Csvg width='25' height='24' viewBox='0 0 25 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M16.0068 6L9.75684 12.25L16.0068 18.5' stroke='%23344054' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E%0A");
 }
 .fc-button-group .fc-button.fc-next-button:before {
-  @apply inline-block mt-1;
+  @apply mt-1 inline-block;
   content: url("data:image/svg+xml,%3Csvg width='25' height='24' viewBox='0 0 25 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M9.50684 19L15.7568 12.75L9.50684 6.5' stroke='%23344054' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E%0A");
 }
 .dark .fc-button-group .fc-button.fc-prev-button:before {
@@ -254,10 +254,8 @@ span.flatpickr-weekday,
 .fc-header-toolbar.fc-toolbar .fc-toolbar-chunk:last-child .fc-button {
   @apply !h-auto !w-auto rounded-md !border-0 bg-transparent !px-5 !py-2 text-sm font-medium text-gray-500 hover:text-gray-700 focus:shadow-none! dark:text-gray-400;
 }
-.fc-header-toolbar.fc-toolbar
-  .fc-toolbar-chunk:last-child
-  .fc-button.fc-button-active {
-  @apply text-gray-900 bg-white dark:bg-gray-800 dark:text-white;
+.fc-header-toolbar.fc-toolbar .fc-toolbar-chunk:last-child .fc-button.fc-button-active {
+  @apply bg-white text-gray-900 dark:bg-gray-800 dark:text-white;
 }
 .fc-theme-standard th {
   @apply !border-x-0 border-t !border-gray-200 bg-gray-50 !text-left dark:!border-gray-800 dark:bg-gray-900;
@@ -267,7 +265,7 @@ span.flatpickr-weekday,
   @apply !border-gray-200 dark:!border-gray-800;
 }
 .fc .fc-col-header-cell-cushion {
-  @apply !px-5 !py-4 text-sm font-medium uppercase text-gray-400;
+  @apply !px-5 !py-4 text-sm font-medium text-gray-400 uppercase;
 }
 .fc .fc-daygrid-day.fc-day-today {
   @apply bg-transparent;
@@ -291,13 +289,13 @@ span.flatpickr-weekday,
   @apply text-gray-400 dark:text-white/30;
 }
 .event-fc-color {
-  @apply rounded-lg py-2.5 pl-4 pr-3;
+  @apply rounded-lg py-2.5 pr-3 pl-4;
 }
 .event-fc-color .fc-event-title {
   @apply p-0 text-sm font-normal text-gray-700;
 }
 .fc-daygrid-event-dot {
-  @apply w-1 h-5 ml-0 mr-3 border-none rounded-sm;
+  @apply mr-3 ml-0 h-5 w-1 rounded-sm border-none;
 }
 .fc-event {
   @apply focus:shadow-none;
@@ -357,7 +355,7 @@ span.flatpickr-weekday,
 
 .stocks-slider-outer .swiper-button-next,
 .stocks-slider-outer .swiper-button-prev {
-  @apply !static mt-0 h-8 w-9 rounded-full border dark:hover:bg-white/[0.05] border-gray-200 !text-gray-700 transition hover:bg-gray-100 dark:border-white/[0.03] dark:bg-gray-800 dark:!text-gray-400  dark:hover:!text-white/90;
+  @apply !static mt-0 h-8 w-9 rounded-full border border-gray-200 !text-gray-700 transition hover:bg-gray-100 dark:border-white/[0.03] dark:bg-gray-800 dark:!text-gray-400 dark:hover:bg-white/[0.05] dark:hover:!text-white/90;
 }
 
 .stocks-slider-outer .swiper-button-next.swiper-button-disabled,
@@ -429,7 +427,7 @@ span.flatpickr-weekday,
   @apply !stroke-gray-200 dark:!stroke-gray-800;
 }
 .jvectormap-tip {
-  @apply !bg-brand-500 !border-none !px-2 !py-1;
+  @apply !border-none !bg-brand-500 !px-2 !py-1;
 }
 .jvectormap-zoomin,
 .jvectormap-zoomout {
@@ -441,7 +439,7 @@ span.flatpickr-weekday,
 }
 
 .taskCheckbox:checked ~ .box span {
-  @apply opacity-100 bg-brand-500;
+  @apply bg-brand-500 opacity-100;
 }
 .taskCheckbox:checked ~ p {
   @apply text-gray-400 line-through;
@@ -456,7 +454,8 @@ span.flatpickr-weekday,
 
 .task {
   border-radius: 0.75rem;
-  box-shadow: 0 1px 3px 0 rgba(16, 24, 40, 0.1),
+  box-shadow:
+    0 1px 3px 0 rgba(16, 24, 40, 0.1),
     0 1px 2px 0 rgba(16, 24, 40, 0.06);
   opacity: 0.8;
   cursor: grabbing; /* Changes the cursor to indicate dragging */

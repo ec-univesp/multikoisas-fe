@@ -23,8 +23,7 @@ beforeEach(() => {
 const respondWith = (method: 'post' | 'delete', path: string, status: number) =>
   server.use(http[method](path, () => new HttpResponse(null, { status })));
 
-const hang = (method: 'post' | 'delete', path: string) =>
-  server.use(http[method](path, () => delay('infinite')));
+const hang = (method: 'post' | 'delete', path: string) => server.use(http[method](path, () => delay('infinite')));
 
 const deleteFromApi = (canalVendaId: number) => {
   apiDatabase.canaisVenda = apiDatabase.canaisVenda.filter((canalVenda) => canalVenda.id !== canalVendaId);
@@ -158,7 +157,7 @@ describe('SalesChannelAdminPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Apagar' }));
 
     expect(await screen.findByText('Nenhum canal cadastrado.')).toBeInTheDocument();
-    expect(apiDatabase.canaisVenda.map((canalVenda) => canalVenda.id)).toEqual([2, 3, 5]);
+    expect(apiDatabase.canaisVenda.map((canalVenda) => canalVenda.id)).toEqual([2, 3, 5, 8]);
     expect(apiRequests).toEqual(['DELETE /api/canalvenda/4']);
   });
 
@@ -181,9 +180,10 @@ describe('SalesChannelAdminPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Apagar Shopee' }));
     await user.click(screen.getByRole('button', { name: 'Apagar' }));
 
-    expect(
-      await screen.findByText('Este canal tem produtos vinculados e não pode ser apagado.'),
-    ).toHaveAttribute('role', 'alert');
+    expect(await screen.findByText('Este canal tem produtos vinculados e não pode ser apagado.')).toHaveAttribute(
+      'role',
+      'alert',
+    );
     expect(screen.getByText('Shopee')).toBeInTheDocument();
   });
 

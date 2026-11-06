@@ -19,7 +19,8 @@ export const loginAction = async (_previousState: LoginState, formData: FormData
   }
 
   const environment = resolveAuthEnvironment(process.env);
-  if (!(await verifyCredentials(username, password, environment))) return { error: INVALID_CREDENTIALS_MESSAGE, username };
+  if (!(await verifyCredentials(username, password, environment)))
+    return { error: INVALID_CREDENTIALS_MESSAGE, username };
 
   const sessionToken = await createSessionToken(environment.SESSION_SECRET, environment.ADMIN_USERS, Date.now());
   if (!sessionToken) return { error: INVALID_CREDENTIALS_MESSAGE, username };

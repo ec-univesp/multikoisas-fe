@@ -1,12 +1,6 @@
 'use client';
 
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import { PencilIcon, TrashBinIcon } from '@/icons';
 import { isHttpsUrl, type SocialNetwork } from '@/entities/social-network';
 
@@ -16,8 +10,7 @@ type SocialNetworkTableProps = {
   onDelete: (socialNetwork: SocialNetwork) => void;
 };
 
-const actionButtonClassName =
-  'flex h-11 w-11 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100';
+const actionButtonClassName = 'flex h-11 w-11 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100';
 
 export const SocialNetworkTable = ({ socialNetworks, onEdit, onDelete }: SocialNetworkTableProps) => {
   if (socialNetworks.length === 0) {
@@ -34,10 +27,7 @@ export const SocialNetworkTable = ({ socialNetworks, onEdit, onDelete }: SocialN
         <Table>
           <TableHeader className="border-b border-gray-200">
             <TableRow>
-              <TableCell
-                isHeader
-                className="px-5 py-3 text-start text-theme-xs font-medium text-gray-500"
-              >
+              <TableCell isHeader className="px-5 py-3 text-start text-theme-xs font-medium text-gray-500">
                 Rede social
               </TableCell>
               <TableCell isHeader className="px-5 py-3">
@@ -50,7 +40,7 @@ export const SocialNetworkTable = ({ socialNetworks, onEdit, onDelete }: SocialN
               <TableRow key={socialNetwork.id}>
                 <TableCell className="px-5 py-4 text-start">
                   <p className="text-theme-sm font-medium text-gray-800">{socialNetwork.name}</p>
-                  <p className="break-all text-theme-xs text-gray-500">{socialNetwork.url}</p>
+                  <p className="text-theme-xs break-all text-gray-500">{socialNetwork.url}</p>
                   {!isHttpsUrl(socialNetwork.url) && (
                     <p className="mt-1 text-theme-xs text-error-500">Link sem https, não aparece na vitrine</p>
                   )}

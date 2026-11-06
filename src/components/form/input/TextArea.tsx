@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 
 interface TextareaProps {
   id?: string; // Identifier used by the field label
@@ -14,14 +14,14 @@ interface TextareaProps {
 
 const TextArea: React.FC<TextareaProps> = ({
   id,
-  placeholder = "Enter your message", // Default placeholder
+  placeholder = 'Enter your message', // Default placeholder
   rows = 3, // Default number of rows
-  value = "", // Default value
+  value = '', // Default value
   onChange, // Callback for changes
-  className = "", // Additional custom styles
+  className = '', // Additional custom styles
   disabled = false, // Disabled state
   error = false, // Error state
-  hint = "", // Default hint text
+  hint = '', // Default hint text
 }) => {
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (onChange) {
@@ -51,13 +51,7 @@ const TextArea: React.FC<TextareaProps> = ({
         className={textareaClasses}
       />
       {hint && (
-        <p
-          className={`mt-2 text-sm ${
-            error ? "text-error-500" : "text-gray-500 dark:text-gray-400"
-          }`}
-        >
-          {hint}
-        </p>
+        <p className={`mt-2 text-sm ${error ? 'text-error-500' : 'text-gray-500 dark:text-gray-400'}`}>{hint}</p>
       )}
     </div>
   );

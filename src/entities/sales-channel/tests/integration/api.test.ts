@@ -14,6 +14,7 @@ describe('fetchSalesChannels', () => {
       { id: 3, name: 'Instagram' },
       { id: 4, name: 'Facebook' },
       { id: 5, name: 'TikTok' },
+      { id: 8, name: 'MagaLu' },
     ]);
   });
 

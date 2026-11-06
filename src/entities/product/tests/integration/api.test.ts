@@ -138,7 +138,10 @@ describe('fetchProductImageRecords', () => {
   it('lists the photos of a product with their ids in id order, ready to display', async () => {
     expect(await fetchProductImageRecords(7, { fresh: true, fromBrowser: true })).toEqual([
       { id: 20, url: `${SUPABASE_IMAGES}/caixa.webp` },
-      { id: 21, url: 'https://avphmmvnlrbidhjrzozx.storage.supabase.co/storage/v1/object/public/imagem/caixa-tampa.jpeg' },
+      {
+        id: 21,
+        url: 'https://avphmmvnlrbidhjrzozx.storage.supabase.co/storage/v1/object/public/imagem/caixa-tampa.jpeg',
+      },
       { id: 22, url: null },
     ]);
   });

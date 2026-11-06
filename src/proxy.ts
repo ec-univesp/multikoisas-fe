@@ -47,7 +47,8 @@ export const proxy = async (request: NextRequest) => {
 
   if (isApiPath(pathname)) {
     if (!hasValidSession) return NextResponse.json({ error: 'Entre no painel para salvar.' }, { status: 401 });
-    if (!isPanelWritableResource(pathname)) return NextResponse.json({ error: 'Gravação não permitida.' }, { status: 403 });
+    if (!isPanelWritableResource(pathname))
+      return NextResponse.json({ error: 'Gravação não permitida.' }, { status: 403 });
     return forwardWithApiToken(request, environment);
   }
   if (pathname === LOGIN_PATH && hasValidSession) return NextResponse.redirect(new URL(PANEL_HOME_PATH, request.url));
