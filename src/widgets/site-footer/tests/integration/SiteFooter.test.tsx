@@ -20,12 +20,12 @@ describe('SiteFooter', () => {
     ).toBeInTheDocument();
   });
 
-  it('offers shortcuts to the home page, the product showcase and the store section', async () => {
+  it('offers shortcuts to the home page and the product showcase', async () => {
     render(await SiteFooter());
     const shortcuts = screen.getByRole('navigation', { name: 'Navegue' });
     expect(within(shortcuts).getByRole('link', { name: 'Início' })).toHaveAttribute('href', '/');
     expect(within(shortcuts).getByRole('link', { name: 'Vitrine de produtos' })).toHaveAttribute('href', '/showcase');
-    expect(within(shortcuts).getByRole('link', { name: 'A loja' })).toHaveAttribute('href', '/#about');
+    expect(within(shortcuts).getAllByRole('link')).toHaveLength(2);
   });
 
   it('links each store social network in a new tab with its icon', async () => {

@@ -26,7 +26,6 @@ describe('SiteHeader', () => {
     expect(sectionLinks.map((link) => [link.textContent, link.getAttribute('href')])).toEqual([
       ['Início', '/'],
       ['Vitrine de produtos', '/showcase'],
-      ['A loja', '/#about'],
     ]);
   });
 
