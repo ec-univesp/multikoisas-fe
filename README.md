@@ -53,11 +53,11 @@ O endereço do produto é o nome dele seguido do id na API, como `/product/garra
 
 ## Como o front fala com a API
 
-O catálogo vem da API do time, um serviço Spring Boot publicado no Render.
+O site funciona sem back-end (SKI-142). A API do time não é chamada: o mesmo contrato dela roda no navegador, com o MSW em modo service worker (`src/shared/local-api/`, `public/mockServiceWorker.js`).
 
-- **Leitura no servidor.** A vitrine e o painel buscam produtos e categorias em `src/entities/product/api.ts`, que roda no servidor do Next.js. A vitrine guarda o resultado por 5 minutos; o painel lê sempre o dado mais recente.
-- **Escrita pelo navegador, através do próprio site.** As telas do painel chamam `/api/...`, e o `next.config.ts` repassa essas chamadas para a API. Assim o navegador fala só com o domínio do site: a API não libera chamadas vindas de outros domínios (CORS), então a chamada direta seria bloqueada.
-- **Endereço configurável.** A variável de ambiente `MULTIKOISAS_API_URL` troca o endereço da API. Sem ela, o projeto usa <https://multikoisas-univesp.onrender.com>.
+- **Dados no navegador.** Produtos, categorias, canais, links de compra e redes ficam no `localStorage`; as fotos enviadas pelo painel ficam no IndexedDB. Cada navegador tem a sua cópia, que começa com os dados de exemplo de `src/shared/local-api/seed.json`.
+- **Leitura e escrita pelo navegador.** Vitrine e painel chamam `/api/...`, e o service worker responde. No servidor, `/api/*` responde 503: nada chega à API real.
+- **Voltar ao começo.** Configurações de site tem o botão "Restaurar dados iniciais".
 
 | Recurso da API                                                                       | Uso no front                                      |
 | ------------------------------------------------------------------------------------ | ------------------------------------------------- |
@@ -100,7 +100,8 @@ Tarefas no santi, projeto `UNIV`.
 - Vitrine, página do produto e painel lendo produtos e categorias da API.
 - Cadastro de produtos no painel (criar, editar, apagar e escolher categoria).
 - Cadastro de categorias no painel.
-- Login do painel com a conta da multikoisas-api.
+- Login do painel com usuário e senha do servidor.
+- Site inteiro funcionando sem back-end, com os dados no navegador.
 - Testes de integração que simulam a API com MSW, reproduzindo o contrato real dela.
 
 **Em andamento**
@@ -145,9 +146,9 @@ O servidor recarrega sozinho a cada arquivo salvo — não precisa reiniciar nad
 
 ### Login do painel
 
-O painel (`/admin`) pede login em `/panel`: entre com a conta da multikoisas-api. O painel guarda o token dela e o usa para salvar; quando o token vence, é preciso entrar de novo.
+O painel (`/admin`) pede login em `/panel`. O usuário e a senha ficam nas variáveis `PANEL_USERNAME` e `PANEL_PASSWORD` do servidor, nunca no repositório; a sessão dura 8 horas.
 
-O servidor precisa só de `SESSION_SECRET`, um texto aleatório com 32 caracteres ou mais (por exemplo `openssl rand -base64 48`). Copie o `.env.example` para `.env.local` e preencha. Sem ele, ninguém entra no painel; em `pnpm dev` um valor de desenvolvimento é usado.
+O servidor também precisa de `SESSION_SECRET`, um texto aleatório com 32 caracteres ou mais (por exemplo `openssl rand -base64 48`). Copie o `.env.example` para `.env.local` e preencha. Sem essas variáveis, a tela de login avisa que o painel não está configurado; em `pnpm dev` um `SESSION_SECRET` de desenvolvimento é usado.
 
 ### Se algo der errado
 

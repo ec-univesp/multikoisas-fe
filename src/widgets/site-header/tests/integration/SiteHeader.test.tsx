@@ -2,14 +2,34 @@ import { render, screen, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it, vi } from 'vitest';
 import { ShowcaseSearchProvider } from '@/features/showcase-filter';
+import { apiDatabase } from '@/test/msw/apiDatabase';
 import { server } from '@/test/msw/server';
+import { waitForLoaded } from '@/test/waitForLoaded';
 import { SiteHeader } from '../../SiteHeader';
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
-const renderHeader = async () => render(<ShowcaseSearchProvider>{await SiteHeader()}</ShowcaseSearchProvider>);
+const renderHeader = async () => {
+  render(
+    <ShowcaseSearchProvider>
+      <SiteHeader />
+    </ShowcaseSearchProvider>,
+  );
+  await waitForLoaded();
+};
 
 describe('SiteHeader', () => {
+  it('marks the header busy and keeps the store strip line while the data loads', () => {
+    render(
+      <ShowcaseSearchProvider>
+        <SiteHeader />
+      </ShowcaseSearchProvider>,
+    );
+    expect(screen.getByRole('banner')).toHaveAttribute('aria-busy', 'true');
+    expect(screen.getByTestId('stores-phrase-placeholder')).toHaveClass('h-5');
+    expect(screen.getByRole('searchbox', { name: 'Buscar produto no cabeçalho' })).toBeInTheDocument();
+  });
+
   it('shows the notice bar, the brand, the search and the section links', async () => {
     await renderHeader();
     expect(
@@ -27,6 +47,18 @@ describe('SiteHeader', () => {
       ['Início', '/'],
       ['Vitrine de produtos', '/showcase'],
     ]);
+  });
+
+  it('lines the tagline up with the brand mark text', async () => {
+    await renderHeader();
+    expect(screen.getByText('Tudo em um só lugar')).toHaveClass('ml-13');
+  });
+
+  it('lines the tagline up with the left edge of the saved logo', async () => {
+    apiDatabase.storeSettings.logoUrl = '/local-images/5';
+    await renderHeader();
+    expect(await screen.findByRole('img', { name: 'MultiKoisas' })).toHaveAttribute('src', '/local-images/5');
+    expect(screen.getByText('Tudo em um só lugar')).not.toHaveClass('ml-13');
   });
 
   it('names only the stores that appear in the catalog links', async () => {
@@ -121,5 +153,11 @@ describe('SiteHeader', () => {
   it('leaves the google reviews badge out of the header, since it floats on the page', async () => {
     await renderHeader();
     expect(screen.queryByRole('link', { name: /no Google/ })).not.toBeInTheDocument();
+  });
+
+  it('shows the saved store logo', async () => {
+    apiDatabase.storeSettings.logoUrl = '/local-images/5';
+    await renderHeader();
+    expect(await screen.findByRole('img', { name: 'MultiKoisas' })).toHaveAttribute('src', '/local-images/5');
   });
 });

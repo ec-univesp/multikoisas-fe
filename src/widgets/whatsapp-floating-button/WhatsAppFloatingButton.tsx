@@ -1,9 +1,10 @@
-import { fetchSocialNetworks, isWhatsApp, SocialNetworkIcon, type SocialNetwork } from '@/entities/social-network';
+'use client';
 
-const loadSocialNetworks = (): Promise<SocialNetwork[]> => fetchSocialNetworks().catch(() => []);
+import { isWhatsApp, SocialNetworkIcon, useSocialNetworks } from '@/entities/social-network';
 
-export const WhatsAppFloatingButton = async () => {
-  const whatsApp = (await loadSocialNetworks()).find(isWhatsApp);
+export const WhatsAppFloatingButton = () => {
+  const socialNetworks = useSocialNetworks();
+  const whatsApp = socialNetworks.status === 'ready' ? socialNetworks.data.find(isWhatsApp) : undefined;
   if (!whatsApp) return null;
   return (
     <a

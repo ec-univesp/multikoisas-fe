@@ -36,7 +36,7 @@ export const SalesChannelAdminPanel = ({ initialSalesChannels }: SalesChannelAdm
 
   const reloadSalesChannels = async (): Promise<SalesChannel[] | null> => {
     try {
-      const latestSalesChannels = await fetchSalesChannels({ fresh: true, fromBrowser: true });
+      const latestSalesChannels = await fetchSalesChannels();
       setSalesChannels(latestSalesChannels);
       return latestSalesChannels;
     } catch {

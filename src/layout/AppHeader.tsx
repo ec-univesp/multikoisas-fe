@@ -3,7 +3,7 @@
 import UserDropdown from '@/components/header/UserDropdown';
 import { useSidebar } from '@/context/SidebarContext';
 import Link from 'next/link';
-import { BrandMark } from '@/shared/ui/BrandMark';
+import { StoreLogo } from '@/entities/store-settings';
 import React, { useState } from 'react';
 
 const AppHeader: React.FC = () => {
@@ -55,7 +55,7 @@ const AppHeader: React.FC = () => {
           </button>
 
           <Link href="/admin" className="lg:hidden">
-            <BrandMark />
+            <StoreLogo />
           </Link>
 
           <button

@@ -17,6 +17,8 @@ import {
   Utensils,
   Wrench,
 } from 'lucide-react';
+import { StoreLogo } from '@/entities/store-settings';
+import { LocalApiProvider } from '@/shared/local-api/LocalApiProvider';
 
 const PANEL_ICON_KINDS = [
   Hammer,
@@ -80,6 +82,12 @@ const PANEL_ICONS = Array.from({ length: PANEL_ICON_GRID_ROWS }).flatMap((_row, 
   }),
 );
 
+const TEXT_BRAND = (
+  <span className="text-2xl font-semibold tracking-tight text-white sm:text-3xl lg:text-5xl">
+    multi<span className="text-store-yellow">koisas</span>
+  </span>
+);
+
 export default function AuthLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <div className="grid min-h-screen grid-rows-[auto_1fr] bg-white lg:grid-cols-[1.05fr_1fr] lg:grid-rows-1">
@@ -123,9 +131,9 @@ export default function AuthLayout({ children }: Readonly<{ children: React.Reac
         </div>
 
         <div className="relative max-w-md">
-          <span className="text-2xl font-semibold tracking-tight text-white sm:text-3xl lg:text-5xl">
-            multi<span className="text-store-yellow">koisas</span>
-          </span>
+          <LocalApiProvider fallback={TEXT_BRAND}>
+            <StoreLogo fallback={TEXT_BRAND} />
+          </LocalApiProvider>
           <p className="mt-1 text-sm font-medium text-white/80 lg:text-base">Painel da loja</p>
           <p className="mt-5 hidden text-sm leading-relaxed text-white/60 lg:block lg:text-base">
             Produtos, fotos e links de compra da vitrine, tudo num lugar só.

@@ -39,4 +39,11 @@ describe('UserDropdown', () => {
     expect(screen.getByRole('link', { name: 'Configurações de site' })).toHaveAttribute('href', '/store');
     expect(screen.getAllByRole('link')).toHaveLength(1);
   });
+
+  it('shows only the word Administrador, without the template stock photo', () => {
+    const { container } = render(<UserDropdown />);
+
+    expect(container.querySelector('.dropdown-toggle')).toHaveTextContent('Administrador');
+    expect(container.querySelector('img')).toBeNull();
+  });
 });

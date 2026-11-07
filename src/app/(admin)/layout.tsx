@@ -6,6 +6,7 @@ import { SidebarProvider, useSidebar } from '@/context/SidebarContext';
 import AppHeader from '@/layout/AppHeader';
 import AppSidebar from '@/layout/AppSidebar';
 import Backdrop from '@/layout/Backdrop';
+import { LocalApiProvider } from '@/shared/local-api/LocalApiProvider';
 
 const AdminShell = ({ children }: { children: React.ReactNode }) => {
   const { isExpanded, isHovered, isMobileOpen } = useSidebar();
@@ -26,8 +27,10 @@ const AdminShell = ({ children }: { children: React.ReactNode }) => {
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <SidebarProvider>
-      <AdminShell>{children}</AdminShell>
-    </SidebarProvider>
+    <LocalApiProvider>
+      <SidebarProvider>
+        <AdminShell>{children}</AdminShell>
+      </SidebarProvider>
+    </LocalApiProvider>
   );
 }

@@ -10,6 +10,11 @@ describe('ProductImage', () => {
     expect(screen.getByAltText('Caixa')).toHaveAttribute('src', expect.stringContaining('sumiu.webp'));
   });
 
+  it('loads a photo saved in this browser straight, without the image optimizer', () => {
+    render(<ProductImage src="/local-images/27" alt="Balde" width={40} height={40} />);
+    expect(screen.getByAltText('Balde')).toHaveAttribute('src', expect.stringMatching(/^[^?]*\/local-images\/27$/));
+  });
+
   it('falls back to the placeholder when the photo fails to load', () => {
     render(<ProductImage src={PHOTO} alt="Caixa" width={40} height={40} />);
     fireEvent.error(screen.getByAltText('Caixa'));

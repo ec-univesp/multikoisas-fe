@@ -1,4 +1,4 @@
-import { type FetchOptions, getFromApi } from '@/shared/api/getFromApi';
+import { getFromApi } from '@/shared/api/getFromApi';
 import type { SocialNetwork } from './types';
 
 type SocialNetworkResponse = { id: number; descricao: string; link: string };
@@ -17,8 +17,8 @@ const withScheme = (link: string): string => {
   return /^[a-z][a-z0-9+.-]*:/i.test(trimmedLink) ? trimmedLink : `https://${trimmedLink}`;
 };
 
-export const fetchSocialNetworks = async (options: FetchOptions = {}): Promise<SocialNetwork[]> =>
-  (await getFromApi<SocialNetworkResponse>('/socialnetwork', options))
+export const fetchSocialNetworks = async (): Promise<SocialNetwork[]> =>
+  (await getFromApi<SocialNetworkResponse>('/socialnetwork'))
     .map((socialNetwork) => ({
       id: socialNetwork.id,
       name: socialNetwork.descricao,

@@ -1,23 +1,25 @@
-import Link from 'next/link';
-import { fetchSocialNetworks, SocialNetworkLinks, type SocialNetwork } from '@/entities/social-network';
-import { STORE_SETTINGS, type StoreSettings } from '@/entities/store-settings';
-import { ShowcaseLink } from '@/features/showcase-filter';
-import { BrandMark } from '@/shared/ui/BrandMark';
+'use client';
 
-const loadSocialNetworks = (): Promise<SocialNetwork[]> => fetchSocialNetworks().catch(() => []);
+import Link from 'next/link';
+import { SocialNetworkLinks, useSocialNetworks } from '@/entities/social-network';
+import { StoreLogo, useStoreSettings, type StoreSettingsValues } from '@/entities/store-settings';
+import { ShowcaseLink } from '@/features/showcase-filter';
 
 const headingClassName = 'text-sm font-bold tracking-wider text-store-yellow uppercase';
 const shortcutClassName = 'flex min-h-11 items-center text-blue-100 hover:text-store-yellow';
 
-export const SiteFooter = async ({ settings = STORE_SETTINGS }: { settings?: StoreSettings } = {}) => {
-  const socialNetworks = await loadSocialNetworks();
-  const address = settings.address?.trim();
+export const SiteFooter = ({ settings }: { settings?: StoreSettingsValues }) => {
+  const savedSettings = useStoreSettings();
+  const socialNetworksState = useSocialNetworks();
+  const socialNetworks = socialNetworksState.status === 'ready' ? socialNetworksState.data : [];
+  const isLoadingSavedSettings = !settings && savedSettings.status === 'loading';
+  const address = isLoadingSavedSettings ? null : (settings ?? savedSettings.settings).address?.trim();
   return (
-    <footer className="bg-store-navy text-blue-100">
+    <footer aria-busy={socialNetworksState.status === 'loading'} className="bg-store-navy text-blue-100">
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 md:grid-cols-3 lg:px-8">
         <div>
           <Link href="/" className="inline-flex">
-            <BrandMark tone="onDark" />
+            <StoreLogo tone="onDark" />
           </Link>
           <p className="mt-3 max-w-xs text-sm">Utilidades para casa, cozinha, limpeza e organização, num lugar só.</p>
           {address && <address className="mt-3 max-w-xs text-sm not-italic">{address}</address>}

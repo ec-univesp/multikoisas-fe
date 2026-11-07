@@ -1,21 +1,4 @@
-export type ProductRow = { id: number; nome: string; descricaoProduto: string };
-export type CategoryRow = { id: number; nome: string };
-export type ProductCategoryRow = { produtoId: number; categoriaId: number };
-export type SalesChannelRow = { id: number; nome: string };
-export type PurchaseLinkRow = { produtoId: number; canalVendaId: number; link: string };
-export type ProductImageRow = { id: number; produtoId: number; imagemUrl: string };
-export type SocialNetworkRow = { id: number; descricao: string; link: string };
-
-type ApiDatabase = {
-  products: ProductRow[];
-  categories: CategoryRow[];
-  productCategories: ProductCategoryRow[];
-  productImages: ProductImageRow[];
-  socialNetworks: SocialNetworkRow[];
-  salesChannels: SalesChannelRow[];
-  purchaseLinks: PurchaseLinkRow[];
-  nextId: number;
-};
+import { DEFAULT_STORE_SETTINGS, type ApiDatabase } from '@/shared/local-api/database';
 
 export const SUPABASE_IMAGES = 'https://avphmmvnlrbidhjrzozx.supabase.co/storage/v1/object/public/imagem';
 
@@ -67,6 +50,8 @@ const seed = (): ApiDatabase => ({
     { produtoId: 1, canalVendaId: 3, link: 'https://www.instagram.com/p/garrafa' },
     { produtoId: 7, canalVendaId: 2, link: 'https://shopee.com.br/caixa' },
   ],
+  users: [{ id: 8, username: 'admin', email: 'pi2alunos@gmail.com', role: 'ADMIN' }],
+  storeSettings: { ...DEFAULT_STORE_SETTINGS },
   nextId: 100,
 });
 
