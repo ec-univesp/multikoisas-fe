@@ -7,7 +7,15 @@ import { PlusIcon } from '@/icons';
 import { UserFormModal } from './UserFormModal';
 import { DeleteUserModal } from './DeleteUserModal';
 import { UserTable } from './UserTable';
-import { type UserAccount, type UserValues, createUser, deleteUser, fetchAllUsers, updateUser } from './userApi';
+import {
+  type UserAccount,
+  type UserValues,
+  createUser,
+  deleteUser,
+  fetchAllUsers,
+  isAdminRole,
+  updateUser,
+} from './userApi';
 
 type UserAdminPanelProps = {
   initialUsers: readonly UserAccount[];
@@ -47,6 +55,9 @@ export const UserAdminPanel = ({ initialUsers }: UserAdminPanelProps) => {
   const saveUser = async (values: UserValues) => {
     if (!editingUser) return addUser(values);
     const updatedUser = await updateUser(editingUser, values);
+    if (isAdminRole(updatedUser.role) !== isAdminRole(values.role)) {
+      setFeedbackMessage('O perfil não foi alterado. Tente de novo.');
+    }
     setUsers((currentUsers) =>
       currentUsers.map((candidate) => (candidate.id === editingUser.id ? updatedUser : candidate)),
     );

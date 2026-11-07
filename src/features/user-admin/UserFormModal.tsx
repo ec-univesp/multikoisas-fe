@@ -31,9 +31,9 @@ const validate = ({ username, email, password }: UserValues, isEditing: boolean)
   password: isEditing || password.trim() ? null : 'Informe a senha.',
 });
 
-const FieldError = ({ message }: { message: string | null }) =>
+const FieldError = ({ id, message }: { id: string; message: string | null }) =>
   message ? (
-    <p role="alert" className="mt-1.5 text-xs text-error-500">
+    <p id={id} role="alert" className="mt-1.5 text-xs text-error-500">
       {message}
     </p>
   ) : null;
@@ -97,9 +97,12 @@ export const UserFormModal = ({ onClose, editingUser, onSave }: UserFormModalPro
                 onChange={(event) => setUsername(event.target.value)}
                 disabled={Boolean(editingUser)}
                 error={Boolean(fieldErrors.username)}
+                aria-invalid={Boolean(fieldErrors.username)}
+                aria-describedby={fieldErrors.username ? 'user-username-error' : undefined}
+                autoComplete="off"
                 className="text-base"
               />
-              <FieldError message={fieldErrors.username} />
+              <FieldError id="user-username-error" message={fieldErrors.username} />
             </div>
             <div>
               <Label htmlFor="user-email">E-mail</Label>
@@ -109,9 +112,11 @@ export const UserFormModal = ({ onClose, editingUser, onSave }: UserFormModalPro
                 defaultValue={email}
                 onChange={(event) => setEmail(event.target.value)}
                 error={Boolean(fieldErrors.email)}
+                aria-invalid={Boolean(fieldErrors.email)}
+                aria-describedby={fieldErrors.email ? 'user-email-error' : undefined}
                 className="text-base"
               />
-              <FieldError message={fieldErrors.email} />
+              <FieldError id="user-email-error" message={fieldErrors.email} />
             </div>
             <div>
               <Label htmlFor="user-password">Senha</Label>
@@ -121,9 +126,12 @@ export const UserFormModal = ({ onClose, editingUser, onSave }: UserFormModalPro
                 placeholder={editingUser ? 'Deixe em branco para manter' : undefined}
                 onChange={(event) => setPassword(event.target.value)}
                 error={Boolean(fieldErrors.password)}
+                aria-invalid={Boolean(fieldErrors.password)}
+                aria-describedby={fieldErrors.password ? 'user-password-error' : undefined}
+                autoComplete="new-password"
                 className="text-base"
               />
-              <FieldError message={fieldErrors.password} />
+              <FieldError id="user-password-error" message={fieldErrors.password} />
             </div>
             <div>
               <Label htmlFor="user-role">Perfil</Label>
