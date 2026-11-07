@@ -9,7 +9,7 @@ type LoadState = { status: 'loading' } | { status: 'error' } | { status: 'ready'
 
 const loadCategories = async (): Promise<LoadState> => {
   try {
-    return { status: 'ready', categories: await fetchCategories({ fresh: true, fromBrowser: true }) };
+    return { status: 'ready', categories: await fetchCategories() };
   } catch {
     return { status: 'error' };
   }

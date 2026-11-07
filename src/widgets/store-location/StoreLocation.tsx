@@ -1,8 +1,12 @@
-import { Navigation } from 'lucide-react';
-import { STORE_SETTINGS, type StoreSettings } from '@/entities/store-settings';
+'use client';
 
-export const StoreLocation = ({ settings = STORE_SETTINGS }: { settings?: StoreSettings } = {}) => {
-  const address = settings.address?.trim();
+import { Navigation } from 'lucide-react';
+import { useStoreSettings, type StoreSettingsValues } from '@/entities/store-settings';
+
+export const StoreLocation = ({ settings }: { settings?: StoreSettingsValues } = {}) => {
+  const savedSettings = useStoreSettings();
+  if (!settings && savedSettings.status === 'loading') return null;
+  const address = (settings ?? savedSettings.settings).address?.trim();
   if (!address) return null;
 
   const encodedAddress = encodeURIComponent(address);

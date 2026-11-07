@@ -1,12 +1,12 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import type { StoreSettings } from '@/entities/store-settings';
+import type { StoreSettingsValues } from '@/entities/store-settings';
 import { StoreLocation } from '../../StoreLocation';
 
 const ADDRESS = 'Rua das Flores, 100 - São Paulo, SP';
 const ENCODED_ADDRESS = 'Rua%20das%20Flores%2C%20100%20-%20S%C3%A3o%20Paulo%2C%20SP';
 
-const settingsWith = (address: string | null): StoreSettings => ({
+const settingsWith = (address: string | null): StoreSettingsValues => ({
   address,
   googleReviewsUrl: null,
   googleRating: null,
@@ -24,9 +24,9 @@ describe('StoreLocation', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('points to the store with the default settings', () => {
+  it('points to the store with the default settings', async () => {
     render(<StoreLocation />);
-    expect(screen.getByRole('link', { name: /Como chegar/ })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: /Como chegar/ })).toHaveAttribute(
       'href',
       expect.stringContaining('destination=Av.%20Prof.%20Luiz%20In%C3%A1cio%20de%20Anhaia%20Melo%2C%202085'),
     );

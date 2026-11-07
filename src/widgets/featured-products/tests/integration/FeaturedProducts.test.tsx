@@ -2,11 +2,13 @@ import { render, screen, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
 import { server } from '@/test/msw/server';
+import { waitForLoaded } from '@/test/waitForLoaded';
 import { FeaturedProducts } from '../../FeaturedProducts';
 
 const renderFeaturedProducts = async () => {
-  const section = await FeaturedProducts();
-  return render(section ?? <></>);
+  const view = render(<FeaturedProducts />);
+  await waitForLoaded();
+  return view;
 };
 
 const carouselCards = () =>
@@ -15,6 +17,28 @@ const carouselCards = () =>
   );
 
 describe('FeaturedProducts', () => {
+  it('holds the place of the carousel while the products load', () => {
+    render(<FeaturedProducts />);
+    expect(screen.getByRole('status')).toHaveTextContent('Carregando produtos em destaque...');
+    expect(screen.getByRole('status').closest('section')).toHaveAttribute('aria-busy', 'true');
+  });
+
+  it('shows the five products of the store in the carousel', async () => {
+    server.use(
+      http.get('*/produto', () =>
+        HttpResponse.json(
+          Array.from({ length: 5 }, (_, index) => ({
+            id: 200 + index,
+            nome: `Produto ${index}`,
+            descricaoProduto: '',
+          })),
+        ),
+      ),
+    );
+    await renderFeaturedProducts();
+    expect(carouselCards()).toHaveLength(5);
+  });
+
   it('titles the section and shows the api products in the carousel', async () => {
     await renderFeaturedProducts();
     expect(screen.getByRole('heading', { level: 2, name: 'Produtos em destaque' })).toBeInTheDocument();
@@ -45,6 +69,7 @@ describe('FeaturedProducts', () => {
 
   it('leaves the section out when the catalog cannot be read', async () => {
     server.use(http.get('*/produto', () => new HttpResponse(null, { status: 500 })));
-    expect(await FeaturedProducts()).toBeNull();
+    const { container } = await renderFeaturedProducts();
+    expect(container).toBeEmptyDOMElement();
   });
 });

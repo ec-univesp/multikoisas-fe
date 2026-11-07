@@ -16,6 +16,15 @@ describe('toDisplayableImageUrl', () => {
     ).toBe('https://avphmmvnlrbidhjrzozx.storage.supabase.co/storage/v1/object/public/imagem/b619ff2d.jpeg');
   });
 
+  it('keeps a photo saved in this browser, as a path', () => {
+    expect(toDisplayableImageUrl('/local-images/27')).toBe('/local-images/27');
+    expect(toDisplayableImageUrl(`${location.origin}/local-images/28`)).toBe('/local-images/28');
+  });
+
+  it('drops a local photo path from another origin', () => {
+    expect(toDisplayableImageUrl('https://example.com/local-images/28')).toBeNull();
+  });
+
   it('drops urls next/image is not allowed to load', () => {
     const rejected = [
       'https://example.com/storage/v1/object/public/imagem/a.webp',

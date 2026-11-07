@@ -1,10 +1,10 @@
 'use client';
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { BrandMark } from '@/shared/ui/BrandMark';
+import { StoreLogo } from '@/entities/store-settings';
 import { usePathname } from 'next/navigation';
 import { useSidebar } from '../context/SidebarContext';
-import { ChevronDownIcon, FolderIcon, HorizontaLDots, PlugInIcon, TableIcon } from '../icons/index';
+import { ChevronDownIcon, FolderIcon, GroupIcon, HorizontaLDots, PlugInIcon, TableIcon } from '../icons/index';
 
 type NavItem = {
   name: string;
@@ -28,6 +28,11 @@ const navItems: NavItem[] = [
     icon: <PlugInIcon />,
     name: 'Canais de venda',
     path: '/admin/sales-channels',
+  },
+  {
+    icon: <GroupIcon />,
+    name: 'Usuários',
+    path: '/admin/users',
   },
 ];
 
@@ -197,7 +202,7 @@ const AppSidebar: React.FC = () => {
     >
       <div className={`flex py-8 ${!isExpanded && !isHovered ? 'lg:justify-center' : 'justify-start'}`}>
         <Link href="/admin">
-          <BrandMark compact={!isExpanded && !isHovered && !isMobileOpen} />
+          <StoreLogo compact={!isExpanded && !isHovered && !isMobileOpen} />
         </Link>
       </div>
       <div className="no-scrollbar flex flex-col overflow-y-auto duration-300 ease-linear">

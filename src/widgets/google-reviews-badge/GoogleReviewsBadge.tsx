@@ -1,6 +1,8 @@
+'use client';
+
 import { Star } from 'lucide-react';
 import { isHttpsUrl } from '@/entities/social-network';
-import { STORE_SETTINGS, type StoreSettings } from '@/entities/store-settings';
+import { useStoreSettings, type StoreSettingsValues } from '@/entities/store-settings';
 
 const NEW_TAB_NOTICE = 'Abre em outra aba.';
 const GOOGLE_STAR_YELLOW = '#FBBC04';
@@ -39,8 +41,10 @@ const accessibleNameOf = (rating: number, reviewCount: number | null): string =>
   return `${ratingPhrase}, ${formatReviewCount(reviewCount)}. ${NEW_TAB_NOTICE}`;
 };
 
-export const GoogleReviewsBadge = ({ settings = STORE_SETTINGS }: { settings?: StoreSettings }) => {
-  const { googleReviewsUrl, googleRating, googleReviewCount } = settings;
+export const GoogleReviewsBadge = ({ settings }: { settings?: StoreSettingsValues }) => {
+  const savedSettings = useStoreSettings();
+  if (!settings && savedSettings.status === 'loading') return null;
+  const { googleReviewsUrl, googleRating, googleReviewCount } = settings ?? savedSettings.settings;
   if (!googleReviewsUrl || !isHttpsUrl(googleReviewsUrl)) return null;
 
   const reviewsPhrase =
