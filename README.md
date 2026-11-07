@@ -5,19 +5,22 @@
 **Tudo em um só lugar.**
 
 Vitrine de afiliados da MultiKoisas, loja física de utilidades para casa, cozinha, limpeza e organização.
-O site mostra os produtos e leva o visitante para comprar nas lojas parceiras — a venda acontece lá, não aqui.
+O site mostra os produtos e leva o visitante para comprar nas lojas parceiras: a venda acontece lá, não aqui.
 
 [![Site no ar](https://img.shields.io/badge/site-multikoisas.netlify.app-0CCE6B?style=flat-square&logo=netlify&logoColor=white)](https://multikoisas.netlify.app)
 [![API](https://img.shields.io/badge/API-Swagger-85EA2D?style=flat-square&logo=swagger&logoColor=black)](https://multikoisas-univesp.onrender.com/swagger-ui/index.html)
-![Versão](https://img.shields.io/badge/versão-0.6.0-4F46E5?style=flat-square)
+[![Tarefas](https://img.shields.io/badge/tarefas-Linear-5E6AD2?style=flat-square&logo=linear&logoColor=white)](https://linear.app/skimpara/project/pi2-site-multikoisas-f810dc2fae75)
+![Versão](https://img.shields.io/badge/versão-0.10.0-4F46E5?style=flat-square)
 
 ![Next.js](https://img.shields.io/badge/Next.js-16-000000?style=flat-square&logo=nextdotjs&logoColor=white)
 ![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-estrito-3178C6?style=flat-square&logo=typescript&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)
 ![pnpm](https://img.shields.io/badge/pnpm-11-F69220?style=flat-square&logo=pnpm&logoColor=white)
+![MSW](https://img.shields.io/badge/MSW-API_simulada-FF6A33?style=flat-square&logo=mockserviceworker&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/back--end-Spring_Boot-6DB33F?style=flat-square&logo=springboot&logoColor=white)
 
-![Testes](https://img.shields.io/badge/testes-305-6E9F18?style=flat-square&logo=vitest&logoColor=white)
+![Testes](https://img.shields.io/badge/testes-613-6E9F18?style=flat-square&logo=vitest&logoColor=white)
 ![Cobertura](https://img.shields.io/badge/cobertura-98%25-22C55E?style=flat-square)
 ![Lighthouse desktop](https://img.shields.io/badge/Lighthouse_desktop-100_·_96_·_100_·_100-0CCE6B?style=flat-square&logo=lighthouse&logoColor=white)
 ![Arquitetura](https://img.shields.io/badge/arquitetura-Feature--Sliced_Design-4F46E5?style=flat-square)
@@ -30,91 +33,40 @@ Projeto integrador da UNIVESP · time Squad PI2
 
 ## Links
 
-| O quê                         | Onde                                                             |
-| ----------------------------- | ---------------------------------------------------------------- |
-| Site no ar                    | <https://multikoisas.netlify.app>                                |
-| Painel administrativo         | <https://multikoisas.netlify.app/admin>                          |
-| API do projeto (back-end)     | <https://multikoisas-univesp.onrender.com>                       |
-| Documentação da API (Swagger) | <https://multikoisas-univesp.onrender.com/swagger-ui/index.html> |
-| Código do back-end            | <https://github.com/pi2alunos/multikoisas-univesp>               |
-| Quadro de tarefas do time     | santi, projeto `UNIV` — <https://getsanti.app/p/UNIV>            |
+| O quê                         | Onde                                                                    |
+| ----------------------------- | ----------------------------------------------------------------------- |
+| Site no ar                    | <https://multikoisas.netlify.app>                                       |
+| Painel administrativo         | <https://multikoisas.netlify.app/panel>                                 |
+| API do projeto (back-end)     | <https://multikoisas-univesp.onrender.com>                              |
+| Documentação da API (Swagger) | <https://multikoisas-univesp.onrender.com/swagger-ui/index.html>        |
+| Código do back-end            | <https://github.com/pi2alunos/multikoisas-univesp>                      |
+| Quadro de tarefas do time     | <https://linear.app/skimpara/project/pi2-site-multikoisas-f810dc2fae75> |
 
 ## Duas superfícies, um projeto
 
-| Endereço            | O que é                                                                            |
-| ------------------- | ---------------------------------------------------------------------------------- |
-| `/`                 | Vitrine pública: produtos da API com filtro por categoria e busca                  |
-| `/product/<slug>`   | Página do produto: descrição completa e onde comprar                               |
-| `/admin`            | Painel com o total de produtos publicados e métricas de cliques (ainda de exemplo) |
-| `/admin/products`   | Criar, editar e apagar produtos, escolhendo a categoria                            |
-| `/admin/categories` | Criar, renomear e apagar categorias                                                |
-
-O endereço do produto é o nome dele seguido do id na API, como `/product/garrafa-termica-1l-12`.
+| Endereço                | O que é                                                                                 |
+| ----------------------- | --------------------------------------------------------------------------------------- |
+| `/`                     | Página inicial: a loja, produtos em destaque, como comprar, avaliações do Google e mapa |
+| `/showcase`             | Vitrine com todos os produtos, busca e filtro por categoria                             |
+| `/product/<slug>`       | Página do produto: fotos, descrição e os botões das lojas onde comprar                  |
+| `/panel`                | Login do painel                                                                         |
+| `/admin/products`       | Produtos: criar, editar, apagar, fotos, categoria e links de compra                     |
+| `/admin/categories`     | Categorias                                                                              |
+| `/admin/sales-channels` | Canais de venda (Shopee, Mercado Livre, Magalu...)                                      |
+| `/admin/users`          | Usuários do painel                                                                      |
+| `/store`                | Configurações de site: logo, endereço, redes sociais e WhatsApp                         |
 
 ## Como o front fala com a API
 
-O site funciona sem back-end (SKI-142). A API do time não é chamada: o mesmo contrato dela roda no navegador, com o MSW em modo service worker (`src/shared/local-api/`, `public/mockServiceWorker.js`).
+O site funciona sem back-end. O mesmo contrato da API do time roda no navegador, com o MSW em modo service worker (`src/shared/local-api/`, `public/mockServiceWorker.js`).
 
-- **Dados no navegador.** Produtos, categorias, canais, links de compra e redes ficam no `localStorage`; as fotos enviadas pelo painel ficam no IndexedDB. Cada navegador tem a sua cópia, que começa com os dados de exemplo de `src/shared/local-api/seed.json`.
-- **Leitura e escrita pelo navegador.** Vitrine e painel chamam `/api/...`, e o service worker responde. No servidor, `/api/*` responde 503: nada chega à API real.
+- **Dados no navegador.** Produtos, categorias, canais, links de compra, redes sociais e usuários ficam no `localStorage`; as fotos enviadas pelo painel ficam no IndexedDB. Cada navegador tem a sua cópia, que começa com os dados de `src/shared/local-api/seed.json`.
 - **Voltar ao começo.** Configurações de site tem o botão "Restaurar dados iniciais".
+- **Avaliações do Google.** A nota, o total e o resumo das avaliações vêm da Places API do Google, lidos no servidor uma vez por dia.
 
-| Recurso da API                                                                       | Uso no front                                      |
-| ------------------------------------------------------------------------------------ | ------------------------------------------------- |
-| `GET /produto`, `POST /produto`, `PUT /produto/{id}`, `DELETE /produto/{id}`         | vitrine, página do produto e cadastro de produtos |
-| `GET /categoria`, `POST /categoria`, `PUT /categoria/{id}`, `DELETE /categoria/{id}` | filtro da vitrine e cadastro de categorias        |
-| `GET /categoriaproduto`, `POST /categoriaproduto`, `DELETE /categoriaproduto`        | categoria de cada produto                         |
+### Testar a API no Postman ou no Bruno
 
-### Ver o JSON da API com o Bruno
-
-A pasta `bruno/multikoisas-api` é uma coleção pronta do [Bruno](https://www.usebruno.com), um cliente de API como o Postman, que guarda as requisições como arquivos no próprio repositório. Ela cobre todos os endpoints da branch `develop` do back-end: produtos, categorias, categoria do produto, canais de venda, links de compra, imagens, redes sociais e usuários.
-
-1. No Bruno, **Open Collection** e escolha a pasta `bruno/multikoisas-api`.
-2. No seletor de ambiente (canto superior direito), escolha onde chamar:
-
-   | Ambiente   | `baseUrl`                                  | Para quê                                                           |
-   | ---------- | ------------------------------------------ | ------------------------------------------------------------------ |
-   | API direta | `https://multikoisas-univesp.onrender.com` | a API publicada (hoje roda a branch `master`)                      |
-   | Pelo site  | `https://multikoisas.netlify.app/api`      | o mesmo caminho que o painel usa, pelo proxy do Netlify            |
-   | Local      | `http://localhost:8080`                    | o back-end rodando na sua máquina, por exemplo na branch `develop` |
-
-3. Abra uma requisição, como `1 - produtos/Listar produtos`, e clique em enviar: o JSON aparece na aba de resposta.
-
-Requisições com **(grava no banco)** no nome alteram o banco real do time: troque o `0` pelo id certo e apague o que criar. As de links de compra existem só na `develop` e respondem 403 até o back-end liberar `/canalvendaproduto` no `SecurityConfig` (card UNIV-12).
-
-Também dá para rodar pelo terminal, sem abrir o aplicativo: `cd bruno/multikoisas-api && npx @usebruno/cli run "1 - produtos/Listar produtos.bru" --env "API direta"`. Evite rodar uma pasta inteira contra a API real: ela inclui as requisições que gravam.
-
-### O que você precisa saber antes de usar
-
-- **A primeira visita do dia pode demorar.** O Render desliga a API quando ela fica parada, e ela leva cerca de 1 minuto para voltar.
-- **A vitrine atualiza em até 5 minutos.** Um produto criado ou renomeado no painel aparece na vitrine depois desse intervalo.
-- **O painel grava direto no banco do time.** Ainda não há login. Para testar, crie um produto ou uma categoria de teste e apague no final.
-- **Fotos e botões de compra ainda não vêm da API.** Os produtos mostram uma imagem genérica e o aviso "Links de compra em breve" até o back-end expor esses dados.
-
-## Situação do projeto
-
-Tarefas no santi, projeto `UNIV`.
-
-**Pronto**
-
-- Vitrine, página do produto e painel lendo produtos e categorias da API.
-- Cadastro de produtos no painel (criar, editar, apagar e escolher categoria).
-- Cadastro de categorias no painel.
-- Login do painel com usuário e senha do servidor.
-- Site inteiro funcionando sem back-end, com os dados no navegador.
-- Testes de integração que simulam a API com MSW, reproduzindo o contrato real dela.
-
-**Em andamento**
-
-- Redes sociais da loja no rodapé da vitrine.
-- Cadastro de canais de venda e de redes sociais no painel.
-
-**Esperando o back-end**
-
-- Fotos dos produtos: falta a API permitir ler a imagem.
-- Botões "Comprar na loja": falta a API liberar os links por canal de venda.
-
-Os problemas encontrados na API estão no santi com a etiqueta `backend`, cada um com o arquivo, como reproduzir e a correção sugerida.
+Importe `collections/multikoisas-api.postman_collection.json` no Postman (**Import**) ou no Bruno (**Import Collection → Postman Collection**). Preencha `username` e `password` nas variáveis da coleção e rode **0 - Login**: o token fica salvo e vai sozinho nas rotas que pedem login. As requisições com **(grava no banco)** no nome alteram o banco real do time.
 
 ## Como rodar na sua máquina
 
@@ -140,26 +92,26 @@ pnpm install
 pnpm dev
 ```
 
-Abra <http://localhost:3000> e a vitrine aparece. O painel fica em <http://localhost:3000/admin>.
+Abra <http://localhost:3000> e a vitrine aparece. O painel fica em <http://localhost:3000/panel>.
 
-O servidor recarrega sozinho a cada arquivo salvo — não precisa reiniciar nada enquanto desenvolve.
+### Variáveis de ambiente
 
-### Login do painel
+Copie o `.env.example` para `.env.local` e preencha. Nenhuma delas vai para o repositório.
 
-O painel (`/admin`) pede login em `/panel`. O usuário e a senha ficam nas variáveis `PANEL_USERNAME` e `PANEL_PASSWORD` do servidor, nunca no repositório; a sessão dura 8 horas.
-
-O servidor também precisa de `SESSION_SECRET`, um texto aleatório com 32 caracteres ou mais (por exemplo `openssl rand -base64 48`). Copie o `.env.example` para `.env.local` e preencha. Sem essas variáveis, a tela de login avisa que o painel não está configurado; em `pnpm dev` um `SESSION_SECRET` de desenvolvimento é usado.
+| Variável                            | Para quê                                                                                                      |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `PANEL_USERNAME` e `PANEL_PASSWORD` | Conta de login do painel; a sessão dura 8 horas                                                               |
+| `SESSION_SECRET`                    | Texto aleatório com 32 caracteres ou mais (`openssl rand -base64 48`); em `pnpm dev` há um de desenvolvimento |
+| `GOOGLE_PLACES_API_KEY`             | Chave da Places API (New); sem ela a seção de avaliações do Google não aparece                                |
 
 ### Se algo der errado
 
-**`pnpm: command not found`** — o corepack não foi habilitado. Rode `corepack enable pnpm` e abra um terminal novo.
+**`pnpm: command not found`**: o corepack não foi habilitado. Rode `corepack enable pnpm` e abra um terminal novo.
 
-**A porta 3000 já está em uso** — outro projeto está rodando nela. Suba em outra porta com `pnpm dev --port 3001`.
+**A porta 3000 já está em uso**: outro projeto está rodando nela. Suba em outra porta com `pnpm dev --port 3001`.
 
-**A vitrine demora ou dá erro na primeira carga** — a API estava dormindo no Render. Espere cerca de 1 minuto e recarregue a página.
-
-**No macOS, o git reclama da licença do Xcode** — aponte as ferramentas de linha de comando para a instalação leve:
-`sudo xcode-select --switch /Library/Developer/CommandLineTools`
+**No macOS, o git reclama da licença do Xcode**: aponte as ferramentas de linha de comando para a instalação leve com
+`sudo xcode-select --switch /Library/Developer/CommandLineTools`.
 
 ## Comandos disponíveis
 
@@ -174,67 +126,22 @@ pnpm test:watch      # roda os testes e fica observando os arquivos
 pnpm test:coverage   # roda os testes e mede a cobertura (mínimo de 90%)
 ```
 
-Antes de pedir revisão de um Pull Request, os quatro precisam passar: `pnpm lint`, `pnpm typecheck`, `pnpm test` e `pnpm build`.
+## Arquitetura: Feature-Sliced Design
 
-Os testes nunca chamam a API de verdade. O MSW simula a API (em `src/test/msw/`) com as mesmas respostas, códigos de erro e comportamentos dela, sobre um banco em memória. Qualquer chamada sem simulação faz o teste falhar, então nada chega ao banco do time.
-
-## Onde fica cada coisa
+O código segue o [Feature-Sliced Design](https://feature-sliced.design): o projeto é dividido em camadas, e cada camada só importa das camadas abaixo dela. Assim, mexer numa tela não quebra o que vem de baixo, e cada pedaço tem um lugar óbvio.
 
 ```
-src/
-  app/
-    (site)/        páginas públicas: vitrine e detalhe do produto
-    (admin)/       páginas do painel: produtos, categorias e métricas
-  widgets/         blocos de página: hero, vitrine, rodapé, detalhe
-  features/
-    product-admin/   cadastro de produtos no painel
-    category-admin/  cadastro de categorias no painel
-    showcase-filter/ filtro por categoria e busca da vitrine
-  entities/
-    product/       o produto: tipo, leitura da API (api.ts) e card
-  components/      biblioteca de componentes do projeto (botão, tabela, modal, formulário...)
+app  →  widgets  →  features  →  entities  →  shared
 ```
 
-A regra de dependência é de cima para baixo: `app` usa `widgets`, que usa `features`, que usa `entities`. Nunca o contrário.
+| Camada         | O que mora aqui                                                             | Exemplos neste projeto                                                         |
+| -------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `src/app`      | Rotas do Next.js e layouts. Só monta a página com os blocos de baixo.       | `(site)/` vitrine pública, `(admin)/` painel, `(auth)/` login                  |
+| `src/widgets`  | Blocos grandes de página, que juntam features e entities.                   | `site-header`, `featured-products`, `google-reviews`, `site-footer`            |
+| `src/features` | Uma ação do usuário, com o seu estado e formulário.                         | `product-admin`, `user-admin`, `showcase-filter`, `social-network-admin`       |
+| `src/entities` | Os conceitos do negócio: tipo, leitura da API e o componente que os mostra. | `product`, `sales-channel`, `social-network`, `store-settings`, `google-place` |
+| `src/shared`   | O que não sabe nada do negócio.                                             | `api/` (cliente HTTP), `local-api/` (API simulada), `ui/`                      |
 
-**Reuse o que já existe.** Antes de criar um componente, procure em `src/components/` — o template traz botão, tabela, modal, formulário, badge e mais. Escrever de novo o que já está pronto gera inconsistência visual e manutenção em dobro.
+`src/components` é a biblioteca de componentes que veio do template TailAdmin (botão, tabela, modal, campos de formulário) e funciona como parte do `shared`: antes de criar um componente, procure lá.
 
-Para acrescentar uma loja parceira nova (Amazon, por exemplo), basta uma entrada em `STORE_PRESENTATION`, em `src/entities/product/types.ts`, com o nome, o texto do botão e as cores dela.
-
-## Regras que o projeto não quebra
-
-- **Nenhum preço na vitrine.** Quem vende é a loja parceira.
-- **O botão de compra sempre diz o nome da loja** ("Comprar na Shopee"), nunca um "Comprar" genérico: o visitante precisa saber para onde está indo.
-- **Mobile primeiro.** Projete em 375px de largura antes de pensar no desktop, com alvos de toque de pelo menos 44 pixels.
-- **Tema claro.** Não há modo escuro em nenhuma das duas superfícies.
-- **Textos em português**, sempre.
-- **Testes na pasta `tests/` de cada módulo**, separados em `unit/` (função ou componente isolado) e `integration/` (tela com a API simulada pelo MSW), com cobertura mínima de 90%.
-- **O front não altera o back-end.** Problema encontrado na API vira tarefa no santi para o time do back-end.
-
-## Publicação
-
-O site está no ar em <https://multikoisas.netlify.app>, publicado pelo Netlify a partir da branch `main`. A configuração está em `netlify.toml`: comando de build, versão do Node e o plugin do Next.js, que é quem faz as rotas estáticas, a atualização a cada 5 minutos e o repasse de `/api` funcionarem lá.
-
-O build busca o catálogo na API para gerar as páginas de produto. Se a API estiver dormindo, o deploy leva cerca de 1 minuto a mais.
-
-Cada Pull Request ganha um endereço de prévia automático (`deploy-preview-<número>--multikoisas.netlify.app`), para o time revisar antes de aprovar.
-
-Para conectar pela primeira vez: no Netlify, **Add new site → Import an existing project**, escolha este repositório e confirme. As configurações de build vêm do `netlify.toml`, não precisa preencher nada na tela. Depois confira em **Site configuration → Build & deploy** se a branch de produção é a `main`: apontar para a branch errada faz o site servir uma versão antiga sem nenhum erro aparecer.
-
-## Como contribuir
-
-Toda branch nasce da `developer` e volta para ela por Pull Request. A `main` só recebe versões prontas para publicação, também por Pull Request.
-
-```bash
-git checkout developer
-git pull
-git checkout -b feat/UNIV-<número>-nome-do-que-voce-vai-fazer
-```
-
-O número é o da tarefa no santi. Mensagens de commit em inglês, no padrão Conventional Commits: `feat:` para funcionalidade nova, `fix:` para correção, `docs:` para documentação, `test:` para teste, `refactor:` quando o comportamento não muda. Um assunto por commit.
-
-## Stack
-
-Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · Vitest com Testing Library · pnpm · API Spring Boot no Render
-
-Vitrine e painel compartilham a mesma biblioteca de componentes, para as duas superfícies falarem a mesma língua.
+Cada módulo guarda os testes ao lado, em `tests/unit/` (função ou componente isolado) e `tests/integration/` (tela conversando com a API simulada pelo MSW).

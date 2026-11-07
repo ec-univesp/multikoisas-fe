@@ -27,14 +27,19 @@ const nameErrorOf = (name: string, isRepeated: boolean): string | null => {
   return isRepeated ? NAME_TAKEN_MESSAGE : null;
 };
 
-const isWhatsAppName = (name: string): boolean => normalizeName(name) === 'whatsapp';
+const isWhatsAppName = (name: string): boolean => normalizeName(name).replace(/\s/g, '') === 'whatsapp';
 
 const WHATSAPP_NUMBER_LINK = /^(?:https:\/\/)?wa\.me\/55(\d{10,11})$/;
 
+// Area code without zero; mobile numbers start with 9, landlines with 2 to 8.
+const BRAZILIAN_NUMBER = /^[1-9]{2}(?:9\d{8}|[2-8]\d{7})$/;
+
 const whatsAppNumberOf = (text: string): string | null => {
   const digits = text.replace(/\D/g, '');
-  const localDigits = /^55\d{10,11}$/.test(digits) ? digits.slice(2) : digits;
-  return /^\d{10,11}$/.test(localDigits) ? localDigits : null;
+  const hasPlusSign = text.trim().startsWith('+');
+  if (hasPlusSign && !digits.startsWith('55')) return null;
+  const localDigits = hasPlusSign || /^55\d{10,11}$/.test(digits) ? digits.slice(2) : digits;
+  return BRAZILIAN_NUMBER.test(localDigits) ? localDigits : null;
 };
 
 const isPhoneText = (text: string): boolean => /^[\d\s()+.-]*$/.test(text);
