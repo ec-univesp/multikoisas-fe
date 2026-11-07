@@ -243,6 +243,46 @@ describe('UserAdminPanel', () => {
     expect(apiDatabase.users).toContainEqual({ ...maria, role: 'ADMIN' });
   });
 
+  it('warns when the api keeps the old profile', async () => {
+    const session = userEvent.setup();
+    renderPanel();
+
+    await session.click(screen.getByRole('button', { name: 'Editar maria' }));
+    await fillForm(session, { role: 'Administrador' });
+
+    expect(await screen.findByText('O perfil não foi alterado. Tente de novo.')).toBeInTheDocument();
+    expect(screen.getAllByText('Administrador')).toHaveLength(1);
+  });
+
+  it('never lets the browser fill a saved password and links each error to its field', async () => {
+    const session = userEvent.setup();
+    renderPanel();
+
+    await submitNewUser(session, {});
+
+    expect(screen.getByLabelText('Senha')).toHaveAttribute('autocomplete', 'new-password');
+    expect(screen.getByLabelText('Nome de usuário')).toHaveAttribute('autocomplete', 'off');
+    for (const [label, message] of [
+      ['Nome de usuário', 'Informe o nome de usuário.'],
+      ['E-mail', 'Informe um e-mail válido.'],
+      ['Senha', 'Informe a senha.'],
+    ]) {
+      const field = screen.getByLabelText(label);
+      expect(field).toHaveAttribute('aria-invalid', 'true');
+      expect(field).toHaveAccessibleDescription(message);
+    }
+  });
+
+  it('shows the profile choice at 16px so phones do not zoom in', async () => {
+    const session = userEvent.setup();
+    renderPanel();
+
+    await session.click(screen.getByRole('button', { name: 'Novo usuário' }));
+
+    expect(screen.getByLabelText('Perfil')).toHaveClass('text-base');
+    expect(screen.getByLabelText('Perfil')).not.toHaveClass('text-sm');
+  });
+
   it('shows an e-mail taken by another user on edit', async () => {
     server.use(
       http.put('*/user/:username', () =>
