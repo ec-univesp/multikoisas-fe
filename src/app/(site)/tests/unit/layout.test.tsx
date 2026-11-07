@@ -18,9 +18,9 @@ const findElementByType = (node: ReactNode, type: unknown): ElementWithChildren 
 };
 
 describe('SiteLayout', () => {
-  it('shares the showcase search between the header and the page', () => {
+  it('shares the showcase search between the header and the page', async () => {
     const page = <p>página</p>;
-    const provider = findElementByType(SiteLayout({ children: page }), ShowcaseSearchProvider);
+    const provider = findElementByType(await SiteLayout({ children: page }), ShowcaseSearchProvider);
     expect(provider).toBeDefined();
     expect(findElementByType(provider, SiteHeader)).toBeDefined();
     const main = findElementByType(provider, 'main');
@@ -28,8 +28,8 @@ describe('SiteLayout', () => {
     expect(findElementByType(main, 'p')?.props.children).toBe('página');
   });
 
-  it('floats the google reviews badge above the WhatsApp button, centered on the right edge', () => {
-    const floating = findElementByType(SiteLayout({ children: <p>página</p> }), 'aside') as
+  it('floats the google reviews badge above the WhatsApp button, centered on the right edge', async () => {
+    const floating = findElementByType(await SiteLayout({ children: <p>página</p> }), 'aside') as
       ReactElement<{ children?: ReactNode; className?: string; 'aria-label'?: string }> | undefined;
     expect(floating?.props['aria-label']).toBe('Contatos da loja');
     expect(floating?.props.className?.split(' ')).toEqual(
@@ -40,8 +40,8 @@ describe('SiteLayout', () => {
     expect(isValidElement(whatsApp) && whatsApp.type).toBe(WhatsAppFloatingButton);
   });
 
-  it('waits for the local api around the whole site but forces the light theme before it starts', () => {
-    const layout = SiteLayout({ children: <p>página</p> });
+  it('waits for the local api around the whole site but forces the light theme before it starts', async () => {
+    const layout = await SiteLayout({ children: <p>página</p> });
     const provider = findElementByType(layout, LocalApiProvider);
     expect(findElementByType(provider, ShowcaseSearchProvider)).toBeDefined();
     expect(findElementByType(provider, 'aside')).toBeDefined();
