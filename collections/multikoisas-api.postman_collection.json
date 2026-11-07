@@ -1,0 +1,1027 @@
+{
+  "info": {
+    "name": "MultiKoisas API",
+    "description": "Todas as rotas da API do back-end (multikoisas-univesp). Rode primeiro \"Login\" com username e password das variáveis da coleção: o token fica salvo e vai sozinho nas rotas que exigem login. Requisições marcadas \"(grava no banco)\" alteram o banco real do time.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://multikoisas-univesp.onrender.com"
+    },
+    {
+      "key": "username",
+      "value": ""
+    },
+    {
+      "key": "password",
+      "value": ""
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "0 - Login",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.collectionVariables.set('token', pm.response.json().token);"]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "1 - Produtos",
+      "item": [
+        {
+          "name": "Listar produtos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/produto",
+              "host": ["{{baseUrl}}"],
+              "path": ["produto"]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Buscar produto por id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/produto?id=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["produto"],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Criar produto (grava no banco)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/produto",
+              "host": ["{{baseUrl}}"],
+              "path": ["produto"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Produto de teste\",\n  \"descricaoProduto\": \"Descrição do produto de teste\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Atualizar produto (grava no banco)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/produto/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["produto", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "0"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Produto de teste\",\n  \"descricaoProduto\": \"Descrição nova\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Apagar produto (grava no banco)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/produto/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["produto", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "0"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2 - Categorias",
+      "item": [
+        {
+          "name": "Listar categorias",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/categoria",
+              "host": ["{{baseUrl}}"],
+              "path": ["categoria"]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Buscar categoria por id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/categoria?categoriaId=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["categoria"],
+              "query": [
+                {
+                  "key": "categoriaId",
+                  "value": "1"
+                }
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Buscar categoria pelo nome",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/categoria?nome=Jardinagem",
+              "host": ["{{baseUrl}}"],
+              "path": ["categoria"],
+              "query": [
+                {
+                  "key": "nome",
+                  "value": "Jardinagem"
+                }
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Criar categoria (grava no banco)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/categoria",
+              "host": ["{{baseUrl}}"],
+              "path": ["categoria"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Categoria de teste\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Renomear categoria (grava no banco)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/categoria/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["categoria", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "0"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Categoria renomeada\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Apagar categoria (grava no banco)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/categoria/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["categoria", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "0"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3 - Categoria do produto",
+      "item": [
+        {
+          "name": "Listar todos os vínculos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/categoriaproduto",
+              "host": ["{{baseUrl}}"],
+              "path": ["categoriaproduto"]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Categorias de um produto",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/categoriaproduto?produtoId=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["categoriaproduto"],
+              "query": [
+                {
+                  "key": "produtoId",
+                  "value": "1"
+                }
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Produtos de uma categoria",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/categoriaproduto?categoriaId=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["categoriaproduto"],
+              "query": [
+                {
+                  "key": "categoriaId",
+                  "value": "1"
+                }
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Vincular categoria ao produto (grava no banco)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/categoriaproduto",
+              "host": ["{{baseUrl}}"],
+              "path": ["categoriaproduto"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"produtoId\": 0,\n  \"categoriaId\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Desvincular categoria do produto (grava no banco)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/categoriaproduto",
+              "host": ["{{baseUrl}}"],
+              "path": ["categoriaproduto"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"produtoId\": 0,\n  \"categoriaId\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4 - Canais de venda",
+      "item": [
+        {
+          "name": "Listar canais de venda",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/canalvenda",
+              "host": ["{{baseUrl}}"],
+              "path": ["canalvenda"]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Buscar canal de venda por id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/canalvenda?id=2",
+              "host": ["{{baseUrl}}"],
+              "path": ["canalvenda"],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "2"
+                }
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Buscar canal de venda pelo nome",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/canalvenda?nome=Shopee",
+              "host": ["{{baseUrl}}"],
+              "path": ["canalvenda"],
+              "query": [
+                {
+                  "key": "nome",
+                  "value": "Shopee"
+                }
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Criar canal de venda (grava no banco)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/canalvenda",
+              "host": ["{{baseUrl}}"],
+              "path": ["canalvenda"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Canal de teste\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Renomear canal de venda (grava no banco)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/canalvenda/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["canalvenda", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "0"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Canal renomeado\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Apagar canal de venda (grava no banco)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/canalvenda/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["canalvenda", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "0"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5 - Links de compra",
+      "item": [
+        {
+          "name": "Listar todos os links",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/canalvendaproduto",
+              "host": ["{{baseUrl}}"],
+              "path": ["canalvendaproduto"]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Links de um produto",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/canalvendaproduto?produtoId=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["canalvendaproduto"],
+              "query": [
+                {
+                  "key": "produtoId",
+                  "value": "1"
+                }
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Produtos de um canal",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/canalvendaproduto?canalVendaId=2",
+              "host": ["{{baseUrl}}"],
+              "path": ["canalvendaproduto"],
+              "query": [
+                {
+                  "key": "canalVendaId",
+                  "value": "2"
+                }
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Vincular link ao produto (grava no banco)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/canalvendaproduto",
+              "host": ["{{baseUrl}}"],
+              "path": ["canalvendaproduto"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"produtoId\": 0,\n  \"canalVendaId\": 0,\n  \"link\": \"https://shopee.com.br/produto-de-teste\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Desvincular link do produto (grava no banco)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/canalvendaproduto",
+              "host": ["{{baseUrl}}"],
+              "path": ["canalvendaproduto"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"produtoId\": 0,\n  \"canalVendaId\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6 - Imagens",
+      "item": [
+        {
+          "name": "Fotos de um produto",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/imagem?produtoId=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["imagem"],
+              "query": [
+                {
+                  "key": "produtoId",
+                  "value": "1"
+                }
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Enviar foto do produto (grava no banco)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/imagem?produtoId=0",
+              "host": ["{{baseUrl}}"],
+              "path": ["imagem"],
+              "query": [
+                {
+                  "key": "produtoId",
+                  "value": "0"
+                }
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Apagar foto do produto (grava no banco)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/imagem",
+              "host": ["{{baseUrl}}"],
+              "path": ["imagem"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 0,\n  \"produtoId\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7 - Redes sociais",
+      "item": [
+        {
+          "name": "Listar redes sociais",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/socialnetwork",
+              "host": ["{{baseUrl}}"],
+              "path": ["socialnetwork"]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Buscar rede social pelo nome",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/socialnetwork?name=Instagram",
+              "host": ["{{baseUrl}}"],
+              "path": ["socialnetwork"],
+              "query": [
+                {
+                  "key": "name",
+                  "value": "Instagram"
+                }
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Criar rede social (grava no banco)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/socialnetwork",
+              "host": ["{{baseUrl}}"],
+              "path": ["socialnetwork"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"descricao\": \"Rede de teste\",\n  \"link\": \"https://exemplo.com/multikoisas\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Atualizar rede social (grava no banco)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/socialnetwork/:description",
+              "host": ["{{baseUrl}}"],
+              "path": ["socialnetwork", ":description"],
+              "variable": [
+                {
+                  "key": "description",
+                  "value": "Rede de teste"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"descricao\": \"Rede de teste\",\n  \"link\": \"https://exemplo.com/novo\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Apagar rede social (grava no banco)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/socialnetwork/:description",
+              "host": ["{{baseUrl}}"],
+              "path": ["socialnetwork", ":description"],
+              "variable": [
+                {
+                  "key": "description",
+                  "value": "Rede de teste"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "8 - Usuários",
+      "item": [
+        {
+          "name": "Listar usuários",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/user",
+              "host": ["{{baseUrl}}"],
+              "path": ["user"]
+            }
+          }
+        },
+        {
+          "name": "Buscar usuário por id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/user?id=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["user"],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar usuário pelo username",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/user?username=admin",
+              "host": ["{{baseUrl}}"],
+              "path": ["user"],
+              "query": [
+                {
+                  "key": "username",
+                  "value": "admin"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Criar usuário (grava no banco)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/user",
+              "host": ["{{baseUrl}}"],
+              "path": ["user"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"teste\",\n  \"email\": \"teste@exemplo.com\",\n  \"password\": \"troque-esta-senha\",\n  \"role\": \"USER\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Atualizar usuário (grava no banco)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/user/:username",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", ":username"],
+              "variable": [
+                {
+                  "key": "username",
+                  "value": "teste"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"teste\",\n  \"email\": \"novo@exemplo.com\",\n  \"password\": \"\",\n  \"role\": \"USER\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Apagar usuário (grava no banco)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/user/:username",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", ":username"],
+              "variable": [
+                {
+                  "key": "username",
+                  "value": "teste"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
