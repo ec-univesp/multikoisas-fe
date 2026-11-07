@@ -279,6 +279,115 @@ describe('local api handlers without the api bugs', () => {
   });
 });
 
+const ADMIN = { id: 8, username: 'admin', email: 'pi2alunos@gmail.com', role: 'ADMIN' };
+
+const NEW_USER = { username: 'maria', email: 'maria@multikoisas.com', password: 'segredo', role: 'USER' };
+
+describe('local api users', () => {
+  beforeEach(() => {
+    database.users.push({ ...ADMIN });
+  });
+
+  it('lists the users and filters by id or username', async () => {
+    expect(await (await send('GET', '/api/user')).json()).toEqual([ADMIN]);
+    expect(await (await send('GET', '/api/user?username=admin')).json()).toEqual([ADMIN]);
+    expect(await (await send('GET', '/api/user?id=8')).json()).toEqual([ADMIN]);
+    const missing = await send('GET', '/api/user?username=ninguem');
+    expect(missing.status).toBe(404);
+    expect(await missing.text()).toBe('');
+  });
+
+  it('creates a user without keeping the password', async () => {
+    const created = await send('POST', '/api/user', NEW_USER);
+    expect(created.status).toBe(201);
+    expect(await created.text()).toBe('usuario cadastrado com sucesso');
+    expect(database.users).toContainEqual({ id: 5, username: 'maria', email: 'maria@multikoisas.com', role: 'USER' });
+    expect(JSON.stringify(database)).not.toContain('segredo');
+    expect(onChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('answers 400 with a message for every blank field', async () => {
+    const refused = await send('POST', '/api/user', { username: ' ', email: '' });
+    expect(refused.status).toBe(400);
+    expect(await refused.json()).toEqual({
+      email: 'O campo email e obrigatorio',
+      username: 'O campo username e obrigatorio',
+      password: 'O campo password e obrigatoria',
+      role: 'o campo role e obrigatorio',
+    });
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('refuses a username or an e-mail already taken', async () => {
+    const usernameTaken = await send('POST', '/api/user', { ...NEW_USER, username: 'admin' });
+    expect(usernameTaken.status).toBe(409);
+    expect(await usernameTaken.text()).toBe('Este nome de usuário já está em uso.');
+
+    const emailTaken = await send('POST', '/api/user', { ...NEW_USER, email: 'pi2alunos@gmail.com' });
+    expect(emailTaken.status).toBe(409);
+    expect(await emailTaken.text()).toBe('Já existe um usuário cadastrado com este e-mail.');
+    expect(database.users).toHaveLength(1);
+  });
+
+  it('updates the e-mail, keeps the blank fields and ignores the role like the api', async () => {
+    database.users.push({ id: 9, username: 'maria', email: 'maria@multikoisas.com', role: 'USER' });
+
+    const updated = await send('PUT', '/api/user/admin', {
+      email: 'maria@multikoisas.com',
+      password: '',
+      role: 'USER',
+    });
+
+    expect(updated.status).toBe(200);
+    expect(await updated.json()).toEqual({ ...ADMIN, email: 'maria@multikoisas.com' });
+    const kept = await send('PUT', '/api/user/admin', { email: ' ', password: 'nova' });
+    expect(await kept.json()).toEqual({ ...ADMIN, email: 'maria@multikoisas.com' });
+    expect(onChange).toHaveBeenCalledTimes(2);
+  });
+
+  it('answers 409 when updating a user that does not exist', async () => {
+    const missing = await send('PUT', '/api/user/ninguem', { email: 'x@y.com' });
+    expect(missing.status).toBe(409);
+    expect(await missing.text()).toBe('Usuário não encontrado.');
+  });
+
+  it('deletes a user and answers 404 when it does not exist', async () => {
+    const deleted = await send('DELETE', '/api/user/admin');
+    expect(deleted.status).toBe(200);
+    expect(await deleted.json()).toEqual({ message: 'Usuario admin deletado com sucesso.' });
+    expect(database.users).toEqual([]);
+    expect((await send('DELETE', '/api/user/admin')).status).toBe(404);
+    expect(onChange).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('local api users without the api bugs', () => {
+  beforeEach(() => {
+    database.users.push({ ...ADMIN }, { id: 9, username: 'maria', email: 'maria@multikoisas.com', role: 'USER' });
+    server.use(
+      ...createApiHandlers(database, {
+        baseUrl: '/api',
+        onChange,
+        images,
+        imageUrl: String,
+        reproduceApiBugs: false,
+      }),
+    );
+  });
+
+  it('changes the role of a user', async () => {
+    const updated = await send('PUT', '/api/user/maria', { role: 'ADMIN' });
+    expect(await updated.json()).toEqual({ id: 9, username: 'maria', email: 'maria@multikoisas.com', role: 'ADMIN' });
+  });
+
+  it('refuses an e-mail taken by another user and accepts the same e-mail', async () => {
+    const taken = await send('PUT', '/api/user/maria', { email: 'pi2alunos@gmail.com' });
+    expect(taken.status).toBe(409);
+    expect(await taken.text()).toBe('Este e-mail já está em uso por outra conta.');
+    expect((await send('PUT', '/api/user/admin', { email: 'pi2alunos@gmail.com' })).status).toBe(200);
+  });
+});
+
 describe('local api store settings', () => {
   it('reads the store settings', async () => {
     const answer = await send('GET', '/api/configuracao');

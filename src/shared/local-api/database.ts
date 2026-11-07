@@ -4,6 +4,7 @@ export type ProductCategoryRow = { produtoId: number; categoriaId: number };
 export type SalesChannelRow = { id: number; nome: string };
 export type PurchaseLinkRow = { produtoId: number; canalVendaId: number; link: string };
 export type ProductImageRow = { id: number; produtoId: number; imagemUrl: string };
+export type UserRow = { id: number; username: string; email: string; role: string };
 export type SocialNetworkRow = { id: number; descricao: string; link: string };
 export type StoreSettingsRow = {
   address: string | null;
@@ -31,11 +32,15 @@ export type ApiDatabase = {
   socialNetworks: SocialNetworkRow[];
   salesChannels: SalesChannelRow[];
   purchaseLinks: PurchaseLinkRow[];
+  users: UserRow[];
   storeSettings: StoreSettingsRow;
   nextId: number;
 };
 
-export type DatabaseSeed = Omit<ApiDatabase, 'nextId' | 'storeSettings'> & { storeSettings?: unknown };
+export type DatabaseSeed = Omit<ApiDatabase, 'nextId' | 'storeSettings' | 'users'> & {
+  storeSettings?: unknown;
+  users?: UserRow[];
+};
 
 const textOr = (value: unknown, fallback: string | null) =>
   value === null || typeof value === 'string' ? value : fallback;
@@ -55,13 +60,18 @@ const toStoreSettingsRow = (saved: unknown): StoreSettingsRow => {
 };
 
 export const createDatabase = (seed: DatabaseSeed): ApiDatabase => {
-  const rows = { ...structuredClone(seed), storeSettings: toStoreSettingsRow(seed.storeSettings) };
+  const rows = {
+    ...structuredClone(seed),
+    users: structuredClone(seed.users ?? []),
+    storeSettings: toStoreSettingsRow(seed.storeSettings),
+  };
   const ids = [
     ...rows.products,
     ...rows.categories,
     ...rows.productImages,
     ...rows.socialNetworks,
     ...rows.salesChannels,
+    ...rows.users,
   ].map((row) => row.id);
   return { ...rows, nextId: Math.max(0, ...ids) + 1 };
 };

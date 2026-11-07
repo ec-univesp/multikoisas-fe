@@ -110,6 +110,21 @@ describe('local api persistence', () => {
     });
   });
 
+  it('starts the users from the seed with the admin account', () => {
+    expect(loadDatabase().users).toEqual([{ id: 8, username: 'admin', email: 'pi2alunos@gmail.com', role: 'ADMIN' }]);
+  });
+
+  it('fills the users of data saved before they existed and keeps the rest', () => {
+    const database = loadDatabase();
+    database.products.splice(1);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...database, users: undefined }));
+
+    const reloaded = loadDatabase();
+
+    expect(reloaded.products).toHaveLength(1);
+    expect(reloaded.users.map((user) => user.username)).toEqual(['admin']);
+  });
+
   it('never hands out the seed itself', () => {
     loadDatabase().products.splice(0);
     expect(loadDatabase().products).toHaveLength(5);

@@ -32,7 +32,7 @@ const readSaved = (): unknown => {
 export const loadDatabase = (): ApiDatabase => {
   const saved = readSaved();
   if (!isDatabase(saved)) return createDatabase(seed);
-  const database = createDatabase(saved);
+  const database = createDatabase({ ...saved, users: Array.isArray(saved.users) ? saved.users : seed.users });
   return { ...database, nextId: Math.max(saved.nextId, database.nextId) };
 };
 
