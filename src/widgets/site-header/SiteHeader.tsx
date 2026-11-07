@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { toStoresPhrase, useCatalog } from '@/entities/product';
-import { isWhatsApp, useSocialNetworks, WhatsAppLink } from '@/entities/social-network';
 import { StoreLogo, useStoreSettings } from '@/entities/store-settings';
 import { ShowcaseLink, ShowcaseSearchField } from '@/features/showcase-filter';
 
@@ -12,12 +11,10 @@ const navLinkClassName =
 export const SiteHeader = () => {
   const catalog = useCatalog();
   const { logoUrl } = useStoreSettings().settings;
-  const socialNetworks = useSocialNetworks();
-  const whatsApp = socialNetworks.status === 'ready' ? socialNetworks.data.find(isWhatsApp) : undefined;
   const storesPhrase = catalog.status === 'ready' ? toStoresPhrase(catalog.data.products) : null;
 
   return (
-    <header aria-busy={catalog.status === 'loading' || socialNetworks.status === 'loading'}>
+    <header aria-busy={catalog.status === 'loading'}>
       <p className="bg-store-yellow px-4 py-2 text-center text-sm font-semibold text-store-navy-950">
         Vitrine oficial MultiKoisas: escolha aqui e conclua a compra com segurança na loja parceira.
       </p>
@@ -31,7 +28,6 @@ export const SiteHeader = () => {
               Tudo em um só lugar
             </span>
           </Link>
-          {whatsApp && <WhatsAppLink url={whatsApp.url} className="lg:order-last" />}
           <div className="w-full lg:w-auto lg:max-w-xl lg:flex-1">
             <ShowcaseSearchField id="site-header-search" label="Buscar produto no cabeçalho" />
           </div>
