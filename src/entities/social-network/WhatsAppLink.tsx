@@ -1,7 +1,7 @@
 import { MessageCircle } from 'lucide-react';
 import type { SocialNetwork } from './types';
 
-const WHATSAPP_HOSTS = new Set(['wa.me', 'api.whatsapp.com', 'whatsapp.com']);
+const WHATSAPP_HOSTS = new Set(['wa.me', 'api.whatsapp.com', 'chat.whatsapp.com', 'whatsapp.com']);
 
 export const isWhatsApp = (socialNetwork: SocialNetwork): boolean =>
   WHATSAPP_HOSTS.has(new URL(socialNetwork.url).hostname.replace(/^www\./, ''));
