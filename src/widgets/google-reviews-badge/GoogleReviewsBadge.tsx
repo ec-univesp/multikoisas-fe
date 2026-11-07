@@ -1,5 +1,3 @@
-'use client';
-
 import { Star } from 'lucide-react';
 import {
   formatRating,
@@ -9,7 +7,6 @@ import {
   type GooglePlace,
 } from '@/entities/google-place';
 import { isHttpsUrl } from '@/entities/social-network';
-import { useStoreSettings, type StoreSettingsValues } from '@/entities/store-settings';
 
 const NEW_TAB_NOTICE = 'Abre em outra aba.';
 
@@ -20,40 +17,30 @@ const accessibleNameOf = (rating: number, reviewCount: number | null): string =>
 };
 
 type GoogleReviewsBadgeProps = {
-  settings?: StoreSettingsValues;
-  livePlace?: Pick<GooglePlace, 'rating' | 'reviewCount'>;
+  place: Pick<GooglePlace, 'rating' | 'reviewCount' | 'mapsUrl'> | null;
 };
 
-export const GoogleReviewsBadge = ({ settings, livePlace }: GoogleReviewsBadgeProps) => {
-  const savedSettings = useStoreSettings();
-  if (!settings && savedSettings.status === 'loading') return null;
-  const { googleReviewsUrl, ...savedValues } = settings ?? savedSettings.settings;
-  const googleRating = livePlace?.rating ?? savedValues.googleRating;
-  const googleReviewCount = livePlace?.reviewCount ?? savedValues.googleReviewCount;
-  if (!googleReviewsUrl || !isHttpsUrl(googleReviewsUrl)) return null;
+export const GoogleReviewsBadge = ({ place }: GoogleReviewsBadgeProps) => {
+  if (!place?.mapsUrl || !isHttpsUrl(place.mapsUrl)) return null;
+  const { rating, reviewCount, mapsUrl } = place;
 
-  const reviewsPhrase =
-    googleReviewCount === null ? 'Avaliações no Google' : `${formatReviewCount(googleReviewCount)} no Google`;
+  const reviewsPhrase = reviewCount === null ? 'Avaliações no Google' : `${formatReviewCount(reviewCount)} no Google`;
 
   return (
     <a
-      href={googleReviewsUrl}
+      href={mapsUrl}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label={
-        googleRating === null
-          ? `Avaliações no Google. ${NEW_TAB_NOTICE}`
-          : accessibleNameOf(googleRating, googleReviewCount)
-      }
+      aria-label={rating === null ? `Avaliações no Google. ${NEW_TAB_NOTICE}` : accessibleNameOf(rating, reviewCount)}
       className="flex h-11 items-center gap-2 rounded-full border border-gray-200 bg-white px-4 text-sm font-bold text-gray-800 shadow-lg hover:bg-gray-50 focus-visible:ring-4 focus-visible:ring-[#4285F4] focus-visible:outline-none"
     >
       <GoogleLogo />
       <Star aria-hidden className="size-4" fill={GOOGLE_STAR_YELLOW} color={GOOGLE_STAR_YELLOW} />
-      {googleRating === null ? (
+      {rating === null ? (
         'Avaliações no Google'
       ) : (
         <>
-          {formatRating(googleRating)}
+          {formatRating(rating)}
           <span className="hidden font-medium text-gray-600 sm:inline">{`· ${reviewsPhrase}`}</span>
         </>
       )}

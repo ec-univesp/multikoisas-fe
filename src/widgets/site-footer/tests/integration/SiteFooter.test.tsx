@@ -79,9 +79,6 @@ describe('SiteFooter', () => {
   it('shows the store address when it is registered', async () => {
     const settings: StoreSettingsValues = {
       address: 'Rua das Flores, 100 - São Paulo, SP',
-      googleReviewsUrl: null,
-      googleRating: null,
-      googleReviewCount: null,
     };
     await renderFooter({ settings });
     const address = within(screen.getByRole('contentinfo')).getByText('Rua das Flores, 100 - São Paulo, SP');
@@ -90,7 +87,7 @@ describe('SiteFooter', () => {
 
   it('leaves out the address when none is registered', async () => {
     await renderFooter({
-      settings: { address: null, googleReviewsUrl: null, googleRating: null, googleReviewCount: null },
+      settings: { address: null },
     });
     expect(screen.getByRole('contentinfo').querySelector('address')).not.toBeInTheDocument();
   });
