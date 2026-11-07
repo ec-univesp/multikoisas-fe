@@ -45,6 +45,7 @@ const uploadLogo = (content: string, type = 'image/png') =>
 
 const VALID_SETTINGS = { address: 'Rua Nova, 10 - Santo André - SP' };
 const SEED_ADDRESS = 'Av. Prof. Luiz Inácio de Anhaia Melo, 2085 - Centreville, Santo André - SP';
+const DEFAULT_APPEARANCE = { showcaseColumns: 4, accentColor: '#facc15' };
 
 let database: ApiDatabase;
 let images: ImageStore;
@@ -394,27 +395,36 @@ describe('local api store settings', () => {
   it('reads the store settings', async () => {
     const answer = await send('GET', '/api/configuracao');
     expect(answer.status).toBe(200);
-    expect(await answer.json()).toEqual({ address: SEED_ADDRESS, logoUrl: null });
+    expect(await answer.json()).toEqual({ address: SEED_ADDRESS, logoUrl: null, ...DEFAULT_APPEARANCE });
   });
 
   it('saves the store settings and keeps the logo', async () => {
     database.storeSettings.logoUrl = '/local-images/50';
     const saved = await send('PUT', '/api/configuracao', VALID_SETTINGS);
     expect(saved.status).toBe(200);
-    expect(await saved.json()).toEqual({ ...VALID_SETTINGS, logoUrl: '/local-images/50' });
-    expect(database.storeSettings).toEqual({ ...VALID_SETTINGS, logoUrl: '/local-images/50' });
+    expect(await saved.json()).toEqual({ ...VALID_SETTINGS, logoUrl: '/local-images/50', ...DEFAULT_APPEARANCE });
+    expect(database.storeSettings).toEqual({ ...VALID_SETTINGS, logoUrl: '/local-images/50', ...DEFAULT_APPEARANCE });
     expect(onChange).toHaveBeenCalledTimes(1);
   });
 
   it('saves empty fields as missing', async () => {
     expect((await send('PUT', '/api/configuracao', { address: ' ' })).status).toBe(200);
-    expect(database.storeSettings).toEqual({ address: null, logoUrl: null });
+    expect(database.storeSettings).toEqual({ address: null, logoUrl: null, ...DEFAULT_APPEARANCE });
   });
 
-  it.each([{ address: 10 }])('refuses invalid store settings %o', async (invalidField) => {
+  it.each([
+    { address: 10 },
+    { showcaseColumns: 5 },
+    { showcaseColumns: '3' },
+    { showcaseColumns: null },
+    { accentColor: 'yellow' },
+    { accentColor: '#fff' },
+    { accentColor: '#1e3a8a' },
+    { accentColor: null },
+  ])('refuses invalid store settings %o', async (invalidField) => {
     const refused = await send('PUT', '/api/configuracao', { ...VALID_SETTINGS, ...invalidField });
     expect(refused.status).toBe(400);
-    expect(database.storeSettings.address).toBe(SEED_ADDRESS);
+    expect(database.storeSettings).toEqual({ address: SEED_ADDRESS, logoUrl: null, ...DEFAULT_APPEARANCE });
     expect(onChange).not.toHaveBeenCalled();
   });
 
@@ -442,9 +452,20 @@ describe('local api store settings', () => {
     expect(database.storeSettings.address).toBeNull();
   });
 
+  it('saves the showcase appearance and keeps it when only the address changes', async () => {
+    expect((await send('PUT', '/api/configuracao', { showcaseColumns: 3, accentColor: '#22C55E' })).status).toBe(200);
+    expect((await send('PUT', '/api/configuracao', VALID_SETTINGS)).status).toBe(200);
+    expect(database.storeSettings).toEqual({
+      ...VALID_SETTINGS,
+      logoUrl: null,
+      showcaseColumns: 3,
+      accentColor: '#22c55e',
+    });
+  });
+
   it('ignores the google fields the store no longer keeps', async () => {
     expect((await send('PUT', '/api/configuracao', { ...VALID_SETTINGS, googleRating: 4.9 })).status).toBe(200);
-    expect(database.storeSettings).toEqual({ ...VALID_SETTINGS, logoUrl: null });
+    expect(database.storeSettings).toEqual({ ...VALID_SETTINGS, logoUrl: null, ...DEFAULT_APPEARANCE });
   });
 
   it('keeps an uploaded logo in the image store, serves it and forgets the previous one', async () => {
