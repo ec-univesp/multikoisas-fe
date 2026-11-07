@@ -1,0 +1,1 @@
+export { GoogleReviews } from './GoogleReviews';
