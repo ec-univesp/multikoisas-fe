@@ -1,5 +1,6 @@
 import { Children, isValidElement, type ReactElement, type ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
+import { StoreAccentColor } from '@/entities/store-settings';
 import { ShowcaseSearchProvider } from '@/features/showcase-filter';
 import { LocalApiProvider } from '@/shared/local-api/LocalApiProvider';
 import { GoogleReviewsBadge } from '@/widgets/google-reviews-badge';
@@ -47,5 +48,12 @@ describe('SiteLayout', () => {
     expect(findElementByType(provider, 'aside')).toBeDefined();
     expect(findElementByType(provider, 'script')).toBeUndefined();
     expect(findElementByType(layout, 'script')).toBeDefined();
+  });
+
+  it('paints the whole showcase with the accent color saved in the panel', async () => {
+    const provider = findElementByType(await SiteLayout({ children: <p>página</p> }), LocalApiProvider);
+    const accentColor = findElementByType(provider, StoreAccentColor);
+    expect(findElementByType(accentColor, ShowcaseSearchProvider)).toBeDefined();
+    expect(findElementByType(accentColor, 'aside')).toBeDefined();
   });
 });
