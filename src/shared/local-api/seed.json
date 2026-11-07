@@ -297,5 +297,6 @@
       "canalVendaId": 7,
       "link": "https://shopee.com.br/Tampa-Assento-Privada-Vaso-Sanit%C3%A1rio-Oval-Encaixe-Universal-Cor-Branco-i.1852983358.58215143183?extraParams=%7B%22display_model_id%22%3A129657994945%2C%22model_selection_logic%22%3A3%7D"
     }
-  ]
+  ],
+  "users": [{ "id": 8, "username": "admin", "email": "pi2alunos@gmail.com", "role": "ADMIN" }]
 }

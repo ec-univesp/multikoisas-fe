@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw';
-import type { ApiDatabase, ProductCategoryRow, PurchaseLinkRow, StoreSettingsRow } from './database';
+import type { ApiDatabase, ProductCategoryRow, PurchaseLinkRow, StoreSettingsRow, UserRow } from './database';
 import type { ImageStore } from './imageStore';
 
 export type ApiHandlerOptions = {
@@ -32,9 +32,25 @@ type NameBody = { nome?: string };
 type ProductBody = { nome?: string; descricaoProduto?: string };
 type ProductImageBody = { id?: number; produtoId?: number };
 type SocialNetworkBody = { descricao?: string; link?: string };
+type UserBody = Partial<Omit<UserRow, 'id'>> & { password?: string };
 type StoreSettingsChanges = Partial<Omit<StoreSettingsRow, 'logoUrl'>>;
 
 const SOCIAL_NETWORK_TAKEN = 'Esta rede social já está cadastrada.';
+
+// Bean Validation messages of the Java UserRequest, typos included.
+const USER_FIELD_MESSAGES = {
+  email: 'O campo email e obrigatorio',
+  username: 'O campo username e obrigatorio',
+  password: 'O campo password e obrigatoria',
+  role: 'o campo role e obrigatorio',
+} as const;
+
+const isBlank = (value: unknown) => typeof value !== 'string' || value.trim() === '';
+
+const blankUserFields = (body: UserBody) => {
+  const values = new Map<string, unknown>(Object.entries(body));
+  return Object.fromEntries(Object.entries(USER_FIELD_MESSAGES).filter(([field]) => isBlank(values.get(field))));
+};
 
 const MAX_UPLOAD_BYTES = 1_048_576;
 
@@ -311,6 +327,52 @@ export const createApiHandlers = (
       if (remaining.length === database.socialNetworks.length) return springError(404, 'Not Found', request);
       database.socialNetworks = remaining;
       return saved(HttpResponse.json({ message: `Rede social ${params.description} deletada com sucesso.` }));
+    }),
+
+    http.get(`${baseUrl}/user`, ({ request }) => {
+      const query = queryOf(request);
+      const username = query.get('username');
+      return listResponse(
+        database.users.filter(
+          (user) => matchesNumber(query.get('id'), user.id) && (!username?.trim() || user.username === username),
+        ),
+      );
+    }),
+
+    http.post<never, UserBody>(`${baseUrl}/user`, async ({ request }) => {
+      const body = await request.json();
+      const blankFields = blankUserFields(body);
+      if (Object.keys(blankFields).length > 0) return HttpResponse.json(blankFields, { status: 400 });
+      const { username = '', email = '', role = '' } = body;
+      if (database.users.some((user) => user.username === username)) {
+        return HttpResponse.text('Este nome de usuário já está em uso.', { status: 409 });
+      }
+      if (database.users.some((user) => user.email === email)) {
+        return HttpResponse.text('Já existe um usuário cadastrado com este e-mail.', { status: 409 });
+      }
+      database.users.push({ id: database.nextId++, username, email, role });
+      return saved(HttpResponse.text('usuario cadastrado com sucesso', { status: 201 }));
+    }),
+
+    // API bug: the Java PUT never copies the role nor checks the e-mail of the other users.
+    http.put<{ username: string }, UserBody>(`${baseUrl}/user/:username`, async ({ request, params }) => {
+      const { email, role } = await request.json();
+      const user = database.users.find((candidate) => candidate.username === params.username);
+      if (!user) return HttpResponse.text('Usuário não encontrado.', { status: 409 });
+      const isTakenByAnother = database.users.some((candidate) => candidate !== user && candidate.email === email);
+      if (!reproduceApiBugs && isTakenByAnother) {
+        return HttpResponse.text('Este e-mail já está em uso por outra conta.', { status: 409 });
+      }
+      if (email?.trim()) user.email = email;
+      if (!reproduceApiBugs && role?.trim()) user.role = role;
+      return saved(HttpResponse.json(user));
+    }),
+
+    http.delete<{ username: string }>(`${baseUrl}/user/:username`, ({ request, params }) => {
+      const remaining = database.users.filter((user) => user.username !== params.username);
+      if (remaining.length === database.users.length) return springError(404, 'Not Found', request);
+      database.users = remaining;
+      return saved(HttpResponse.json({ message: `Usuario ${params.username} deletado com sucesso.` }));
     }),
 
     http.get(`${baseUrl}/canalvenda`, ({ request }) => {

@@ -50,6 +50,7 @@ const seed = (): ApiDatabase => ({
     { produtoId: 1, canalVendaId: 3, link: 'https://www.instagram.com/p/garrafa' },
     { produtoId: 7, canalVendaId: 2, link: 'https://shopee.com.br/caixa' },
   ],
+  users: [{ id: 8, username: 'admin', email: 'pi2alunos@gmail.com', role: 'ADMIN' }],
   storeSettings: { ...DEFAULT_STORE_SETTINGS },
   nextId: 100,
 });
