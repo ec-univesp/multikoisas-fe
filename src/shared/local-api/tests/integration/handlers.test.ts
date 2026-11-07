@@ -43,12 +43,8 @@ const uploadLogo = (content: string, type = 'image/png') =>
     ].join('\r\n'),
   });
 
-const VALID_SETTINGS = {
-  address: 'Rua Nova, 10 - Santo André - SP',
-  googleReviewsUrl: 'https://g.page/r/multikoisas',
-  googleRating: 4.9,
-  googleReviewCount: 400,
-};
+const VALID_SETTINGS = { address: 'Rua Nova, 10 - Santo André - SP' };
+const SEED_ADDRESS = 'Av. Prof. Luiz Inácio de Anhaia Melo, 2085 - Centreville, Santo André - SP';
 
 let database: ApiDatabase;
 let images: ImageStore;
@@ -398,7 +394,7 @@ describe('local api store settings', () => {
   it('reads the store settings', async () => {
     const answer = await send('GET', '/api/configuracao');
     expect(answer.status).toBe(200);
-    expect(await answer.json()).toEqual(expect.objectContaining({ googleRating: 4.7, logoUrl: null }));
+    expect(await answer.json()).toEqual({ address: SEED_ADDRESS, logoUrl: null });
   });
 
   it('saves the store settings and keeps the logo', async () => {
@@ -411,38 +407,21 @@ describe('local api store settings', () => {
   });
 
   it('saves empty fields as missing', async () => {
-    const emptySettings = { address: ' ', googleReviewsUrl: '', googleRating: null, googleReviewCount: null };
-    expect((await send('PUT', '/api/configuracao', emptySettings)).status).toBe(200);
-    expect(database.storeSettings).toEqual({
-      address: null,
-      googleReviewsUrl: null,
-      googleRating: null,
-      googleReviewCount: null,
-      logoUrl: null,
-    });
+    expect((await send('PUT', '/api/configuracao', { address: ' ' })).status).toBe(200);
+    expect(database.storeSettings).toEqual({ address: null, logoUrl: null });
   });
 
-  it.each([
-    { googleReviewsUrl: 'http://g.page/r/multikoisas' },
-    { googleReviewsUrl: 'não é link' },
-    { googleRating: 5.1 },
-    { googleRating: 4.85 },
-    { googleRating: -1 },
-    { googleRating: '4' },
-    { googleReviewCount: 2.5 },
-    { googleReviewCount: -3 },
-    { address: 10 },
-  ])('refuses invalid store settings %o', async (invalidField) => {
+  it.each([{ address: 10 }])('refuses invalid store settings %o', async (invalidField) => {
     const refused = await send('PUT', '/api/configuracao', { ...VALID_SETTINGS, ...invalidField });
     expect(refused.status).toBe(400);
-    expect(database.storeSettings.googleRating).toBe(4.7);
+    expect(database.storeSettings.address).toBe(SEED_ADDRESS);
     expect(onChange).not.toHaveBeenCalled();
   });
 
   it('answers 507 and keeps the settings when the browser refuses to save them', async () => {
     onChange.mockReturnValue(false);
     expect((await send('PUT', '/api/configuracao', VALID_SETTINGS)).status).toBe(507);
-    expect(database.storeSettings.googleRating).toBe(4.7);
+    expect(database.storeSettings.address).toBe(SEED_ADDRESS);
   });
 
   it.each(['null', '[]', '"Rua Nova"'])('refuses the store settings body %s', async (body) => {
@@ -452,14 +431,20 @@ describe('local api store settings', () => {
       body,
     });
     expect(refused.status).toBe(400);
-    expect(database.storeSettings.googleRating).toBe(4.7);
+    expect(database.storeSettings.address).toBe(SEED_ADDRESS);
     expect(onChange).not.toHaveBeenCalled();
   });
 
   it('keeps the omitted store settings and clears the ones sent empty', async () => {
-    const before = database.storeSettings;
-    expect((await send('PUT', '/api/configuracao', { googleRating: 3.5, address: null })).status).toBe(200);
-    expect(database.storeSettings).toEqual({ ...before, googleRating: 3.5, address: null });
+    expect((await send('PUT', '/api/configuracao', {})).status).toBe(200);
+    expect(database.storeSettings.address).toBe(SEED_ADDRESS);
+    expect((await send('PUT', '/api/configuracao', { address: null })).status).toBe(200);
+    expect(database.storeSettings.address).toBeNull();
+  });
+
+  it('ignores the google fields the store no longer keeps', async () => {
+    expect((await send('PUT', '/api/configuracao', { ...VALID_SETTINGS, googleRating: 4.9 })).status).toBe(200);
+    expect(database.storeSettings).toEqual({ ...VALID_SETTINGS, logoUrl: null });
   });
 
   it('keeps an uploaded logo in the image store, serves it and forgets the previous one', async () => {

@@ -4,16 +4,12 @@ import { apiDatabase } from '@/test/msw/apiDatabase';
 import { server } from '@/test/msw/server';
 import { fetchStoreSettings, removeStoreLogo, saveStoreLogo, saveStoreSettings } from '../../api';
 
-const NEW_SETTINGS = {
-  address: 'Rua Nova, 10',
-  googleReviewsUrl: 'https://g.page/r/multikoisas',
-  googleRating: 4.9,
-  googleReviewCount: 400,
-};
+const NEW_SETTINGS = { address: 'Rua Nova, 10' };
 
 describe('store settings api', () => {
   it('reads the store settings', async () => {
-    expect(await fetchStoreSettings()).toEqual(expect.objectContaining({ googleRating: 4.7, logoUrl: null }));
+    expect(await fetchStoreSettings()).toEqual(expect.objectContaining({ logoUrl: null }));
+    expect(await fetchStoreSettings()).not.toHaveProperty('googleRating');
   });
 
   it('saves the store settings', async () => {

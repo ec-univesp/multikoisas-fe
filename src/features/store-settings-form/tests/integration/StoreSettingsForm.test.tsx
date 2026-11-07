@@ -20,7 +20,6 @@ describe('StoreSettingsForm saving', () => {
     render(<StoreSettingsForm />);
     expect(screen.getByRole('status')).toHaveTextContent('Carregando...');
     expect(await screen.findByLabelText('Endereço')).toHaveValue('Rua Salva, 1');
-    expect(screen.getByLabelText('Nota no Google')).toHaveValue(4.7);
   });
 
   it('offers to try again, without the fields, when the saved settings cannot be read', async () => {
@@ -32,7 +31,7 @@ describe('StoreSettingsForm saving', () => {
     expect(screen.queryByLabelText('Endereço')).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Tentar de novo' }));
 
-    expect(await screen.findByLabelText('Quantidade de avaliações')).toHaveValue(387);
+    expect(await screen.findByLabelText('Endereço')).toBeInTheDocument();
   });
 
   it('saves the changed settings', async () => {
@@ -41,32 +40,10 @@ describe('StoreSettingsForm saving', () => {
     await screen.findByLabelText('Endereço');
 
     await replaceText('Endereço', 'Rua Nova, 10');
-    await replaceText('Link das avaliações no Google', '');
-    await replaceText('Nota no Google', '4.9');
-    await replaceText('Quantidade de avaliações', '400');
     await user.click(screen.getByRole('button', { name: 'Salvar dados' }));
 
     expect(await screen.findByRole('status')).toHaveTextContent('Dados salvos.');
-    expect(apiDatabase.storeSettings).toEqual({
-      address: 'Rua Nova, 10',
-      googleReviewsUrl: null,
-      googleRating: 4.9,
-      googleReviewCount: 400,
-      logoUrl: null,
-    });
-  });
-
-  it('keeps saving disabled while a field is invalid', async () => {
-    render(<StoreSettingsForm />);
-    await screen.findByLabelText('Endereço');
-    const save = screen.getByRole('button', { name: 'Salvar dados' });
-    expect(save).toBeEnabled();
-
-    await replaceText('Nota no Google', '6');
-    expect(save).toBeDisabled();
-
-    await replaceText('Nota no Google', '5');
-    expect(save).toBeEnabled();
+    expect(apiDatabase.storeSettings).toEqual({ address: 'Rua Nova, 10', logoUrl: null });
   });
 
   it('keeps saving disabled while saving', async () => {
