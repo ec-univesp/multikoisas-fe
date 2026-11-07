@@ -63,6 +63,8 @@ describe('local api persistence', () => {
     expect(loadDatabase().storeSettings).toEqual({
       address: 'Av. Prof. Luiz Inácio de Anhaia Melo, 2085 - Centreville, Santo André - SP',
       logoUrl: null,
+      showcaseColumns: 4,
+      accentColor: '#facc15',
     });
   });
 
@@ -78,6 +80,8 @@ describe('local api persistence', () => {
       'Av. Prof. Luiz Inácio de Anhaia Melo, 2085 - Centreville, Santo André - SP',
     );
     expect(reloaded.storeSettings.logoUrl).toBeNull();
+    expect(reloaded.storeSettings.showcaseColumns).toBe(4);
+    expect(reloaded.storeSettings.accentColor).toBe('#facc15');
   });
 
   it.each([null, {}, 'Rua Nova'])('uses the default store settings when the saved ones are %j', (storeSettings) => {
@@ -85,16 +89,32 @@ describe('local api persistence', () => {
     expect(loadDatabase().storeSettings).toEqual({
       address: 'Av. Prof. Luiz Inácio de Anhaia Melo, 2085 - Centreville, Santo André - SP',
       logoUrl: null,
+      showcaseColumns: 4,
+      accentColor: '#facc15',
     });
   });
 
   it('keeps each valid saved store setting and replaces the ones with the wrong type', () => {
-    const storeSettings = { address: 7, googleRating: 4.9, logoUrl: '/local-images/9' };
+    const storeSettings = {
+      address: 7,
+      googleRating: 4.9,
+      logoUrl: '/local-images/9',
+      showcaseColumns: 3,
+      accentColor: 'amarelo',
+    };
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...loadDatabase(), storeSettings }));
     expect(loadDatabase().storeSettings).toEqual({
       address: 'Av. Prof. Luiz Inácio de Anhaia Melo, 2085 - Centreville, Santo André - SP',
       logoUrl: '/local-images/9',
+      showcaseColumns: 3,
+      accentColor: '#facc15',
     });
+  });
+
+  it('keeps a saved accent color and replaces a column count the showcase does not offer', () => {
+    const storeSettings = { address: null, logoUrl: null, showcaseColumns: 7, accentColor: '#123abc' };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...loadDatabase(), storeSettings }));
+    expect(loadDatabase().storeSettings).toEqual({ ...storeSettings, showcaseColumns: 4 });
   });
 
   it('starts the users from the seed with the admin account', () => {

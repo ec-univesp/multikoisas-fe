@@ -6,15 +6,21 @@ export type PurchaseLinkRow = { produtoId: number; canalVendaId: number; link: s
 export type ProductImageRow = { id: number; produtoId: number; imagemUrl: string };
 export type UserRow = { id: number; username: string; email: string; role: string };
 export type SocialNetworkRow = { id: number; descricao: string; link: string };
+export type ShowcaseColumns = 2 | 3 | 4;
+
 export type StoreSettingsRow = {
   address: string | null;
   logoUrl: string | null;
+  showcaseColumns: ShowcaseColumns;
+  accentColor: string;
 };
 
 // The real API does not store these yet (SKI-135).
 export const DEFAULT_STORE_SETTINGS: StoreSettingsRow = {
   address: 'Av. Prof. Luiz Inácio de Anhaia Melo, 2085 - Centreville, Santo André - SP',
   logoUrl: null,
+  showcaseColumns: 4,
+  accentColor: '#facc15',
 };
 
 export type ApiDatabase = {
@@ -38,11 +44,20 @@ export type DatabaseSeed = Omit<ApiDatabase, 'nextId' | 'storeSettings' | 'users
 const textOr = (value: unknown, fallback: string | null) =>
   value === null || typeof value === 'string' ? value : fallback;
 
+export const isShowcaseColumns = (value: unknown): value is ShowcaseColumns => value === 2 || value === 3 || value === 4;
+
+export const isAccentColor = (value: unknown): value is string =>
+  typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value);
+
 const toStoreSettingsRow = (saved: unknown): StoreSettingsRow => {
   const fields = new Map<string, unknown>(typeof saved === 'object' && saved !== null ? Object.entries(saved) : []);
+  const showcaseColumns = fields.get('showcaseColumns');
+  const accentColor = fields.get('accentColor');
   return {
     address: textOr(fields.get('address'), DEFAULT_STORE_SETTINGS.address),
     logoUrl: textOr(fields.get('logoUrl'), DEFAULT_STORE_SETTINGS.logoUrl),
+    showcaseColumns: isShowcaseColumns(showcaseColumns) ? showcaseColumns : DEFAULT_STORE_SETTINGS.showcaseColumns,
+    accentColor: isAccentColor(accentColor) ? accentColor.toLowerCase() : DEFAULT_STORE_SETTINGS.accentColor,
   };
 };
 
