@@ -419,6 +419,7 @@ describe('local api store settings', () => {
     { showcaseColumns: null },
     { accentColor: 'yellow' },
     { accentColor: '#fff' },
+    { accentColor: '#1e3a8a' },
     { accentColor: null },
   ])('refuses invalid store settings %o', async (invalidField) => {
     const refused = await send('PUT', '/api/configuracao', { ...VALID_SETTINGS, ...invalidField });
@@ -452,13 +453,13 @@ describe('local api store settings', () => {
   });
 
   it('saves the showcase appearance and keeps it when only the address changes', async () => {
-    expect((await send('PUT', '/api/configuracao', { showcaseColumns: 3, accentColor: '#1E40AF' })).status).toBe(200);
+    expect((await send('PUT', '/api/configuracao', { showcaseColumns: 3, accentColor: '#22C55E' })).status).toBe(200);
     expect((await send('PUT', '/api/configuracao', VALID_SETTINGS)).status).toBe(200);
     expect(database.storeSettings).toEqual({
       ...VALID_SETTINGS,
       logoUrl: null,
       showcaseColumns: 3,
-      accentColor: '#1e40af',
+      accentColor: '#22c55e',
     });
   });
 

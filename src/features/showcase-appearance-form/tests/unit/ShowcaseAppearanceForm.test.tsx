@@ -3,13 +3,13 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { ShowcaseAppearanceForm } from '../../ShowcaseAppearanceForm';
 
-const SAVED_APPEARANCE = { showcaseColumns: 3, accentColor: '#1e40af' } as const;
+const SAVED_APPEARANCE = { showcaseColumns: 3, accentColor: '#22c55e' } as const;
 
 describe('ShowcaseAppearanceForm', () => {
   it('starts with the saved columns and accent color', () => {
     render(<ShowcaseAppearanceForm settings={SAVED_APPEARANCE} />);
     expect(screen.getByLabelText('Colunas na vitrine (computador)')).toHaveValue('3');
-    expect(screen.getByLabelText('Cor de destaque')).toHaveValue('#1e40af');
+    expect(screen.getByLabelText('Cor de destaque')).toHaveValue('#22c55e');
   });
 
   it('offers two, three or four columns', () => {

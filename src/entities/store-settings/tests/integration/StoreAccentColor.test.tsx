@@ -15,13 +15,13 @@ const renderShowcase = () => {
 describe('StoreAccentColor', () => {
   it('keeps the theme yellow while the store uses the default accent color', async () => {
     const wrapper = renderShowcase();
-    await waitFor(() => expect(wrapper).toBeInTheDocument());
+    await new Promise((resolve) => setTimeout(resolve, 50));
     expect(wrapper?.style.getPropertyValue('--color-store-yellow')).toBe('');
   });
 
   it('paints the showcase with the accent color chosen in the panel', async () => {
-    apiDatabase.storeSettings.accentColor = '#1e40af';
+    apiDatabase.storeSettings.accentColor = '#22c55e';
     const wrapper = renderShowcase();
-    await waitFor(() => expect(wrapper?.style.getPropertyValue('--color-store-yellow')).toBe('#1e40af'));
+    await waitFor(() => expect(wrapper?.style.getPropertyValue('--color-store-yellow')).toBe('#22c55e'));
   });
 });

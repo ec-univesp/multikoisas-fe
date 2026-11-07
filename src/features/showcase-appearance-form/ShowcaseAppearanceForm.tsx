@@ -11,6 +11,7 @@ import {
   type ShowcaseColumns,
   type StoreSettings,
 } from '@/entities/store-settings';
+import { isReadableAccentColor } from '@/shared/lib/accentColor';
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'failed';
 
@@ -25,10 +26,15 @@ const ShowcaseAppearanceFields = ({ initialAppearance }: { initialAppearance: Sh
   const [accentColor, setAccentColor] = useState(initialAppearance.accentColor);
   const [saveState, setSaveState] = useState<SaveState>('idle');
 
+  const isSaving = saveState === 'saving';
+  const isColorTooDark = !isReadableAccentColor(accentColor);
+
   const markChanged = () => setSaveState((currentState) => (currentState === 'saving' ? currentState : 'idle'));
 
   const changeColumns = (value: string) => {
-    setShowcaseColumns((currentColumns) => SHOWCASE_COLUMNS.find((columns) => String(columns) === value) ?? currentColumns);
+    setShowcaseColumns(
+      (currentColumns) => SHOWCASE_COLUMNS.find((columns) => String(columns) === value) ?? currentColumns,
+    );
     markChanged();
   };
 
@@ -58,6 +64,7 @@ const ShowcaseAppearanceFields = ({ initialAppearance }: { initialAppearance: Sh
           placeholder="Escolha as colunas"
           defaultValue={String(initialAppearance.showcaseColumns)}
           onChange={changeColumns}
+          disabled={isSaving}
           className="text-base"
         />
       </div>
@@ -69,15 +76,23 @@ const ShowcaseAppearanceFields = ({ initialAppearance }: { initialAppearance: Sh
             type="color"
             value={accentColor}
             onChange={(event) => changeAccentColor(event.target.value)}
+            disabled={isSaving}
+            aria-invalid={isColorTooDark}
+            aria-describedby={isColorTooDark ? 'showcase-appearance-accent-color-error' : undefined}
             className="h-11 w-20 cursor-pointer rounded-lg border border-gray-300 bg-white p-1 text-base"
           />
-          <Button variant="outline" onClick={() => changeAccentColor(STORE_SETTINGS.accentColor)}>
+          <Button variant="outline" disabled={isSaving} onClick={() => changeAccentColor(STORE_SETTINGS.accentColor)}>
             Voltar à cor padrão
           </Button>
         </div>
+        {isColorTooDark && (
+          <p id="showcase-appearance-accent-color-error" role="alert" className="mt-1.5 text-xs text-error-500">
+            Cor muito escura: o texto da vitrine fica ilegível. Escolha uma cor mais clara.
+          </p>
+        )}
       </div>
       <div className="flex flex-wrap items-center gap-3">
-        <Button type="submit" disabled={saveState === 'saving'}>
+        <Button type="submit" disabled={isSaving || isColorTooDark}>
           Salvar aparência
         </Button>
         {saveState === 'saved' && (

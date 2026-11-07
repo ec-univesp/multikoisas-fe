@@ -32,12 +32,12 @@ describe('ShowcaseAppearanceForm saving', () => {
     const user = userEvent.setup();
     render(<ShowcaseAppearanceForm />);
     await user.selectOptions(await screen.findByLabelText(COLUMNS_LABEL), '3');
-    fireEvent.input(screen.getByLabelText('Cor de destaque'), { target: { value: '#1e40af' } });
+    fireEvent.input(screen.getByLabelText('Cor de destaque'), { target: { value: '#22c55e' } });
     await user.click(screen.getByRole('button', { name: 'Salvar aparência' }));
 
     expect(await screen.findByRole('status')).toHaveTextContent('Dados salvos.');
     expect(apiDatabase.storeSettings).toEqual(
-      expect.objectContaining({ showcaseColumns: 3, accentColor: '#1e40af', address: expect.any(String) }),
+      expect.objectContaining({ showcaseColumns: 3, accentColor: '#22c55e', address: expect.any(String) }),
     );
   });
 
@@ -46,7 +46,10 @@ describe('ShowcaseAppearanceForm saving', () => {
     server.use(
       http.put(
         '*/configuracao',
-        () => new Promise<Response>((resolve) => (answerSave = () => resolve(HttpResponse.json({})))),
+        () =>
+          new Promise<Response>(
+            (resolve) => (answerSave = () => resolve(HttpResponse.json(apiDatabase.storeSettings))),
+          ),
       ),
     );
     const user = userEvent.setup();
@@ -56,6 +59,8 @@ describe('ShowcaseAppearanceForm saving', () => {
     await user.click(screen.getByRole('button', { name: 'Salvar aparência' }));
 
     expect(screen.getByRole('button', { name: 'Salvar aparência' })).toBeDisabled();
+    expect(screen.getByLabelText(COLUMNS_LABEL)).toBeDisabled();
+    expect(screen.getByLabelText('Cor de destaque')).toBeDisabled();
     answerSave();
     expect(await screen.findByText('Dados salvos.')).toBeInTheDocument();
   });
@@ -82,5 +87,21 @@ describe('ShowcaseAppearanceForm saving', () => {
     await user.selectOptions(screen.getByLabelText(COLUMNS_LABEL), '2');
 
     expect(screen.queryByText('Dados salvos.')).not.toBeInTheDocument();
+  });
+
+  it('refuses a color too dark for the showcase text without calling the api', async () => {
+    const user = userEvent.setup();
+    render(<ShowcaseAppearanceForm />);
+    await screen.findByLabelText(COLUMNS_LABEL);
+
+    fireEvent.input(screen.getByLabelText('Cor de destaque'), { target: { value: '#1e3a8a' } });
+
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Cor muito escura: o texto da vitrine fica ilegível. Escolha uma cor mais clara.',
+    );
+    expect(screen.getByRole('button', { name: 'Salvar aparência' })).toBeDisabled();
+    await user.click(screen.getByRole('button', { name: 'Voltar à cor padrão' }));
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(apiDatabase.storeSettings.accentColor).toBe('#facc15');
   });
 });

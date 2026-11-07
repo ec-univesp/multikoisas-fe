@@ -112,9 +112,15 @@ describe('local api persistence', () => {
   });
 
   it('keeps a saved accent color and replaces a column count the showcase does not offer', () => {
-    const storeSettings = { address: null, logoUrl: null, showcaseColumns: 7, accentColor: '#123abc' };
+    const storeSettings = { address: null, logoUrl: null, showcaseColumns: 7, accentColor: '#38bdf8' };
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...loadDatabase(), storeSettings }));
     expect(loadDatabase().storeSettings).toEqual({ ...storeSettings, showcaseColumns: 4 });
+  });
+
+  it('goes back to the default accent color when the saved one is too dark to read the showcase text', () => {
+    const storeSettings = { address: null, logoUrl: null, showcaseColumns: 3, accentColor: '#1e3a8a' };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...loadDatabase(), storeSettings }));
+    expect(loadDatabase().storeSettings.accentColor).toBe('#facc15');
   });
 
   it('starts the users from the seed with the admin account', () => {

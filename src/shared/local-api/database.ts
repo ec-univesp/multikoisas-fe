@@ -1,3 +1,4 @@
+import { isReadableAccentColor } from '@/shared/lib/accentColor';
 export type ProductRow = { id: number; nome: string; descricaoProduto: string };
 export type CategoryRow = { id: number; nome: string };
 export type ProductCategoryRow = { produtoId: number; categoriaId: number };
@@ -44,10 +45,10 @@ export type DatabaseSeed = Omit<ApiDatabase, 'nextId' | 'storeSettings' | 'users
 const textOr = (value: unknown, fallback: string | null) =>
   value === null || typeof value === 'string' ? value : fallback;
 
-export const isShowcaseColumns = (value: unknown): value is ShowcaseColumns => value === 2 || value === 3 || value === 4;
+export const isShowcaseColumns = (value: unknown): value is ShowcaseColumns =>
+  value === 2 || value === 3 || value === 4;
 
-export const isAccentColor = (value: unknown): value is string =>
-  typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value);
+export const isAccentColor = isReadableAccentColor;
 
 const toStoreSettingsRow = (saved: unknown): StoreSettingsRow => {
   const fields = new Map<string, unknown>(typeof saved === 'object' && saved !== null ? Object.entries(saved) : []);
