@@ -5,7 +5,7 @@ import { Modal } from '@/components/ui/modal';
 import Button from '@/components/ui/button/Button';
 import Label from '@/components/form/Label';
 import Input from '@/components/form/input/InputField';
-import { isHttpsUrl, type SocialNetwork } from '@/entities/social-network';
+import { isHttpsUrl, isWhatsApp, withScheme, type SocialNetwork } from '@/entities/social-network';
 import { SocialNetworkNameTakenError, type SocialNetworkValues } from './socialNetworkApi';
 
 const NAME_TAKEN_MESSAGE = 'Já existe uma rede com esse nome.';
@@ -27,15 +27,57 @@ const nameErrorOf = (name: string, isRepeated: boolean): string | null => {
   return isRepeated ? NAME_TAKEN_MESSAGE : null;
 };
 
+const isWhatsAppName = (name: string): boolean => normalizeName(name).replace(/\s/g, '') === 'whatsapp';
+
+const WHATSAPP_NUMBER_LINK = /^(?:https:\/\/)?wa\.me\/55(\d{10,11})$/;
+
+// Area code without zero; mobile numbers start with 9, landlines with 2 to 8.
+const BRAZILIAN_NUMBER = /^[1-9]{2}(?:9\d{8}|[2-8]\d{7})$/;
+
+const whatsAppNumberOf = (text: string): string | null => {
+  const digits = text.replace(/\D/g, '');
+  const hasPlusSign = text.trim().startsWith('+');
+  if (hasPlusSign && !digits.startsWith('55')) return null;
+  const localDigits = hasPlusSign || /^55\d{10,11}$/.test(digits) ? digits.slice(2) : digits;
+  return BRAZILIAN_NUMBER.test(localDigits) ? localDigits : null;
+};
+
+const isPhoneText = (text: string): boolean => /^[\d\s()+.-]*$/.test(text);
+
+// The store owner types the number; a wa.me link saved before (like wa.me/message/...) still works.
+const whatsAppLinkOf = (text: string): string | null => {
+  const trimmedText = text.trim();
+  if (isPhoneText(trimmedText)) {
+    const number = whatsAppNumberOf(trimmedText);
+    return number ? `https://wa.me/55${number}` : null;
+  }
+  const link = withScheme(trimmedText);
+  return isHttpsUrl(link) && isWhatsApp({ id: 0, name: '', url: link }) ? link : null;
+};
+
+const initialUrlOf = (socialNetwork: SocialNetwork | null): string => {
+  if (!socialNetwork) return '';
+  const savedNumber = isWhatsAppName(socialNetwork.name) ? WHATSAPP_NUMBER_LINK.exec(socialNetwork.url)?.[1] : null;
+  return savedNumber ?? socialNetwork.url;
+};
+
+const linkToSave = (name: string, url: string): string | null => {
+  if (isWhatsAppName(name)) return whatsAppLinkOf(url);
+  return isHttpsUrl(url.trim()) ? url.trim() : null;
+};
+
 type FieldErrors = { name: string | null; url: string | null };
 
 const validate = ({ name, url }: SocialNetworkValues, otherSocialNetworks: readonly SocialNetwork[]): FieldErrors => {
   const isRepeated = otherSocialNetworks.some(
     (socialNetwork) => normalizeName(socialNetwork.name) === normalizeName(name),
   );
+  const urlError = isWhatsAppName(name)
+    ? 'Informe o número com DDD, como (11) 98765-4321.'
+    : 'Informe um link completo, começando com https://.';
   return {
     name: nameErrorOf(name, isRepeated),
-    url: isHttpsUrl(url.trim()) ? null : 'Informe um link completo, começando com https://.',
+    url: linkToSave(name, url) ? null : urlError,
   };
 };
 
@@ -53,7 +95,7 @@ export const SocialNetworkFormModal = ({
   onSave,
 }: SocialNetworkFormModalProps) => {
   const [name, setName] = useState(editingSocialNetwork?.name ?? '');
-  const [url, setUrl] = useState(editingSocialNetwork?.url ?? '');
+  const [url, setUrl] = useState(initialUrlOf(editingSocialNetwork));
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({ name: null, url: null });
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -67,13 +109,14 @@ export const SocialNetworkFormModal = ({
     const otherSocialNetworks = socialNetworks.filter((socialNetwork) => socialNetwork !== editingSocialNetwork);
     const validationErrors = validate({ name, url }, otherSocialNetworks);
     setFieldErrors(validationErrors);
-    if (validationErrors.name || validationErrors.url) return;
+    const link = linkToSave(name, url);
+    if (validationErrors.name || !link) return;
 
     setIsSaving(true);
     setSaveError(null);
     try {
       const savedName = name === editingSocialNetwork?.name ? name : collapseSpaces(name);
-      await onSave({ name: savedName, url: url.trim() });
+      await onSave({ name: savedName, url: link });
       onClose();
     } catch (error) {
       if (error instanceof SocialNetworkNameTakenError) {
@@ -114,11 +157,12 @@ export const SocialNetworkFormModal = ({
               )}
             </div>
             <div>
-              <Label htmlFor="social-network-url">Link</Label>
+              <Label htmlFor="social-network-url">{isWhatsAppName(name) ? 'Número do WhatsApp' : 'Link'}</Label>
               <Input
                 id="social-network-url"
-                type="url"
-                placeholder="https://"
+                type={isWhatsAppName(name) ? 'tel' : 'url'}
+                inputMode={isWhatsAppName(name) ? 'tel' : 'url'}
+                placeholder={isWhatsAppName(name) ? '(11) 98765-4321' : 'https://'}
                 defaultValue={url}
                 onChange={(event) => setUrl(event.target.value)}
                 error={Boolean(fieldErrors.url)}

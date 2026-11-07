@@ -61,10 +61,17 @@ describe('SocialNetworkAdminPanel', () => {
   });
 
   it('uses the singular count and flags a link the storefront hides', () => {
-    renderPanel([{ id: 3, name: 'WhatsApp', url: 'wa.me/5511999999999' }]);
+    renderPanel([{ id: 3, name: 'Facebook', url: 'http://facebook.com/multikoisas' }]);
 
     expect(screen.getByText('1 rede cadastrada')).toBeInTheDocument();
     expect(screen.getByText('Link sem https, não aparece na vitrine')).toBeInTheDocument();
+  });
+
+  it('does not flag a link without the scheme, since the storefront completes it with https', () => {
+    renderPanel([{ id: 3, name: 'WhatsApp', url: 'wa.me/message/V4IAOMTCK5XHP1' }]);
+
+    expect(screen.getByText('wa.me/message/V4IAOMTCK5XHP1')).toBeInTheDocument();
+    expect(screen.queryByText('Link sem https, não aparece na vitrine')).not.toBeInTheDocument();
   });
 
   it('creates the social network and reloads the list to get its id', async () => {
@@ -117,6 +124,96 @@ describe('SocialNetworkAdminPanel', () => {
       expect(apiRequests).toEqual([]);
     },
   );
+
+  it.each([
+    ['(11) 98765-4321', 'https://wa.me/5511987654321'],
+    ['+55 11 98765-4321', 'https://wa.me/5511987654321'],
+    ['11 3456 7890', 'https://wa.me/551134567890'],
+    ['55 11 98765-4321', 'https://wa.me/5511987654321'],
+    ['(55) 98765-4321', 'https://wa.me/5555987654321'],
+    ['https://chat.whatsapp.com/AbCdEf123', 'https://chat.whatsapp.com/AbCdEf123'],
+  ])('builds the whatsapp link from the number "%s"', async (number, link) => {
+    acceptNewSocialNetworks();
+    const user = userEvent.setup();
+    renderPanel();
+
+    await user.click(screen.getByRole('button', { name: 'Nova rede' }));
+    await user.type(screen.getByLabelText('Nome da rede'), 'WhatsApp');
+    const numberField = screen.getByLabelText('Número do WhatsApp');
+    expect(numberField).toHaveAttribute('inputmode', 'tel');
+    await user.type(numberField, number);
+    await user.click(screen.getByRole('button', { name: 'Salvar rede' }));
+
+    expect(await screen.findByText(link)).toBeInTheDocument();
+    expect(apiDatabase.socialNetworks).toContainEqual({ id: 100, descricao: 'WhatsApp', link });
+  });
+
+  it.each([
+    '(11) 9876-543',
+    '',
+    '5511987654321999',
+    'meu zap',
+    'https://example.com/zap',
+    '+1 (415) 555-1234',
+    '+55 98765-4321',
+    '(00) 00000-0000',
+    '(11) 88765-4321',
+  ])('rejects the whatsapp number "%s" without 10 or 11 digits', async (number) => {
+    const user = userEvent.setup();
+    renderPanel();
+
+    await user.click(screen.getByRole('button', { name: 'Nova rede' }));
+    await user.type(screen.getByLabelText('Nome da rede'), 'whatsapp');
+    const numberField = screen.getByLabelText('Número do WhatsApp');
+    if (number) await user.type(numberField, number);
+    await user.click(screen.getByRole('button', { name: 'Salvar rede' }));
+
+    expect(screen.getByText('Informe o número com DDD, como (11) 98765-4321.')).toHaveAttribute('role', 'alert');
+    expect(apiRequests).toEqual([]);
+  });
+
+  it('asks for the number whatever spacing the whatsapp name has', async () => {
+    const user = userEvent.setup();
+    renderPanel();
+
+    await user.click(screen.getByRole('button', { name: 'Nova rede' }));
+    await user.type(screen.getByLabelText('Nome da rede'), 'Whats App');
+
+    expect(screen.getByLabelText('Número do WhatsApp')).toBeInTheDocument();
+  });
+
+  it('shows the number of a saved whatsapp link when editing it', async () => {
+    const user = userEvent.setup();
+    renderPanel([{ id: 3, name: 'WhatsApp', url: 'https://wa.me/5511987654321' }]);
+
+    await user.click(screen.getByRole('button', { name: 'Editar WhatsApp' }));
+
+    expect(screen.getByLabelText('Número do WhatsApp')).toHaveValue('11987654321');
+  });
+
+  it('keeps a saved whatsapp link that is not a number and lets it be swapped for one', async () => {
+    apiDatabase.socialNetworks.push({ id: 3, descricao: 'WhatsApp', link: 'wa.me/message/V4IAOMTCK5XHP1' });
+    const user = userEvent.setup();
+    renderPanel([{ id: 3, name: 'WhatsApp', url: 'wa.me/message/V4IAOMTCK5XHP1' }]);
+
+    await user.click(screen.getByRole('button', { name: 'Editar WhatsApp' }));
+    const numberField = screen.getByLabelText('Número do WhatsApp');
+    expect(numberField).toHaveValue('wa.me/message/V4IAOMTCK5XHP1');
+    await user.click(screen.getByRole('button', { name: 'Salvar rede' }));
+    expect(await screen.findByText('https://wa.me/message/V4IAOMTCK5XHP1')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Editar WhatsApp' }));
+    await user.clear(screen.getByLabelText('Número do WhatsApp'));
+    await user.type(screen.getByLabelText('Número do WhatsApp'), '(11) 98765-4321');
+    await user.click(screen.getByRole('button', { name: 'Salvar rede' }));
+
+    expect(await screen.findByText('https://wa.me/5511987654321')).toBeInTheDocument();
+    expect(apiDatabase.socialNetworks).toContainEqual({
+      id: 3,
+      descricao: 'WhatsApp',
+      link: 'https://wa.me/5511987654321',
+    });
+  });
 
   it('says the api refused the new network when it answers 409 and the name is not in the reloaded list', async () => {
     const user = userEvent.setup();

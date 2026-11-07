@@ -62,9 +62,6 @@ describe('local api persistence', () => {
   it('starts the store settings from the seed with the default logo', () => {
     expect(loadDatabase().storeSettings).toEqual({
       address: 'Av. Prof. Luiz Inácio de Anhaia Melo, 2085 - Centreville, Santo André - SP',
-      googleReviewsUrl: expect.stringMatching(/^https:\/\/www\.google\.com\/maps\//),
-      googleRating: 4.7,
-      googleReviewCount: 387,
       logoUrl: null,
     });
   });
@@ -77,7 +74,9 @@ describe('local api persistence', () => {
     const reloaded = loadDatabase();
 
     expect(reloaded.products).toHaveLength(1);
-    expect(reloaded.storeSettings.googleRating).toBe(4.7);
+    expect(reloaded.storeSettings.address).toBe(
+      'Av. Prof. Luiz Inácio de Anhaia Melo, 2085 - Centreville, Santo André - SP',
+    );
     expect(reloaded.storeSettings.logoUrl).toBeNull();
   });
 
@@ -85,27 +84,15 @@ describe('local api persistence', () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...loadDatabase(), storeSettings }));
     expect(loadDatabase().storeSettings).toEqual({
       address: 'Av. Prof. Luiz Inácio de Anhaia Melo, 2085 - Centreville, Santo André - SP',
-      googleReviewsUrl: expect.stringMatching(/^https:\/\/www\.google\.com\/maps\//),
-      googleRating: 4.7,
-      googleReviewCount: 387,
       logoUrl: null,
     });
   });
 
   it('keeps each valid saved store setting and replaces the ones with the wrong type', () => {
-    const storeSettings = {
-      address: null,
-      googleReviewsUrl: 7,
-      googleRating: '5',
-      googleReviewCount: 10,
-      logoUrl: '/local-images/9',
-    };
+    const storeSettings = { address: 7, googleRating: 4.9, logoUrl: '/local-images/9' };
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...loadDatabase(), storeSettings }));
     expect(loadDatabase().storeSettings).toEqual({
-      address: null,
-      googleReviewsUrl: expect.stringMatching(/^https:\/\/www\.google\.com\/maps\//),
-      googleRating: 4.7,
-      googleReviewCount: 10,
+      address: 'Av. Prof. Luiz Inácio de Anhaia Melo, 2085 - Centreville, Santo André - SP',
       logoUrl: '/local-images/9',
     });
   });

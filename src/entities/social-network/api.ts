@@ -12,7 +12,7 @@ export const isHttpsUrl = (link: string): boolean => {
 };
 
 // The store owner registered links like "wa.me/..." without the scheme.
-const withScheme = (link: string): string => {
+export const withScheme = (link: string): string => {
   const trimmedLink = link.trim();
   return /^[a-z][a-z0-9+.-]*:/i.test(trimmedLink) ? trimmedLink : `https://${trimmedLink}`;
 };

@@ -62,23 +62,7 @@ const SERVED_TYPES = new Set([...PHOTO_TYPES, ...LOGO_TYPES]);
 
 const LOCAL_PHOTO_PATH = '/local-images/';
 
-const RATING_PATTERN = /^\d(\.\d)?$/;
-
-const isHttpsUrl = (link: string) => {
-  try {
-    return new URL(link).protocol === 'https:';
-  } catch {
-    return false;
-  }
-};
-
 const isOptionalText = (value: unknown) => value === undefined || value === null || typeof value === 'string';
-
-const isRating = (value: unknown): value is number | null =>
-  value === null || (typeof value === 'number' && value <= 5 && RATING_PATTERN.test(String(value)));
-
-const isReviewCount = (value: unknown): value is number | null =>
-  value === null || (typeof value === 'number' && Number.isInteger(value) && value >= 0);
 
 const toText = (value: unknown) => (typeof value === 'string' ? value.trim() || null : null);
 
@@ -89,20 +73,6 @@ const toStoreSettingsChanges = (body: unknown): StoreSettingsChanges | null => {
   if ('address' in body) {
     if (!isOptionalText(body.address)) return null;
     changes.address = toText(body.address);
-  }
-  if ('googleReviewsUrl' in body) {
-    if (!isOptionalText(body.googleReviewsUrl)) return null;
-    const url = toText(body.googleReviewsUrl);
-    if (url !== null && !isHttpsUrl(url)) return null;
-    changes.googleReviewsUrl = url;
-  }
-  if ('googleRating' in body) {
-    if (!isRating(body.googleRating)) return null;
-    changes.googleRating = body.googleRating;
-  }
-  if ('googleReviewCount' in body) {
-    if (!isReviewCount(body.googleReviewCount)) return null;
-    changes.googleReviewCount = body.googleReviewCount;
   }
   return changes;
 };

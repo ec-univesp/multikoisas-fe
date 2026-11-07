@@ -14,11 +14,11 @@ beforeEach(() => {
 
 describe('SocialNetworkAdminScreen', () => {
   it('loads every social network through the site proxy, including links the storefront hides', async () => {
-    apiDatabase.socialNetworks.push({ id: 3, descricao: 'WhatsApp', link: 'wa.me/5511999999999' });
+    apiDatabase.socialNetworks.push({ id: 3, descricao: 'Facebook', link: 'http://facebook.com/multikoisas' });
     render(<SocialNetworkAdminScreen />);
 
     expect(screen.getByText('Carregando redes sociais...')).toBeInTheDocument();
-    expect(await screen.findByText('WhatsApp')).toBeInTheDocument();
+    expect(await screen.findByText('Facebook')).toBeInTheDocument();
     expect(screen.getByText('Link sem https, não aparece na vitrine')).toBeInTheDocument();
     expect(screen.getByText('3 redes cadastradas')).toBeInTheDocument();
     expect(apiRequests).toEqual(['GET /api/socialnetwork']);

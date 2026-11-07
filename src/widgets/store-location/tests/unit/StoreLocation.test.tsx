@@ -8,9 +8,6 @@ const ENCODED_ADDRESS = 'Rua%20das%20Flores%2C%20100%20-%20S%C3%A3o%20Paulo%2C%2
 
 const settingsWith = (address: string | null): StoreSettingsValues => ({
   address,
-  googleReviewsUrl: null,
-  googleRating: null,
-  googleReviewCount: null,
 });
 
 describe('StoreLocation', () => {

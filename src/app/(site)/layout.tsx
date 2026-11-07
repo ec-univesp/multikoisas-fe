@@ -34,7 +34,11 @@ export default async function SiteLayout({ children }: Readonly<{ children: Reac
           className="fixed top-1/2 right-4 z-40 flex -translate-y-1/2 flex-col items-end gap-3"
         >
           <GoogleReviewsBadge
-            livePlace={googlePlace ? { rating: googlePlace.rating, reviewCount: googlePlace.reviewCount } : undefined}
+            place={
+              googlePlace
+                ? { rating: googlePlace.rating, reviewCount: googlePlace.reviewCount, mapsUrl: googlePlace.mapsUrl }
+                : null
+            }
           />
           <WhatsAppFloatingButton />
         </aside>
