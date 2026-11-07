@@ -79,3 +79,29 @@ describe('GoogleReviewsBadge', () => {
     expect(badge).not.toHaveTextContent('12');
   });
 });
+
+describe('GoogleReviewsBadge with the live google place', () => {
+  it('prefers the rating and the review count read from google', () => {
+    render(
+      <GoogleReviewsBadge
+        settings={settingsWith({ googleRating: 4.5, googleReviewCount: 300 })}
+        livePlace={{ rating: 4.8, reviewCount: 390 }}
+      />,
+    );
+    expect(
+      screen.getByRole('link', { name: 'Nota 4,8 de 5 no Google, 390 avaliações. Abre em outra aba.' }),
+    ).toBeInTheDocument();
+  });
+
+  it('keeps the saved values when google sent nothing', () => {
+    render(
+      <GoogleReviewsBadge
+        settings={settingsWith({ googleRating: 4.5, googleReviewCount: 300 })}
+        livePlace={{ rating: null, reviewCount: null }}
+      />,
+    );
+    expect(
+      screen.getByRole('link', { name: 'Nota 4,5 de 5 no Google, 300 avaliações. Abre em outra aba.' }),
+    ).toBeInTheDocument();
+  });
+});
