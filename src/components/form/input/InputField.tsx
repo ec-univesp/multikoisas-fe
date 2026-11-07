@@ -6,6 +6,7 @@ interface InputProps {
   id?: string;
   name?: string;
   autoComplete?: string;
+  inputMode?: React.HTMLAttributes<HTMLInputElement>['inputMode'];
   autoFocus?: boolean;
   autoCapitalize?: string;
   autoCorrect?: string;
@@ -31,6 +32,7 @@ const Input: FC<InputProps> = ({
   id,
   name,
   autoComplete,
+  inputMode,
   autoFocus,
   autoCapitalize,
   autoCorrect,
@@ -71,6 +73,7 @@ const Input: FC<InputProps> = ({
         id={id}
         name={name}
         autoComplete={autoComplete}
+        inputMode={inputMode}
         autoFocus={autoFocus}
         autoCapitalize={autoCapitalize}
         autoCorrect={autoCorrect}
