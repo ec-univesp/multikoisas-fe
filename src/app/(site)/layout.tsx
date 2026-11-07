@@ -13,6 +13,9 @@ export const metadata: Metadata = {
     'Vitrine da MultiKoisas: utilidades para casa, cozinha, limpeza e organização. Veja os detalhes e compre nas nossas lojas parceiras.',
 };
 
+// Retries Google within the hour when a regeneration could not read it; a good answer stays a day in the fetch cache.
+export const revalidate = 3600;
+
 const forceLightTheme = `document.documentElement.classList.remove('dark');`;
 
 export default async function SiteLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -30,7 +33,9 @@ export default async function SiteLayout({ children }: Readonly<{ children: Reac
           aria-label="Contatos da loja"
           className="fixed top-1/2 right-4 z-40 flex -translate-y-1/2 flex-col items-end gap-3"
         >
-          <GoogleReviewsBadge livePlace={googlePlace ?? undefined} />
+          <GoogleReviewsBadge
+            livePlace={googlePlace ? { rating: googlePlace.rating, reviewCount: googlePlace.reviewCount } : undefined}
+          />
           <WhatsAppFloatingButton />
         </aside>
       </LocalApiProvider>

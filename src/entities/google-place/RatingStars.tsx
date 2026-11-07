@@ -11,7 +11,7 @@ export const RatingStars = ({ rating, label }: { rating: number; label: string }
         aria-hidden
         className="size-4"
         color={GOOGLE_STAR_YELLOW}
-        fill={position <= Math.round(rating) ? GOOGLE_STAR_YELLOW : 'none'}
+        fill={position <= Math.floor(rating) ? GOOGLE_STAR_YELLOW : 'none'}
       />
     ))}
   </span>
