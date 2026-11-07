@@ -2,7 +2,7 @@
 
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import { PencilIcon, TrashBinIcon } from '@/icons';
-import { isHttpsUrl, type SocialNetwork } from '@/entities/social-network';
+import { isHttpsUrl, withScheme, type SocialNetwork } from '@/entities/social-network';
 
 type SocialNetworkTableProps = {
   socialNetworks: readonly SocialNetwork[];
@@ -41,7 +41,7 @@ export const SocialNetworkTable = ({ socialNetworks, onEdit, onDelete }: SocialN
                 <TableCell className="px-5 py-4 text-start">
                   <p className="text-theme-sm font-medium text-gray-800">{socialNetwork.name}</p>
                   <p className="text-theme-xs break-all text-gray-500">{socialNetwork.url}</p>
-                  {!isHttpsUrl(socialNetwork.url) && (
+                  {!isHttpsUrl(withScheme(socialNetwork.url)) && (
                     <p className="mt-1 text-theme-xs text-error-500">Link sem https, não aparece na vitrine</p>
                   )}
                 </TableCell>

@@ -61,10 +61,17 @@ describe('SocialNetworkAdminPanel', () => {
   });
 
   it('uses the singular count and flags a link the storefront hides', () => {
-    renderPanel([{ id: 3, name: 'WhatsApp', url: 'wa.me/5511999999999' }]);
+    renderPanel([{ id: 3, name: 'Facebook', url: 'http://facebook.com/multikoisas' }]);
 
     expect(screen.getByText('1 rede cadastrada')).toBeInTheDocument();
     expect(screen.getByText('Link sem https, não aparece na vitrine')).toBeInTheDocument();
+  });
+
+  it('does not flag a link without the scheme, since the storefront completes it with https', () => {
+    renderPanel([{ id: 3, name: 'WhatsApp', url: 'wa.me/message/V4IAOMTCK5XHP1' }]);
+
+    expect(screen.getByText('wa.me/message/V4IAOMTCK5XHP1')).toBeInTheDocument();
+    expect(screen.queryByText('Link sem https, não aparece na vitrine')).not.toBeInTheDocument();
   });
 
   it('creates the social network and reloads the list to get its id', async () => {
