@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { StoreLogo } from '@/entities/store-settings';
 import { usePathname } from 'next/navigation';
 import { useSidebar } from '../context/SidebarContext';
-import { ChevronDownIcon, FolderIcon, HorizontaLDots, PlugInIcon, TableIcon } from '../icons/index';
+import { ChevronDownIcon, FolderIcon, GroupIcon, HorizontaLDots, PlugInIcon, TableIcon } from '../icons/index';
 
 type NavItem = {
   name: string;
@@ -28,6 +28,11 @@ const navItems: NavItem[] = [
     icon: <PlugInIcon />,
     name: 'Canais de venda',
     path: '/admin/sales-channels',
+  },
+  {
+    icon: <GroupIcon />,
+    name: 'Usuários',
+    path: '/admin/users',
   },
 ];
 
