@@ -41,21 +41,45 @@ describe('GoogleReviews', () => {
   it('shows the review summary with the google attribution and the report link', () => {
     render(
       <GoogleReviews
-        place={placeWith({ summary: { text: 'As pessoas elogiam a equipe.', reportUrl: 'https://google.com/report' } })}
+        place={placeWith({
+          summary: {
+            text: 'As pessoas elogiam a equipe.',
+            disclosure: 'Resumido com o Gemini',
+            reportUrl: 'https://google.com/report',
+          },
+        })}
       />,
     );
     expect(screen.getByText('As pessoas elogiam a equipe.')).toBeInTheDocument();
-    expect(screen.getByText('Resumo das avaliações feito pelo Google com o Gemini.')).toBeInTheDocument();
+    expect(screen.getByText('Resumido com o Gemini')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Informar um problema no resumo. Abre em outra aba.' })).toHaveAttribute(
       'href',
       'https://google.com/report',
     );
   });
 
+  it('falls back to a fixed gemini attribution when google sends none', () => {
+    render(<GoogleReviews place={placeWith({ summary: { text: 'Resumo.', disclosure: null, reportUrl: null } })} />);
+    expect(screen.getByText('Resumo das avaliações feito pelo Google com o Gemini.')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Informar um problema/ })).not.toBeInTheDocument();
+  });
+
+  it('draws only the whole stars of the rating', () => {
+    render(<GoogleReviews place={placeWith({ rating: 4.7 })} />);
+    const stars = screen.getByRole('img', { name: 'Nota 4,7 de 5' }).querySelectorAll('svg');
+    expect([...stars].map((star) => star.getAttribute('fill'))).toEqual([
+      '#FBBC04',
+      '#FBBC04',
+      '#FBBC04',
+      '#FBBC04',
+      'none',
+    ]);
+  });
+
   it('shows each review with its author, rating, date and text', () => {
     render(<GoogleReviews place={placeWith({ reviews: [review] })} />);
     const card = screen.getByRole('listitem');
-    expect(within(card).getByRole('link', { name: 'Maria Souza' })).toHaveAttribute(
+    expect(within(card).getByRole('link', { name: 'Maria Souza. Abre em outra aba.' })).toHaveAttribute(
       'href',
       'https://www.google.com/maps/contrib/1',
     );

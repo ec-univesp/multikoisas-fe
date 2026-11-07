@@ -11,6 +11,6 @@ export type GooglePlace = {
   rating: number | null;
   reviewCount: number | null;
   mapsUrl: string | null;
-  summary: { text: string; reportUrl: string | null } | null;
+  summary: { text: string; disclosure: string | null; reportUrl: string | null } | null;
   reviews: GoogleReview[];
 };

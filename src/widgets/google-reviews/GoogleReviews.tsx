@@ -16,6 +16,7 @@ const ReviewAuthor = ({ review }: { review: GoogleReview }) => {
       href={review.authorUrl}
       target="_blank"
       rel="noopener noreferrer"
+      aria-label={`${review.authorName}. ${NEW_TAB_NOTICE}`}
       className="font-bold text-gray-800 hover:underline"
     >
       {review.authorName}
@@ -24,7 +25,7 @@ const ReviewAuthor = ({ review }: { review: GoogleReview }) => {
 };
 
 const ReviewCard = ({ review }: { review: GoogleReview }) => (
-  <li className="flex flex-col gap-3 rounded-lg border border-gray-200 p-4">
+  <li className="flex min-w-0 flex-col gap-3 rounded-lg border border-gray-200 p-4">
     <div className="flex items-center gap-3">
       {review.authorPhotoUrl && (
         // eslint-disable-next-line @next/next/no-img-element -- google serves author photos from changing hosts and asks for no referrer
@@ -41,7 +42,7 @@ const ReviewCard = ({ review }: { review: GoogleReview }) => (
       </div>
     </div>
     <RatingStars rating={review.rating} label={`Nota ${review.rating} de 5`} />
-    {review.text && <p className="line-clamp-6 text-gray-700">{review.text}</p>}
+    {review.text && <p className="line-clamp-6 break-words text-gray-700">{review.text}</p>}
   </li>
 );
 
@@ -82,15 +83,15 @@ export const GoogleReviews = ({ place }: { place: GooglePlace | null }) => {
         {summary && (
           <figure className="rounded-lg bg-gray-50 p-4">
             <blockquote className="text-gray-700">{summary.text}</blockquote>
-            <figcaption className="mt-2 flex flex-wrap gap-x-3 text-xs text-gray-500">
-              <span>Resumo das avaliações feito pelo Google com o Gemini.</span>
+            <figcaption className="mt-2 flex flex-wrap items-center gap-x-3 text-xs text-gray-500">
+              <span>{summary.disclosure ?? 'Resumo das avaliações feito pelo Google com o Gemini.'}</span>
               {summary.reportUrl && (
                 <a
                   href={summary.reportUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={`Informar um problema no resumo. ${NEW_TAB_NOTICE}`}
-                  className="underline"
+                  className="inline-flex min-h-11 items-center underline"
                 >
                   Informar um problema
                 </a>
@@ -100,8 +101,8 @@ export const GoogleReviews = ({ place }: { place: GooglePlace | null }) => {
         )}
         {reviews.length > 0 && (
           <ul className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {reviews.map((review) => (
-              <ReviewCard key={`${review.authorName}-${review.publishedAgo}`} review={review} />
+            {reviews.map((review, position) => (
+              <ReviewCard key={position} review={review} />
             ))}
           </ul>
         )}

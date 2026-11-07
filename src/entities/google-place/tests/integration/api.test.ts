@@ -11,6 +11,7 @@ const googleResponse = {
   googleMapsUri: 'https://maps.google.com/?cid=123',
   reviewSummary: {
     text: { text: 'As pessoas elogiam a equipe atenciosa.', languageCode: 'pt-BR' },
+    disclosureText: { text: 'Resumido com o Gemini', languageCode: 'pt-BR' },
     flagContentUri: 'https://www.google.com/local/content/rap/report?postId=1',
   },
   reviews: [
@@ -26,6 +27,7 @@ const googleResponse = {
       googleMapsUri: 'https://www.google.com/maps/reviews/1',
     },
     { rating: 4, relativePublishTimeDescription: 'há 1 mês', authorAttribution: { displayName: 'João' } },
+    { relativePublishTimeDescription: 'há 1 ano', authorAttribution: { displayName: 'Sem nota' } },
   ],
 };
 
@@ -55,6 +57,7 @@ describe('fetchGooglePlace', () => {
       mapsUrl: 'https://maps.google.com/?cid=123',
       summary: {
         text: 'As pessoas elogiam a equipe atenciosa.',
+        disclosure: 'Resumido com o Gemini',
         reportUrl: 'https://www.google.com/local/content/rap/report?postId=1',
       },
       reviews: [
@@ -84,7 +87,25 @@ describe('fetchGooglePlace', () => {
 
   it('returns null without calling google when there is no key', async () => {
     vi.stubEnv('GOOGLE_PLACES_API_KEY', '');
+    let googleCalls = 0;
+    server.use(
+      http.get(PLACE_URL, () => {
+        googleCalls += 1;
+        return HttpResponse.json(googleResponse);
+      }),
+    );
     expect(await fetchGooglePlace()).toBeNull();
+    expect(googleCalls).toBe(0);
+  });
+
+  it('keeps the google answer for a day and gives up after five seconds', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    server.use(http.get(PLACE_URL, () => HttpResponse.json(googleResponse)));
+    await fetchGooglePlace();
+    const init = fetchSpy.mock.calls[0]?.[1];
+    expect(init?.next?.revalidate).toBe(86_400);
+    expect(init?.signal).toBeInstanceOf(AbortSignal);
+    fetchSpy.mockRestore();
   });
 
   it('returns null when google refuses the request', async () => {
