@@ -331,10 +331,11 @@ export const createApiHandlers = (
 
     http.get(`${baseUrl}/user`, ({ request }) => {
       const query = queryOf(request);
+      const id = query.get('id');
       const username = query.get('username');
       return listResponse(
-        database.users.filter(
-          (user) => matchesNumber(query.get('id'), user.id) && (!username?.trim() || user.username === username),
+        database.users.filter((user) =>
+          id !== null ? user.id === Number(id) : !username?.trim() || user.username === username,
         ),
       );
     }),
@@ -368,9 +369,9 @@ export const createApiHandlers = (
       return saved(HttpResponse.json(user));
     }),
 
-    http.delete<{ username: string }>(`${baseUrl}/user/:username`, ({ request, params }) => {
+    http.delete<{ username: string }>(`${baseUrl}/user/:username`, ({ params }) => {
       const remaining = database.users.filter((user) => user.username !== params.username);
-      if (remaining.length === database.users.length) return springError(404, 'Not Found', request);
+      if (remaining.length === database.users.length) return new HttpResponse(null, { status: 404 });
       database.users = remaining;
       return saved(HttpResponse.json({ message: `Usuario ${params.username} deletado com sucesso.` }));
     }),
