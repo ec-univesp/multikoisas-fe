@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import PageBreadcrumb from '@/components/common/PageBreadCrumb';
 import { LocalDataReset } from '@/features/local-data-reset';
+import { ShowcaseAppearanceForm } from '@/features/showcase-appearance-form';
 import { SocialNetworkAdminScreen } from '@/features/social-network-admin';
 import { StoreLogoField } from '@/features/store-logo';
 import { StoreSettingsForm } from '@/features/store-settings-form';
@@ -24,6 +25,12 @@ const StorePage = () => (
         Dados da loja
       </h3>
       <StoreSettingsForm />
+    </section>
+    <section aria-labelledby="showcase-appearance-title" className="mb-8">
+      <h3 id="showcase-appearance-title" className="mb-4 text-lg font-semibold text-gray-800">
+        Aparência da vitrine
+      </h3>
+      <ShowcaseAppearanceForm />
     </section>
     <section aria-labelledby="social-networks-title" className="mb-8">
       <h3 id="social-networks-title" className="mb-4 text-lg font-semibold text-gray-800">

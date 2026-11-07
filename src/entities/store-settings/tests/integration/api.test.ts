@@ -13,7 +13,12 @@ describe('store settings api', () => {
   });
 
   it('saves the store settings', async () => {
-    expect(await saveStoreSettings(NEW_SETTINGS)).toEqual({ ...NEW_SETTINGS, logoUrl: null });
+    expect(await saveStoreSettings(NEW_SETTINGS)).toEqual({
+      ...NEW_SETTINGS,
+      logoUrl: null,
+      showcaseColumns: 4,
+      accentColor: '#facc15',
+    });
     expect(apiDatabase.storeSettings.address).toBe('Rua Nova, 10');
   });
 
