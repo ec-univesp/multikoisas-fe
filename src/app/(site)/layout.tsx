@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { fetchGooglePlace } from '@/entities/google-place';
 import { ShowcaseSearchProvider } from '@/features/showcase-filter';
 import { LocalApiProvider } from '@/shared/local-api/LocalApiProvider';
 import { GoogleReviewsBadge } from '@/widgets/google-reviews-badge';
@@ -14,7 +15,8 @@ export const metadata: Metadata = {
 
 const forceLightTheme = `document.documentElement.classList.remove('dark');`;
 
-export default function SiteLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function SiteLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const googlePlace = await fetchGooglePlace();
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
       <script dangerouslySetInnerHTML={{ __html: forceLightTheme }} />
@@ -28,7 +30,7 @@ export default function SiteLayout({ children }: Readonly<{ children: React.Reac
           aria-label="Contatos da loja"
           className="fixed top-1/2 right-4 z-40 flex -translate-y-1/2 flex-col items-end gap-3"
         >
-          <GoogleReviewsBadge />
+          <GoogleReviewsBadge livePlace={googlePlace ?? undefined} />
           <WhatsAppFloatingButton />
         </aside>
       </LocalApiProvider>
