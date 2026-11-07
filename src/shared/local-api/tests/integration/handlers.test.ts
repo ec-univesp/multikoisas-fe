@@ -356,8 +356,14 @@ describe('local api users', () => {
     expect(deleted.status).toBe(200);
     expect(await deleted.json()).toEqual({ message: 'Usuario admin deletado com sucesso.' });
     expect(database.users).toEqual([]);
-    expect((await send('DELETE', '/api/user/admin')).status).toBe(404);
+    const missing = await send('DELETE', '/api/user/admin');
+    expect(missing.status).toBe(404);
+    expect(await missing.text()).toBe('');
     expect(onChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('filters by id alone when id and username are both sent, like the java api', async () => {
+    expect(await (await send('GET', '/api/user?id=8&username=outro')).json()).toEqual([ADMIN]);
   });
 });
 
