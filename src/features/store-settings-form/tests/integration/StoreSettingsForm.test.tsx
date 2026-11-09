@@ -43,7 +43,7 @@ describe('StoreSettingsForm saving', () => {
     await user.click(screen.getByRole('button', { name: 'Salvar dados' }));
 
     expect(await screen.findByRole('status')).toHaveTextContent('Dados salvos.');
-    expect(apiDatabase.storeSettings).toEqual({ address: 'Rua Nova, 10', logoUrl: null, showcaseColumns: 4, accentColor: '#facc15' });
+    expect(apiDatabase.storeSettings).toEqual({ address: 'Rua Nova, 10', logoUrl: null });
   });
 
   it('keeps saving disabled while saving', async () => {
