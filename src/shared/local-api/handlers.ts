@@ -1,13 +1,5 @@
 import { http, HttpResponse } from 'msw';
-import {
-  isAccentColor,
-  isShowcaseColumns,
-  type ApiDatabase,
-  type ProductCategoryRow,
-  type PurchaseLinkRow,
-  type StoreSettingsRow,
-  type UserRow,
-} from './database';
+import type { ApiDatabase, ProductCategoryRow, PurchaseLinkRow, StoreSettingsRow, UserRow } from './database';
 import type { ImageStore } from './imageStore';
 
 export type ApiHandlerOptions = {
@@ -81,14 +73,6 @@ const toStoreSettingsChanges = (body: unknown): StoreSettingsChanges | null => {
   if ('address' in body) {
     if (!isOptionalText(body.address)) return null;
     changes.address = toText(body.address);
-  }
-  if ('showcaseColumns' in body) {
-    if (!isShowcaseColumns(body.showcaseColumns)) return null;
-    changes.showcaseColumns = body.showcaseColumns;
-  }
-  if ('accentColor' in body) {
-    if (!isAccentColor(body.accentColor)) return null;
-    changes.accentColor = body.accentColor.toLowerCase();
   }
   return changes;
 };

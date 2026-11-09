@@ -10,7 +10,7 @@ O site mostra os produtos e leva o visitante para comprar nas lojas parceiras: a
 [![Site no ar](https://img.shields.io/badge/site-multikoisas.netlify.app-0CCE6B?style=flat-square&logo=netlify&logoColor=white)](https://multikoisas.netlify.app)
 [![API](https://img.shields.io/badge/API-Swagger-85EA2D?style=flat-square&logo=swagger&logoColor=black)](https://multikoisas-univesp.onrender.com/swagger-ui/index.html)
 [![Tarefas](https://img.shields.io/badge/tarefas-Linear-5E6AD2?style=flat-square&logo=linear&logoColor=white)](https://linear.app/skimpara/project/pi2-site-multikoisas-f810dc2fae75)
-![Versão](https://img.shields.io/badge/versão-0.11.0-4F46E5?style=flat-square)
+![Versão](https://img.shields.io/badge/versão-0.12.0-4F46E5?style=flat-square)
 
 ![Next.js](https://img.shields.io/badge/Next.js-16-000000?style=flat-square&logo=nextdotjs&logoColor=white)
 ![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)
@@ -20,7 +20,7 @@ O site mostra os produtos e leva o visitante para comprar nas lojas parceiras: a
 ![MSW](https://img.shields.io/badge/MSW-API_simulada-FF6A33?style=flat-square&logo=mockserviceworker&logoColor=white)
 ![Spring Boot](https://img.shields.io/badge/back--end-Spring_Boot-6DB33F?style=flat-square&logo=springboot&logoColor=white)
 
-![Testes](https://img.shields.io/badge/testes-640-6E9F18?style=flat-square&logo=vitest&logoColor=white)
+![Testes](https://img.shields.io/badge/testes-613-6E9F18?style=flat-square&logo=vitest&logoColor=white)
 ![Cobertura](https://img.shields.io/badge/cobertura-98%25-22C55E?style=flat-square)
 ![Lighthouse desktop](https://img.shields.io/badge/Lighthouse_desktop-100_·_96_·_100_·_100-0CCE6B?style=flat-square&logo=lighthouse&logoColor=white)
 ![Arquitetura](https://img.shields.io/badge/arquitetura-Feature--Sliced_Design-4F46E5?style=flat-square)
@@ -54,7 +54,7 @@ Projeto integrador da UNIVESP · time Squad PI2
 | `/admin/categories`     | Categorias                                                                              |
 | `/admin/sales-channels` | Canais de venda (Shopee, Mercado Livre, Magalu...)                                      |
 | `/admin/users`          | Usuários do painel                                                                      |
-| `/store`                | Configurações de site: logo, endereço, aparência da vitrine, redes sociais e WhatsApp   |
+| `/store`                | Configurações de site: logo, endereço, redes sociais e WhatsApp                         |
 
 ## Como o front fala com a API
 
