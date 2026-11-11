@@ -1,4 +1,4 @@
-export { fetchStoreSettings, removeStoreImage, saveStoreDescription, saveStoreImage } from './api';
+export { fetchStoreSettings, removeStoreImage, saveStoreImage, saveStoreSettings } from './api';
 export { StoreLogo } from './StoreLogo';
 export { STORE_ADDRESS, STORE_SETTINGS } from './storeSettings';
 export { useStoreSettings } from './useStoreSettings';

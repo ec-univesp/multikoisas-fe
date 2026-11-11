@@ -6,7 +6,7 @@ export type PurchaseLinkRow = { produtoId: number; canalVendaId: number; link: s
 export type ProductImageRow = { id: number; produtoId: number; imagemUrl: string };
 export type UserRow = { id: number; username: string; email: string; role: string };
 export type SocialNetworkRow = { id: number; descricao: string; link: string };
-export type StoreRow = { id: number; nomeLoja: string; descricaoLoja: string };
+export type StoreRow = { id: number; nomeLoja: string; descricaoLoja: string; endereco: string | null };
 export type StoreImageRow = { id: number; imagemUrl: string; tipo: string };
 
 export type ApiDatabase = {

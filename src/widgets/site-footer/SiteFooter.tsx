@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { SocialNetworkLinks, useSocialNetworks } from '@/entities/social-network';
-import { STORE_ADDRESS, StoreLogo } from '@/entities/store-settings';
+import { STORE_ADDRESS, StoreLogo, useStoreSettings } from '@/entities/store-settings';
 import { ShowcaseLink } from '@/features/showcase-filter';
 
 const headingClassName = 'text-sm font-bold tracking-wider text-store-yellow uppercase';
@@ -11,6 +11,7 @@ const shortcutClassName = 'flex min-h-11 items-center text-blue-100 hover:text-s
 export const SiteFooter = () => {
   const socialNetworksState = useSocialNetworks();
   const socialNetworks = socialNetworksState.status === 'ready' ? socialNetworksState.data : [];
+  const address = useStoreSettings().settings.address ?? STORE_ADDRESS;
   return (
     <footer aria-busy={socialNetworksState.status === 'loading'} className="bg-store-navy text-blue-100">
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 md:grid-cols-3 lg:px-8">
@@ -19,7 +20,7 @@ export const SiteFooter = () => {
             <StoreLogo tone="onDark" />
           </Link>
           <p className="mt-3 max-w-xs text-sm">Utilidades para casa, cozinha, limpeza e organização, num lugar só.</p>
-          <address className="mt-3 max-w-xs text-sm not-italic">{STORE_ADDRESS}</address>
+          <address className="mt-3 max-w-xs text-sm not-italic">{address}</address>
         </div>
 
         <nav aria-labelledby="site-footer-shortcuts">
