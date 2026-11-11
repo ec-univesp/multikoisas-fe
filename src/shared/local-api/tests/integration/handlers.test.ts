@@ -30,7 +30,6 @@ const uploadPhoto = (produtoId: number, content: string, type = 'image/png') =>
 
 const UPLOADED_IMAGES = 'https://avphmmvnlrbidhjrzozx.supabase.co/storage/v1/object/public/imagem/upload-';
 
-
 let database: ApiDatabase;
 let images: ImageStore;
 const onChange = vi.fn(() => true);
@@ -106,9 +105,9 @@ describe('local api handlers', () => {
       { produtoId: 1, canalVendaId: 4, link: 'https://shopee.com.br/balde-novo' },
     ]);
 
-    expect((await send('PUT', '/api/canalvendaproduto?produtoId=1&canalVendaId=9', { link: 'https://x.com' })).status).toBe(
-      404,
-    );
+    expect(
+      (await send('PUT', '/api/canalvendaproduto?produtoId=1&canalVendaId=9', { link: 'https://x.com' })).status,
+    ).toBe(404);
     expect((await send('PUT', '/api/canalvendaproduto?produtoId=1&canalVendaId=4', { link: ' ' })).status).toBe(400);
     expect(onChange).toHaveBeenCalledTimes(1);
   });
@@ -210,7 +209,7 @@ describe('local api handlers without the api bugs', () => {
         baseUrl: '/api',
         onChange,
         images,
-          reproduceApiBugs: false,
+        reproduceApiBugs: false,
       }),
     );
   });
@@ -354,7 +353,7 @@ describe('local api users without the api bugs', () => {
         baseUrl: '/api',
         onChange,
         images,
-          reproduceApiBugs: false,
+        reproduceApiBugs: false,
       }),
     );
   });
@@ -449,7 +448,7 @@ describe('local api store images', () => {
   it('refuses an unknown type, another file type, a file too big or missing', async () => {
     expect((await uploadStoreImage('FUNDO', 'bytes')).status).toBe(400);
     expect((await uploadStoreImage('LOGO', 'gif', 'image/gif')).status).toBe(415);
-    expect((await uploadStoreImage('LOGO', 'x'.repeat(1_048_577))).status).toBe(413);
+    expect((await uploadStoreImage('LOGO', 'x'.repeat(5_242_881))).status).toBe(413);
     expect((await uploadStoreImage('LOGO', '')).status).toBe(400);
     expect((await fetch('/api/imagemloja?tipo=LOGO', { method: 'POST', body: new FormData() })).status).toBe(400);
     expect(database.storeImages).toEqual([]);

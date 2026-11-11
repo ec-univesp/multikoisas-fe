@@ -236,11 +236,11 @@ describe('multikoisas-api handlers', () => {
     expect(await (await send('GET', '/api/imagem?produtoId=5')).json()).toEqual([image]);
   });
 
-  it('rejects an upload without file, an empty file and a file above 1 MB', async () => {
+  it('rejects an upload without file, an empty file and a file above 5 MB', async () => {
     const withoutFile = new FormData();
     expect((await fetch('/api/imagem?produtoId=5', { method: 'POST', body: withoutFile })).status).toBe(400);
     expect((await uploadToProduct5('vazio.png', '')).status).toBe(409);
-    expect((await uploadToProduct5('grande.png', 'x'.repeat(1_048_577))).status).toBe(413);
+    expect((await uploadToProduct5('grande.png', 'x'.repeat(5_242_881))).status).toBe(413);
     expect(apiDatabase.productImages.filter((image) => image.produtoId === 5)).toEqual([]);
   });
 
