@@ -48,14 +48,14 @@ describe('StoreImageField', () => {
     expect(URL.createObjectURL).not.toHaveBeenCalled();
   });
 
-  it('warns about an image over 1 MB and keeps the valid preview already chosen', async () => {
+  it('warns about an image over 5 MB and keeps the valid preview already chosen', async () => {
     const user = userEvent.setup();
     render(<StoreImageField type="LOGO" />);
 
     await user.upload(screen.getByLabelText('Nova logo'), image('logo.svg', 'image/svg+xml'));
-    await user.upload(screen.getByLabelText('Nova logo'), image('big.png', 'image/png', 1_048_577));
+    await user.upload(screen.getByLabelText('Nova logo'), image('big.png', 'image/png', 5_242_881));
 
-    expect(screen.getByRole('alert')).toHaveTextContent('A imagem passa de 1 MB.');
+    expect(screen.getByRole('alert')).toHaveTextContent('A imagem passa de 5 MB.');
     expect(screen.getByAltText('Prévia da logo nova')).toHaveAttribute('src', 'blob:logo-1');
     expect(URL.revokeObjectURL).not.toHaveBeenCalled();
   });

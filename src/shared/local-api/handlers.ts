@@ -51,7 +51,7 @@ const blankUserFields = (body: UserBody) => {
   return Object.fromEntries(Object.entries(USER_FIELD_MESSAGES).filter(([field]) => isBlank(values.get(field))));
 };
 
-const MAX_UPLOAD_BYTES = 1_048_576;
+const MAX_UPLOAD_BYTES = 5_242_880;
 
 const PHOTO_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif']);
 
@@ -108,7 +108,9 @@ export const createApiHandlers = (
       }
       if (!database.products.some((product) => product.id === id)) return springError(404, 'Not Found', request);
       const localPhotoIds = database.productImages
-        .filter((productImage) => productImage.produtoId === id && productImage.imagemUrl.startsWith(UPLOADED_IMAGES_URL))
+        .filter(
+          (productImage) => productImage.produtoId === id && productImage.imagemUrl.startsWith(UPLOADED_IMAGES_URL),
+        )
         .map((productImage) => productImage.id);
       database.productImages = database.productImages.filter((productImage) => productImage.produtoId !== id);
       database.purchaseLinks = database.purchaseLinks.filter((link) => link.produtoId !== id);

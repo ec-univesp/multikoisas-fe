@@ -28,9 +28,7 @@ describe('StoreImageField saving', () => {
   it('shows the saved logo as the current one', async () => {
     saveLogo();
     render(<StoreImageField type="LOGO" />);
-    await waitFor(() =>
-      expect(screen.getByRole('img', { name: 'Logo atual' })).toHaveAttribute('src', SAVED_LOGO),
-    );
+    await waitFor(() => expect(screen.getByRole('img', { name: 'Logo atual' })).toHaveAttribute('src', SAVED_LOGO));
   });
 
   it('enables saving only once a valid image is chosen', async () => {
@@ -63,11 +61,9 @@ describe('StoreImageField saving', () => {
   it('locks the file choice and the discard while the logo is being saved', async () => {
     let finishUpload = () => {};
     server.use(
-      http.post(
-        '*/imagemloja',
-        () => new Promise<undefined>((resolve) => (finishUpload = () => resolve(undefined))),
-        { once: true },
-      ),
+      http.post('*/imagemloja', () => new Promise<undefined>((resolve) => (finishUpload = () => resolve(undefined))), {
+        once: true,
+      }),
     );
     const user = userEvent.setup();
     render(<StoreImageField type="LOGO" />);
