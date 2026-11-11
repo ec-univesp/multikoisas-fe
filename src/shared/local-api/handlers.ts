@@ -353,8 +353,11 @@ export const createApiHandlers = (
       if (!nome?.trim()) return springError(400, 'Bad Request', request);
       const salesChannel = database.salesChannels.find((candidate) => candidate.id === Number(params.id));
       if (!salesChannel) return springError(404, 'Not Found', request);
+      if (database.salesChannels.some((candidate) => candidate.id !== salesChannel.id && candidate.nome === nome)) {
+        return HttpResponse.text('Já existe um canal com esse nome', { status: 409 });
+      }
       salesChannel.nome = nome;
-      return saved(new HttpResponse(null, { status: 204 }));
+      return saved(HttpResponse.json(salesChannel));
     }),
 
     http.delete(`${baseUrl}/canalvenda/:id`, ({ request, params }) => {

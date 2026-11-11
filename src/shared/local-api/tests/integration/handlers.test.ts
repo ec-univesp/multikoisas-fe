@@ -83,6 +83,19 @@ describe('local api handlers', () => {
     expect(onChange).toHaveBeenCalledTimes(15);
   });
 
+  it('renames a sales channel like the real api: 200 with the row, 409 on a taken name, 404 when unknown', async () => {
+    await send('POST', '/api/canalvenda', { nome: 'MagaLu' });
+
+    const renamed = await send('PUT', '/api/canalvenda/4', { nome: 'Shopee BR' });
+    expect(renamed.status).toBe(200);
+    expect(await renamed.json()).toEqual({ id: 4, nome: 'Shopee BR' });
+
+    expect((await send('PUT', '/api/canalvenda/4', { nome: 'Shopee BR' })).status).toBe(200);
+    expect((await send('PUT', '/api/canalvenda/4', { nome: 'MagaLu' })).status).toBe(409);
+    expect((await send('PUT', '/api/canalvenda/99', { nome: 'Outro' })).status).toBe(404);
+    expect(database.salesChannels).toContainEqual({ id: 4, nome: 'Shopee BR' });
+  });
+
   it('changes only the link of a social network, never its name', async () => {
     const changed = await send('PUT', '/api/socialnetwork/Instagram', {
       descricao: 'Insta',
