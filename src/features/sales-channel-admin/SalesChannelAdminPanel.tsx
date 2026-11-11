@@ -13,6 +13,7 @@ import {
   SalesChannelInUseError,
   createSalesChannel,
   deleteSalesChannel,
+  renameSalesChannel,
 } from './salesChannelApi';
 
 type SalesChannelAdminPanelProps = {
@@ -21,12 +22,23 @@ type SalesChannelAdminPanelProps = {
 
 export const SalesChannelAdminPanel = ({ initialSalesChannels }: SalesChannelAdminPanelProps) => {
   const [salesChannels, setSalesChannels] = useState<SalesChannel[]>([...initialSalesChannels]);
+  const [editingSalesChannel, setEditingSalesChannel] = useState<SalesChannel | null>(null);
   const [deletingSalesChannel, setDeletingSalesChannel] = useState<SalesChannel | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
 
   const formModal = useModal();
   const deleteModal = useModal();
+
+  const openCreateModal = () => {
+    setEditingSalesChannel(null);
+    formModal.openModal();
+  };
+
+  const openEditModal = (salesChannel: SalesChannel) => {
+    setEditingSalesChannel(salesChannel);
+    formModal.openModal();
+  };
 
   const openDeleteModal = (salesChannel: SalesChannel) => {
     setDeletingSalesChannel(salesChannel);
@@ -46,6 +58,15 @@ export const SalesChannelAdminPanel = ({ initialSalesChannels }: SalesChannelAdm
 
   const saveSalesChannel = async (name: string) => {
     setFeedbackMessage(null);
+    if (editingSalesChannel) {
+      const renamedSalesChannel = await renameSalesChannel(editingSalesChannel, name);
+      setSalesChannels((currentSalesChannels) =>
+        currentSalesChannels.map((candidate) =>
+          candidate.id === renamedSalesChannel.id ? renamedSalesChannel : candidate,
+        ),
+      );
+      return;
+    }
     try {
       const createdSalesChannel = await createSalesChannel(name);
       setSalesChannels((currentSalesChannels) => [...currentSalesChannels, createdSalesChannel]);
@@ -87,7 +108,7 @@ export const SalesChannelAdminPanel = ({ initialSalesChannels }: SalesChannelAdm
         <p className="text-theme-sm text-gray-500">
           {salesChannels.length} {salesChannels.length === 1 ? 'canal cadastrado' : 'canais cadastrados'}
         </p>
-        <Button size="sm" startIcon={<PlusIcon />} onClick={formModal.openModal}>
+        <Button size="sm" startIcon={<PlusIcon />} onClick={openCreateModal}>
           Novo canal
         </Button>
       </div>
@@ -98,12 +119,13 @@ export const SalesChannelAdminPanel = ({ initialSalesChannels }: SalesChannelAdm
         </p>
       )}
 
-      <SalesChannelTable salesChannels={salesChannels} onDelete={openDeleteModal} />
+      <SalesChannelTable salesChannels={salesChannels} onEdit={openEditModal} onDelete={openDeleteModal} />
 
       {formModal.isOpen && (
         <SalesChannelFormModal
           isOpen
           onClose={formModal.closeModal}
+          existingSalesChannel={editingSalesChannel ?? undefined}
           salesChannels={salesChannels}
           onSave={saveSalesChannel}
         />

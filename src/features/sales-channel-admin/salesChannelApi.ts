@@ -31,6 +31,11 @@ export const createSalesChannel = async (name: string): Promise<SalesChannel> =>
   return { id: apiSalesChannel.id, name: apiSalesChannel.nome };
 };
 
+export const renameSalesChannel = async (salesChannel: SalesChannel, name: string): Promise<SalesChannel> => {
+  await callApi('PUT', `/canalvenda/${salesChannel.id}`, { nome: name });
+  return { id: salesChannel.id, name };
+};
+
 export const deleteSalesChannel = async (salesChannel: SalesChannel): Promise<void> => {
   try {
     await callApi('DELETE', `/canalvenda/${salesChannel.id}`);

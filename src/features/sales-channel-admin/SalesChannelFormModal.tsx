@@ -6,6 +6,7 @@ import Button from '@/components/ui/button/Button';
 import Label from '@/components/form/Label';
 import Input from '@/components/form/input/InputField';
 import type { SalesChannel } from '@/entities/sales-channel';
+import { SalesChannelNameTakenError } from './salesChannelApi';
 
 const collapseSpaces = (name: string): string => name.trim().replace(/\s+/g, ' ');
 
@@ -15,23 +16,32 @@ export const normalizeSalesChannelName = (name: string): string =>
     .replace(/\p{Diacritic}/gu, '')
     .toLocaleLowerCase('pt-BR');
 
+const NAME_TAKEN_MESSAGE = 'Já existe um canal com esse nome.';
+
 const validateSalesChannelName = (name: string, salesChannels: readonly SalesChannel[]): string | null => {
   if (!name.trim()) return 'Informe o nome do canal.';
   const isRepeated = salesChannels.some(
     (salesChannel) => normalizeSalesChannelName(salesChannel.name) === normalizeSalesChannelName(name),
   );
-  return isRepeated ? 'Já existe um canal com esse nome.' : null;
+  return isRepeated ? NAME_TAKEN_MESSAGE : null;
 };
 
 type SalesChannelFormModalProps = {
   isOpen: boolean;
   onClose: () => void;
+  existingSalesChannel?: SalesChannel;
   salesChannels: readonly SalesChannel[];
   onSave: (name: string) => Promise<void>;
 };
 
-export const SalesChannelFormModal = ({ isOpen, onClose, salesChannels, onSave }: SalesChannelFormModalProps) => {
-  const [name, setName] = useState('');
+export const SalesChannelFormModal = ({
+  isOpen,
+  onClose,
+  existingSalesChannel,
+  salesChannels,
+  onSave,
+}: SalesChannelFormModalProps) => {
+  const [name, setName] = useState(existingSalesChannel?.name ?? '');
   const [nameError, setNameError] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -42,7 +52,8 @@ export const SalesChannelFormModal = ({ isOpen, onClose, salesChannels, onSave }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const validationError = validateSalesChannelName(name, salesChannels);
+    const otherSalesChannels = salesChannels.filter((salesChannel) => salesChannel.id !== existingSalesChannel?.id);
+    const validationError = validateSalesChannelName(name, otherSalesChannels);
     setNameError(validationError);
     if (validationError) return;
 
@@ -51,8 +62,9 @@ export const SalesChannelFormModal = ({ isOpen, onClose, salesChannels, onSave }
     try {
       await onSave(collapseSpaces(name));
       onClose();
-    } catch {
-      setSaveError('Não foi possível salvar o canal. Tente de novo.');
+    } catch (error) {
+      if (error instanceof SalesChannelNameTakenError) setNameError(NAME_TAKEN_MESSAGE);
+      else setSaveError('Não foi possível salvar o canal. Tente de novo.');
       setIsSaving(false);
     }
   };
@@ -60,7 +72,9 @@ export const SalesChannelFormModal = ({ isOpen, onClose, salesChannels, onSave }
   return (
     <Modal isOpen={isOpen} onClose={closeUnlessSaving} className="m-4 max-w-[480px]">
       <div className="relative w-full max-w-[480px] rounded-3xl bg-white p-4 lg:p-8">
-        <h4 className="mb-1 text-2xl font-semibold text-gray-800">Novo canal</h4>
+        <h4 className="mb-1 text-2xl font-semibold text-gray-800">
+          {existingSalesChannel ? 'Editar canal' : 'Novo canal'}
+        </h4>
         <p className="mb-6 text-sm text-gray-500">Loja ou rede onde os produtos são vendidos.</p>
 
         <form onSubmit={handleSubmit} noValidate>

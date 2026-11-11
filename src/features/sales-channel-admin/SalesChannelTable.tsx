@@ -1,15 +1,16 @@
 'use client';
 
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
-import { TrashBinIcon } from '@/icons';
+import { PencilIcon, TrashBinIcon } from '@/icons';
 import type { SalesChannel } from '@/entities/sales-channel';
 
 type SalesChannelTableProps = {
   salesChannels: readonly SalesChannel[];
+  onEdit: (salesChannel: SalesChannel) => void;
   onDelete: (salesChannel: SalesChannel) => void;
 };
 
-export const SalesChannelTable = ({ salesChannels, onDelete }: SalesChannelTableProps) => {
+export const SalesChannelTable = ({ salesChannels, onEdit, onDelete }: SalesChannelTableProps) => {
   if (salesChannels.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center rounded-2xl border border-gray-200 bg-white p-10 text-center">
@@ -40,6 +41,15 @@ export const SalesChannelTable = ({ salesChannels, onDelete }: SalesChannelTable
                 </TableCell>
                 <TableCell className="px-5 py-4 text-end">
                   <div className="flex items-center justify-end gap-1">
+                    <button
+                      type="button"
+                      onClick={() => onEdit(salesChannel)}
+                      aria-label={`Editar ${salesChannel.name}`}
+                      title="Renomear canal"
+                      className="flex h-11 w-11 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-brand-500"
+                    >
+                      <PencilIcon />
+                    </button>
                     <button
                       type="button"
                       onClick={() => onDelete(salesChannel)}
