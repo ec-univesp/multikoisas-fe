@@ -54,7 +54,7 @@ Projeto integrador da UNIVESP · time Squad PI2
 | `/admin/categories`     | Categorias                                                                              |
 | `/admin/sales-channels` | Canais de venda (Shopee, Mercado Livre, Magalu...)                                      |
 | `/admin/users`          | Usuários do painel                                                                      |
-| `/store`                | Configurações de site: logo, endereço, redes sociais e WhatsApp                         |
+| `/store`                | Configurações de site: descrição, logo e foto da loja, redes sociais e WhatsApp         |
 
 ## Como o front fala com a API
 
