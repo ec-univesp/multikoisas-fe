@@ -75,8 +75,8 @@ describe('local api handlers', () => {
     await send('POST', '/api/canalvendaproduto', { produtoId: 5, canalVendaId: 4, link: 'https://x.com/a' });
     await send('DELETE', '/api/canalvendaproduto', { produtoId: 5, canalVendaId: 4, link: 'https://x.com/a' });
     await send('PUT', '/api/canalvendaproduto?produtoId=1&canalVendaId=4', { link: 'https://shopee.com.br/novo' });
-    await send('PUT', '/api/socialnetwork/Instagram', { link: 'https://instagram.com/novo' });
-    await send('DELETE', '/api/socialnetwork/Instagram');
+    await send('PUT', '/api/socialnetwork/3', { link: 'https://instagram.com/novo' });
+    await send('DELETE', '/api/socialnetwork/3');
     await send('DELETE', '/api/canalvenda/6');
     await send('DELETE', '/api/produto/1');
     await send('DELETE', '/api/categoria/2');
@@ -97,15 +97,15 @@ describe('local api handlers', () => {
   });
 
   it('changes only the link of a social network, never its name', async () => {
-    const changed = await send('PUT', '/api/socialnetwork/Instagram', {
+    const changed = await send('PUT', '/api/socialnetwork/3', {
       descricao: 'Insta',
       link: 'https://instagram.com/novo',
     });
     expect(changed.status).toBe(200);
     expect(await changed.json()).toEqual({ id: 3, descricao: 'Instagram', link: 'https://instagram.com/novo' });
 
-    expect((await send('PUT', '/api/socialnetwork/Instagram', { link: ' ' })).status).toBe(400);
-    expect((await send('PUT', '/api/socialnetwork/TikTok', { link: 'https://t.co' })).status).toBe(409);
+    expect((await send('PUT', '/api/socialnetwork/3', { link: ' ' })).status).toBe(400);
+    expect((await send('PUT', '/api/socialnetwork/99', { link: 'https://t.co' })).status).toBe(404);
     expect(onChange).toHaveBeenCalledTimes(1);
   });
 

@@ -259,25 +259,20 @@ export const createApiHandlers = (
     }),
 
     // The PUT changes only the link; a descricao in the body is ignored.
-    http.put<{ description: string }, SocialNetworkBody>(
-      `${baseUrl}/socialnetwork/:description`,
-      async ({ request, params }) => {
-        const { link } = await request.json();
-        const socialNetwork = database.socialNetworks.find((candidate) => candidate.descricao === params.description);
-        if (!socialNetwork) return HttpResponse.text('Descrição não encontrado.', { status: 409 });
-        if (!link?.trim()) return springError(400, 'Bad Request', request);
-        socialNetwork.link = link;
-        return saved(HttpResponse.json(socialNetwork));
-      },
-    ),
+    http.put<{ id: string }, SocialNetworkBody>(`${baseUrl}/socialnetwork/:id`, async ({ request, params }) => {
+      const { link } = await request.json();
+      const socialNetwork = database.socialNetworks.find((candidate) => candidate.id === Number(params.id));
+      if (!socialNetwork) return springError(404, 'Not Found', request);
+      if (!link?.trim()) return springError(400, 'Bad Request', request);
+      socialNetwork.link = link;
+      return saved(HttpResponse.json(socialNetwork));
+    }),
 
-    http.delete<{ description: string }>(`${baseUrl}/socialnetwork/:description`, ({ request, params }) => {
-      const remaining = database.socialNetworks.filter(
-        (socialNetwork) => socialNetwork.descricao !== params.description,
-      );
-      if (remaining.length === database.socialNetworks.length) return springError(404, 'Not Found', request);
-      database.socialNetworks = remaining;
-      return saved(HttpResponse.json({ message: `Rede social ${params.description} deletada com sucesso.` }));
+    http.delete<{ id: string }>(`${baseUrl}/socialnetwork/:id`, ({ request, params }) => {
+      const socialNetwork = database.socialNetworks.find((candidate) => candidate.id === Number(params.id));
+      if (!socialNetwork) return springError(404, 'Not Found', request);
+      database.socialNetworks = database.socialNetworks.filter((candidate) => candidate !== socialNetwork);
+      return saved(HttpResponse.json({ message: `Rede social ${socialNetwork.descricao} deletada com sucesso.` }));
     }),
 
     http.get(`${baseUrl}/user`, ({ request }) => {
