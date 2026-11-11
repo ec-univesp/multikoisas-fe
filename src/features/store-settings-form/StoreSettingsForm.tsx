@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
+import InputField from '@/components/form/input/InputField';
 import TextArea from '@/components/form/input/TextArea';
 import Label from '@/components/form/Label';
 import Button from '@/components/ui/button/Button';
@@ -10,18 +11,26 @@ type SaveState = 'idle' | 'saving' | 'saved' | 'failed';
 
 const StoreSettingsFields = ({ initialSettings }: { initialSettings: StoreSettingsValues }) => {
   const [description, setDescription] = useState(initialSettings.description ?? '');
+  const [address, setAddress] = useState(initialSettings.address ?? '');
   const [saveState, setSaveState] = useState<SaveState>('idle');
+
+  const dropSavedMessage = () => setSaveState((currentState) => (currentState === 'saving' ? currentState : 'idle'));
 
   const changeDescription = (value: string) => {
     setDescription(value);
-    setSaveState((currentState) => (currentState === 'saving' ? currentState : 'idle'));
+    dropSavedMessage();
+  };
+
+  const changeAddress = (value: string) => {
+    setAddress(value);
+    dropSavedMessage();
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSaveState('saving');
     try {
-      await saveStoreSettings({ description: description.trim(), address: initialSettings.address });
+      await saveStoreSettings({ description: description.trim(), address: address.trim() });
       setSaveState('saved');
     } catch {
       setSaveState('failed');
@@ -38,6 +47,17 @@ const StoreSettingsFields = ({ initialSettings }: { initialSettings: StoreSettin
           value={description}
           onChange={changeDescription}
           className="text-base! text-gray-800!"
+        />
+      </div>
+      <div>
+        <Label htmlFor="store-settings-address">Endereço da loja</Label>
+        <InputField
+          id="store-settings-address"
+          autoComplete="street-address"
+          placeholder="Rua, número - bairro, cidade - UF"
+          defaultValue={address}
+          onChange={(event) => changeAddress(event.target.value)}
+          className="text-base"
         />
       </div>
       <div className="flex flex-wrap items-center gap-3">

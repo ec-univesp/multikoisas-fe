@@ -41,10 +41,40 @@ describe('StoreSettingsForm saving', () => {
     await screen.findByLabelText('Descrição da loja');
 
     await replaceText('Descrição da loja', '  Utilidades para a casa  ');
+    await replaceText('Endereço da loja', '  Rua das Flores, 10  ');
     await user.click(screen.getByRole('button', { name: 'Salvar dados' }));
 
     expect(await screen.findByRole('status')).toHaveTextContent('Dados salvos.');
-    expect(apiDatabase.stores).toEqual([{ id: 1, nomeLoja: 'multikoisas', descricaoLoja: 'Utilidades para a casa' }]);
+    expect(apiDatabase.stores).toEqual([
+      { id: 1, nomeLoja: 'multikoisas', descricaoLoja: 'Utilidades para a casa', endereco: 'Rua das Flores, 10' },
+    ]);
+  });
+
+  it('starts with the saved address', async () => {
+    render(<StoreSettingsForm />);
+    expect(await screen.findByLabelText('Endereço da loja')).toHaveValue(
+      'Av. Prof. Luiz Inácio de Anhaia Melo, 2085 - Centreville, Santo André - SP',
+    );
+  });
+
+  it('saves an emptied address without blocking the description', async () => {
+    const user = userEvent.setup();
+    render(<StoreSettingsForm />);
+    await screen.findByLabelText('Endereço da loja');
+
+    await replaceText('Endereço da loja', '   ');
+    await user.click(screen.getByRole('button', { name: 'Salvar dados' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Dados salvos.');
+    expect(apiDatabase.stores[0]).toEqual(
+      expect.objectContaining({ descricaoLoja: 'Tudo em um só lugar', endereco: '' }),
+    );
+  });
+
+  it('starts the address empty when the store has none saved', async () => {
+    apiDatabase.stores[0].endereco = null;
+    render(<StoreSettingsForm />);
+    expect(await screen.findByLabelText('Endereço da loja')).toHaveValue('');
   });
 
   it('keeps saving disabled while saving', async () => {
@@ -86,6 +116,18 @@ describe('StoreSettingsForm saving', () => {
     await screen.findByText('Dados salvos.');
 
     await user.type(screen.getByLabelText('Descrição da loja'), ' e organização');
+
+    expect(screen.queryByText('Dados salvos.')).not.toBeInTheDocument();
+  });
+
+  it('drops the saved message once the address changes', async () => {
+    const user = userEvent.setup();
+    render(<StoreSettingsForm />);
+    await screen.findByLabelText('Endereço da loja');
+    await user.click(screen.getByRole('button', { name: 'Salvar dados' }));
+    await screen.findByText('Dados salvos.');
+
+    await user.type(screen.getByLabelText('Endereço da loja'), ' fundos');
 
     expect(screen.queryByText('Dados salvos.')).not.toBeInTheDocument();
   });
