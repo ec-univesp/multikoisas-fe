@@ -32,7 +32,7 @@ type ProductBody = { nome?: string; descricaoProduto?: string };
 type ProductImageBody = { id?: number; produtoId?: number };
 type SocialNetworkBody = { descricao?: string; link?: string };
 type UserBody = Partial<Omit<UserRow, 'id'>> & { password?: string };
-type StoreBody = { nomeLoja?: string; descricaoLoja?: string };
+type StoreBody = { nomeLoja?: string; descricaoLoja?: string; endereco?: string };
 
 const SOCIAL_NETWORK_TAKEN = 'Esta rede social já está cadastrada.';
 
@@ -437,12 +437,12 @@ export const createApiHandlers = (
     }),
 
     http.post<never, StoreBody>(`${baseUrl}/loja`, async ({ request }) => {
-      const { nomeLoja, descricaoLoja = '' } = await request.json();
+      const { nomeLoja, descricaoLoja = '', endereco = '' } = await request.json();
       if (!nomeLoja?.trim()) return springError(400, 'Bad Request', request);
       if (database.stores.some((store) => matchesText(nomeLoja, store.nomeLoja))) {
         return springError(409, 'Conflict', request);
       }
-      const store = { id: database.nextId++, nomeLoja, descricaoLoja };
+      const store = { id: database.nextId++, nomeLoja, descricaoLoja, endereco };
       database.stores.push(store);
       if (onChange()) return HttpResponse.json(store, { status: 201 });
       database.stores.pop();
@@ -450,13 +450,13 @@ export const createApiHandlers = (
     }),
 
     http.put<{ name: string }, StoreBody>(`${baseUrl}/loja/:name`, async ({ request, params }) => {
-      const { descricaoLoja = '' } = await request.json();
+      const { descricaoLoja = '', endereco = '' } = await request.json();
       const store = database.stores.find((candidate) => matchesText(params.name, candidate.nomeLoja));
       if (!store) return springError(404, 'Not Found', request);
-      const previousDescription = store.descricaoLoja;
-      store.descricaoLoja = descricaoLoja;
+      const previousStore = { ...store };
+      Object.assign(store, { descricaoLoja, endereco });
       if (onChange()) return HttpResponse.json(store);
-      store.descricaoLoja = previousDescription;
+      Object.assign(store, previousStore);
       return storageFull();
     }),
 
