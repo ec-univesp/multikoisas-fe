@@ -6,7 +6,7 @@ import Button from '@/components/ui/button/Button';
 import Label from '@/components/form/Label';
 import Input from '@/components/form/input/InputField';
 import { isHttpsUrl, isWhatsApp, withScheme, type SocialNetwork } from '@/entities/social-network';
-import { SocialNetworkNameTakenError, type SocialNetworkValues } from './socialNetworkApi';
+import type { SocialNetworkValues } from './socialNetworkApi';
 
 const NAME_TAKEN_MESSAGE = 'Já existe uma rede com esse nome.';
 
@@ -107,7 +107,9 @@ export const SocialNetworkFormModal = ({
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const otherSocialNetworks = socialNetworks.filter((socialNetwork) => socialNetwork !== editingSocialNetwork);
-    const validationErrors = validate({ name, url }, otherSocialNetworks);
+    const validationErrors = editingSocialNetwork
+      ? { ...validate({ name, url }, otherSocialNetworks), name: null }
+      : validate({ name, url }, otherSocialNetworks);
     setFieldErrors(validationErrors);
     const link = linkToSave(name, url);
     if (validationErrors.name || !link) return;
@@ -115,15 +117,10 @@ export const SocialNetworkFormModal = ({
     setIsSaving(true);
     setSaveError(null);
     try {
-      const savedName = name === editingSocialNetwork?.name ? name : collapseSpaces(name);
-      await onSave({ name: savedName, url: link });
+      await onSave({ name: editingSocialNetwork?.name ?? collapseSpaces(name), url: link });
       onClose();
-    } catch (error) {
-      if (error instanceof SocialNetworkNameTakenError) {
-        setFieldErrors({ name: NAME_TAKEN_MESSAGE, url: null });
-      } else {
-        setSaveError('Não foi possível salvar a rede. Tente de novo.');
-      }
+    } catch {
+      setSaveError('Não foi possível salvar a rede. Tente de novo.');
       setIsSaving(false);
     }
   };
@@ -147,9 +144,16 @@ export const SocialNetworkFormModal = ({
                 type="text"
                 defaultValue={name}
                 onChange={(event) => setName(event.target.value)}
+                disabled={Boolean(editingSocialNetwork)}
+                aria-describedby={editingSocialNetwork ? 'social-network-name-hint' : undefined}
                 error={Boolean(fieldErrors.name)}
                 className="text-base"
               />
+              {editingSocialNetwork && (
+                <p id="social-network-name-hint" className="mt-1.5 text-xs text-gray-500">
+                  O nome não pode ser alterado; apague e cadastre de novo para trocar.
+                </p>
+              )}
               {fieldErrors.name && (
                 <p role="alert" className="mt-1.5 text-xs text-error-500">
                   {fieldErrors.name}

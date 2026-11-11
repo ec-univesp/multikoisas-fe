@@ -36,6 +36,12 @@ const fillForm = async (user: User, name: string, url: string) => {
   await user.click(screen.getByRole('button', { name: 'Salvar rede' }));
 };
 
+const fillLink = async (user: User, url: string) => {
+  await user.clear(screen.getByLabelText('Link'));
+  await user.type(screen.getByLabelText('Link'), url);
+  await user.click(screen.getByRole('button', { name: 'Salvar rede' }));
+};
+
 // Happy path for when the back end fixes the POST, which today answers 409 to every create.
 const acceptNewSocialNetworks = () =>
   server.use(
@@ -316,61 +322,52 @@ describe('SocialNetworkAdminPanel', () => {
     expect(screen.getByLabelText('Nome da rede')).toBeInTheDocument();
   });
 
-  it('fixes the link of a social network, keeping its own name allowed', async () => {
-    apiDatabase.socialNetworks.push({ id: 3, descricao: 'Minha Loja', link: 'loja.com' });
-    const user = userEvent.setup();
-    renderPanel([...socialNetworks, { id: 3, name: 'Minha Loja', url: 'loja.com' }]);
-
-    await user.click(screen.getByRole('button', { name: 'Editar Minha Loja' }));
-    expect(screen.getByLabelText('Nome da rede')).toHaveValue('Minha Loja');
-    expect(screen.getByLabelText('Link')).toHaveValue('loja.com');
-    await fillForm(user, 'Minha Loja', 'https://loja.com');
-
-    expect(await screen.findByText('https://loja.com')).toBeInTheDocument();
-    expect(screen.queryByText('Link sem https, não aparece na vitrine')).not.toBeInTheDocument();
-    expect(apiDatabase.socialNetworks).toContainEqual({ id: 3, descricao: 'Minha Loja', link: 'https://loja.com' });
-    expect(apiRequests).toEqual(['PUT /api/socialnetwork/Minha%20Loja']);
-  });
-
-  it('sends only the link when the original name was kept, even with odd spacing', async () => {
+  it('fixes the link of a social network sending only the link', async () => {
     apiDatabase.socialNetworks.push({ id: 3, descricao: 'Minha  Loja', link: 'loja.com' });
+    const bodies: unknown[] = [];
+    server.use(
+      http.put('*/socialnetwork/:description', async ({ request }) => {
+        bodies.push(await request.clone().json());
+      }),
+    );
     const user = userEvent.setup();
     renderPanel([...socialNetworks, { id: 3, name: 'Minha  Loja', url: 'loja.com' }]);
 
     await user.click(screen.getByRole('button', { name: /Editar Minha/ }));
-    await user.clear(screen.getByLabelText('Link'));
-    await user.type(screen.getByLabelText('Link'), 'https://loja.com');
-    await user.click(screen.getByRole('button', { name: 'Salvar rede' }));
+    expect(screen.getByLabelText('Link')).toHaveValue('loja.com');
+    await fillLink(user, 'https://loja.com');
 
     expect(await screen.findByText('https://loja.com')).toBeInTheDocument();
+    expect(screen.queryByText('Link sem https, não aparece na vitrine')).not.toBeInTheDocument();
     expect(apiDatabase.socialNetworks).toContainEqual({ id: 3, descricao: 'Minha  Loja', link: 'https://loja.com' });
+    expect(apiRequests).toEqual(['PUT /api/socialnetwork/Minha%20%20Loja']);
+    expect(bodies).toEqual([{ link: 'https://loja.com' }]);
   });
 
-  it('renames a social network when the api accepts the new name', async () => {
-    server.use(
-      http.put('*/socialnetwork/:description', () =>
-        HttpResponse.json({ id: 2, descricao: 'Shopee Oficial', link: 'https://shopee.com.br/multikoisas' }),
-      ),
+  it('shows the name read-only when editing and explains how to change it', async () => {
+    const user = userEvent.setup();
+    renderPanel();
+
+    await user.click(screen.getByRole('button', { name: 'Editar Shopee' }));
+
+    const nameField = screen.getByLabelText('Nome da rede');
+    expect(nameField).toHaveValue('Shopee');
+    expect(nameField).toBeDisabled();
+    expect(nameField).toHaveAccessibleDescription(
+      'O nome não pode ser alterado; apague e cadastre de novo para trocar.',
     );
-    const user = userEvent.setup();
-    renderPanel();
-
-    await user.click(screen.getByRole('button', { name: 'Editar Shopee' }));
-    await fillForm(user, 'Shopee Oficial', 'https://shopee.com.br/multikoisas');
-
-    expect(await screen.findByText('Shopee Oficial')).toBeInTheDocument();
-    expect(screen.getByText('2 redes cadastradas')).toBeInTheDocument();
   });
 
-  it('shows a repeated name when the api refuses the rename as already registered', async () => {
+  it('keeps the name editable when creating a social network', async () => {
     const user = userEvent.setup();
     renderPanel();
 
-    await user.click(screen.getByRole('button', { name: 'Editar Shopee' }));
-    await fillForm(user, 'Shopee Oficial', 'https://shopee.com.br/multikoisas');
+    await user.click(screen.getByRole('button', { name: 'Nova rede' }));
 
-    expect(await screen.findByText('Já existe uma rede com esse nome.')).toBeInTheDocument();
-    expect(screen.getByLabelText('Nome da rede')).toBeInTheDocument();
+    expect(screen.getByLabelText('Nome da rede')).toBeEnabled();
+    expect(
+      screen.queryByText('O nome não pode ser alterado; apague e cadastre de novo para trocar.'),
+    ).not.toBeInTheDocument();
   });
 
   it('reloads the list when the network was changed in another tab', async () => {
@@ -378,7 +375,7 @@ describe('SocialNetworkAdminPanel', () => {
     renderPanel([...socialNetworks, { id: 9, name: 'TikTok', url: 'https://tiktok.com/@multikoisas' }]);
 
     await user.click(screen.getByRole('button', { name: 'Editar TikTok' }));
-    await fillForm(user, 'TikTok', 'https://tiktok.com/@mk');
+    await fillLink(user, 'https://tiktok.com/@mk');
 
     expect(await screen.findByText('Essa rede foi alterada em outra aba. Recarregue a lista.')).toHaveAttribute(
       'role',
@@ -395,7 +392,7 @@ describe('SocialNetworkAdminPanel', () => {
     renderPanel();
 
     await user.click(screen.getByRole('button', { name: 'Editar Shopee' }));
-    await fillForm(user, 'Shopee', 'https://shopee.com.br/loja');
+    await fillLink(user, 'https://shopee.com.br/loja');
 
     expect(await screen.findByText('Não foi possível salvar a rede. Tente de novo.')).toBeInTheDocument();
   });

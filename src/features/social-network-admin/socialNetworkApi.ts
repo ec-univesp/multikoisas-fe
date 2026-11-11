@@ -28,7 +28,6 @@ const sendToApi = (method: string, path: string, body: { descricao?: string; lin
 
 const conflictErrorOf = async (response: Response, request: string): Promise<Error> => {
   const message = await response.text();
-  if (message.includes('já está cadastrada')) return new SocialNetworkNameTakenError(`${request} responded 409`);
   if (message.includes('não encontrad')) return new SocialNetworkChangedElsewhereError(`${request} responded 409`);
   return new Error(`${request} responded 409`);
 };
@@ -44,11 +43,10 @@ export const createSocialNetwork = async (values: SocialNetworkValues): Promise<
 
 export const updateSocialNetwork = async (
   socialNetwork: SocialNetwork,
-  { name, url }: SocialNetworkValues,
+  { url }: SocialNetworkValues,
 ): Promise<SocialNetwork> => {
-  const body = name === socialNetwork.name ? { link: url } : { descricao: name, link: url };
   const request = `PUT ${pathOf(socialNetwork)}`;
-  const response = await sendToApi('PUT', pathOf(socialNetwork), body);
+  const response = await sendToApi('PUT', pathOf(socialNetwork), { link: url });
   if (response.status === HTTP_CONFLICT) throw await conflictErrorOf(response, request);
   if (!response.ok) throw new Error(`${request} responded ${response.status}`);
   return toSocialNetwork(await response.json());

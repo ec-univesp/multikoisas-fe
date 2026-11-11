@@ -244,8 +244,8 @@ export const createApiHandlers = (
       );
     }),
 
-    // API bug: the service checks `findByName(...) != null` on a List, so every create and every
-    // PUT with descricao filled answer 409, whether the network exists or not.
+    // API bug: the service checks `findByName(...) != null` on a List, so every create answers 409,
+    // whether the network exists or not.
     http.post<never, SocialNetworkBody>(`${baseUrl}/socialnetwork`, async ({ request }) => {
       const { descricao, link } = await request.json();
       if (!descricao?.trim() || !link?.trim()) return springError(400, 'Bad Request', request);
@@ -256,20 +256,15 @@ export const createApiHandlers = (
       return saved(HttpResponse.json(socialNetwork, { status: 201 }));
     }),
 
+    // The PUT changes only the link; a descricao in the body is ignored.
     http.put<{ description: string }, SocialNetworkBody>(
       `${baseUrl}/socialnetwork/:description`,
       async ({ request, params }) => {
-        const { descricao, link } = await request.json();
+        const { link } = await request.json();
         const socialNetwork = database.socialNetworks.find((candidate) => candidate.descricao === params.description);
         if (!socialNetwork) return HttpResponse.text('Descrição não encontrado.', { status: 409 });
-        const isTakenByAnother = database.socialNetworks.some(
-          (candidate) => candidate !== socialNetwork && candidate.descricao === descricao,
-        );
-        if (descricao?.trim() && (reproduceApiBugs || isTakenByAnother)) {
-          return HttpResponse.text(SOCIAL_NETWORK_TAKEN, { status: 409 });
-        }
-        if (descricao?.trim()) socialNetwork.descricao = descricao;
-        if (link?.trim()) socialNetwork.link = link;
+        if (!link?.trim()) return springError(400, 'Bad Request', request);
+        socialNetwork.link = link;
         return saved(HttpResponse.json(socialNetwork));
       },
     ),
