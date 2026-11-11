@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Dropdown } from '../ui/dropdown/Dropdown';
 import { logoutAction } from '@/features/admin-auth/actions';
 import { BoltIcon } from '@/icons';
+import { version } from '../../../package.json';
 
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
@@ -85,6 +86,8 @@ export default function UserDropdown() {
             Sair
           </button>
         </form>
+
+        <p className="mt-3 border-t border-gray-100 px-3 pt-3 text-theme-xs text-gray-500">v{version}</p>
       </Dropdown>
     </div>
   );
