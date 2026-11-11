@@ -2,7 +2,7 @@ import { getResponse } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { server } from '@/test/msw/server';
 import { createDatabase, type ApiDatabase } from '../../database';
-import { createApiHandlers, createLocalImagesHandler } from '../../handlers';
+import { createApiHandlers } from '../../handlers';
 import { createMemoryImageStore, type ImageStore } from '../../imageStore';
 
 const send = (method: string, path: string, body?: unknown) =>
@@ -70,7 +70,6 @@ beforeEach(() => {
       imageUrl: (id) => `http://localhost/local-images/${id}`,
       reproduceApiBugs: true,
     }),
-    createLocalImagesHandler(images),
   );
 });
 
@@ -110,19 +109,15 @@ describe('local api handlers', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  it('keeps an uploaded photo in the image store and serves it back', async () => {
+  it('keeps an uploaded photo in the image store', async () => {
     const uploaded = await uploadPhoto(1, 'png-bytes');
     expect(uploaded.status).toBe(201);
     expect(await uploaded.json()).toEqual({ id: 5, produtoId: 1, imagemUrl: 'http://localhost/local-images/5' });
     expect(onChange).toHaveBeenCalledTimes(1);
 
-    const served = await fetch('/local-images/5');
-    expect(served.headers.get('content-type')).toBe('image/png');
-    expect(await served.text()).toBe('png-bytes');
-  });
-
-  it('answers 404 for a photo that is not stored', async () => {
-    expect((await fetch('/local-images/99')).status).toBe(404);
+    const stored = await images.get(5);
+    expect(stored?.type).toBe('image/png');
+    expect(await stored?.text()).toBe('png-bytes');
   });
 
   it('removes the stored file when the photo is deleted', async () => {
@@ -163,11 +158,6 @@ describe('local api handlers', () => {
     expect((await uploadPhoto(1, '<script>alert(1)</script>', 'text/html')).status).toBe(415);
     expect(await images.get(5)).toBeUndefined();
     expect(onChange).not.toHaveBeenCalled();
-  });
-
-  it('serves a stored file of another type as plain bytes', async () => {
-    await images.save(9, new Blob(['<script>alert(1)</script>'], { type: 'text/html' }));
-    expect((await fetch('/local-images/9')).headers.get('content-type')).toBe('application/octet-stream');
   });
 
   it('deletes a product even when a stored photo cannot be removed, and leaves remote photos alone', async () => {
@@ -447,7 +437,7 @@ describe('local api store settings', () => {
     expect(database.storeSettings).toEqual({ ...VALID_SETTINGS, logoUrl: null });
   });
 
-  it('keeps an uploaded logo in the image store, serves it and forgets the previous one', async () => {
+  it('keeps an uploaded logo in the image store and forgets the previous one', async () => {
     const first = await uploadLogo('primeira');
     expect(first.status).toBe(200);
     expect(await first.json()).toEqual(expect.objectContaining({ logoUrl: '/local-images/5' }));
@@ -455,9 +445,9 @@ describe('local api store settings', () => {
     expect((await uploadLogo('<svg/>', 'image/svg+xml')).status).toBe(200);
     expect(database.storeSettings.logoUrl).toBe('/local-images/6');
     expect(await images.get(5)).toBeUndefined();
-    const served = await fetch('/local-images/6');
-    expect(served.headers.get('content-type')).toBe('image/svg+xml');
-    expect(await served.text()).toBe('<svg/>');
+    const stored = await images.get(6);
+    expect(stored?.type).toBe('image/svg+xml');
+    expect(await stored?.text()).toBe('<svg/>');
     expect(onChange).toHaveBeenCalledTimes(2);
   });
 
