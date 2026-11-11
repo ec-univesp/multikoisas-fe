@@ -1,4 +1,4 @@
-export const API_URL = process.env.MULTIKOISAS_API_URL ?? 'https://multikoisas-univesp.onrender.com';
+export const API_URL = process.env.MULTIKOISAS_API_URL || 'https://multikoisas-univesp.onrender.com';
 
 // The API answers an empty list with a bodiless 404 (/canalvendaproduto, with 204).
 const EMPTY_LIST_STATUSES = new Set([204, 404]);
