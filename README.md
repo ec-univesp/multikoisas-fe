@@ -17,7 +17,7 @@ O site mostra os produtos e leva o visitante para comprar nas lojas parceiras: a
 ![TypeScript](https://img.shields.io/badge/TypeScript-estrito-3178C6?style=flat-square&logo=typescript&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)
 ![pnpm](https://img.shields.io/badge/pnpm-11-F69220?style=flat-square&logo=pnpm&logoColor=white)
-![MSW](https://img.shields.io/badge/MSW-API_simulada-FF6A33?style=flat-square&logo=mockserviceworker&logoColor=white)
+![MSW](https://img.shields.io/badge/MSW-API_simulada_nos_testes-FF6A33?style=flat-square&logo=mockserviceworker&logoColor=white)
 ![Spring Boot](https://img.shields.io/badge/back--end-Spring_Boot-6DB33F?style=flat-square&logo=springboot&logoColor=white)
 
 ![Testes](https://img.shields.io/badge/testes-613-6E9F18?style=flat-square&logo=vitest&logoColor=white)
@@ -58,10 +58,13 @@ Projeto integrador da UNIVESP · time Squad PI2
 
 ## Como o front fala com a API
 
-O site funciona sem back-end. O mesmo contrato da API do time roda no navegador, com o MSW em modo service worker (`src/shared/local-api/`, `public/mockServiceWorker.js`).
+Os dados vêm da API do time, um serviço Spring Boot publicado no Render (<https://multikoisas-univesp.onrender.com>, Swagger em `/swagger-ui/index.html`).
 
-- **Dados no navegador.** Produtos, categorias, canais, links de compra, redes sociais e usuários ficam no `localStorage`; as fotos enviadas pelo painel ficam no IndexedDB. Cada navegador tem a sua cópia, que começa com os dados de `src/shared/local-api/seed.json`.
-- **Voltar ao começo.** Configurações de site tem o botão "Restaurar dados iniciais".
+- **Tudo passa pelo próprio site.** As telas chamam `/api/...`, e o `next.config.ts` repassa essas chamadas para a API. A API não libera chamadas vindas de outros domínios (CORS), então o navegador fala só com o domínio do site.
+- **Leitura é livre, gravação pede login.** O `src/proxy.ts` deixa passar toda leitura. Gravação só sai do painel: precisa vir do mesmo site, ter sessão válida e mirar um recurso da loja; o proxy põe o token da API (`Authorization: Bearer`) antes de repassar.
+- **Login do painel.** `/panel` manda usuário e senha para `POST /auth/login` da API. A sessão fica em dois cookies httpOnly (a sessão assinada com `SESSION_SECRET` e o token da API) e dura o mesmo que o token, no máximo 8 horas.
+- **Endereço configurável.** A variável `MULTIKOISAS_API_URL` troca o endereço da API. Sem ela, o projeto usa o do Render.
+- **Testes não tocam a API real.** O banco é compartilhado com o time: os testes usam uma cópia simulada do contrato (`src/shared/local-api/`, ligada ao MSW em `src/test/msw/`).
 - **Avaliações do Google.** A nota, o total e o resumo das avaliações vêm da Places API do Google, lidos no servidor uma vez por dia.
 
 ### Testar a API no Postman ou no Bruno
@@ -98,11 +101,13 @@ Abra <http://localhost:3000> e a vitrine aparece. O painel fica em <http://local
 
 Copie o `.env.example` para `.env.local` e preencha. Nenhuma delas vai para o repositório.
 
-| Variável                            | Para quê                                                                                                      |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `PANEL_USERNAME` e `PANEL_PASSWORD` | Conta de login do painel; a sessão dura 8 horas                                                               |
-| `SESSION_SECRET`                    | Texto aleatório com 32 caracteres ou mais (`openssl rand -base64 48`); em `pnpm dev` há um de desenvolvimento |
-| `GOOGLE_PLACES_API_KEY`             | Chave da Places API (New); sem ela a seção de avaliações do Google não aparece                                |
+| Variável                | Para quê                                                                                                      |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `MULTIKOISAS_API_URL`   | Endereço da API do time; sem ela, <https://multikoisas-univesp.onrender.com>                                  |
+| `SESSION_SECRET`        | Texto aleatório com 32 caracteres ou mais (`openssl rand -base64 48`); em `pnpm dev` há um de desenvolvimento |
+| `GOOGLE_PLACES_API_KEY` | Chave da Places API (New); sem ela a seção de avaliações do Google não aparece                                |
+
+O login do painel usa as contas cadastradas na API (as mesmas de **Usuários** no painel).
 
 ### Se algo der errado
 
