@@ -1,20 +1,19 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
-import InputField from '@/components/form/input/InputField';
+import TextArea from '@/components/form/input/TextArea';
 import Label from '@/components/form/Label';
 import Button from '@/components/ui/button/Button';
-import { saveStoreSettings, useStoreSettings, type StoreSettingsValues } from '@/entities/store-settings';
+import { saveStoreDescription, useStoreSettings, type StoreSettingsValues } from '@/entities/store-settings';
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'failed';
 
 const StoreSettingsFields = ({ initialSettings }: { initialSettings: StoreSettingsValues }) => {
-  const [initialAddress] = useState(() => initialSettings.address ?? '');
-  const [address, setAddress] = useState(initialAddress);
+  const [description, setDescription] = useState(initialSettings.description ?? '');
   const [saveState, setSaveState] = useState<SaveState>('idle');
 
-  const changeAddress = (value: string) => {
-    setAddress(value);
+  const changeDescription = (value: string) => {
+    setDescription(value);
     setSaveState((currentState) => (currentState === 'saving' ? currentState : 'idle'));
   };
 
@@ -22,7 +21,7 @@ const StoreSettingsFields = ({ initialSettings }: { initialSettings: StoreSettin
     event.preventDefault();
     setSaveState('saving');
     try {
-      await saveStoreSettings({ address: address.trim() || null });
+      await saveStoreDescription(description.trim());
       setSaveState('saved');
     } catch {
       setSaveState('failed');
@@ -32,12 +31,13 @@ const StoreSettingsFields = ({ initialSettings }: { initialSettings: StoreSettin
   return (
     <form noValidate onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <Label htmlFor="store-settings-address">Endereço</Label>
-        <InputField
-          id="store-settings-address"
-          defaultValue={initialAddress}
-          onChange={(event) => changeAddress(event.target.value)}
-          className="text-base"
+        <Label htmlFor="store-settings-description">Descrição da loja</Label>
+        <TextArea
+          id="store-settings-description"
+          placeholder="Conte em poucas palavras o que a loja oferece."
+          value={description}
+          onChange={changeDescription}
+          className="text-base! text-gray-800!"
         />
       </div>
       <div className="flex flex-wrap items-center gap-3">

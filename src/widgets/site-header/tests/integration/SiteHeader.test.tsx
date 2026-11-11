@@ -2,10 +2,12 @@ import { render, screen, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it, vi } from 'vitest';
 import { ShowcaseSearchProvider } from '@/features/showcase-filter';
-import { apiDatabase } from '@/test/msw/apiDatabase';
+import { apiDatabase, SUPABASE_IMAGES } from '@/test/msw/apiDatabase';
 import { server } from '@/test/msw/server';
 import { waitForLoaded } from '@/test/waitForLoaded';
 import { SiteHeader } from '../../SiteHeader';
+
+const SAVED_LOGO = `${SUPABASE_IMAGES}/logo.png`;
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
@@ -55,9 +57,9 @@ describe('SiteHeader', () => {
   });
 
   it('lines the tagline up with the left edge of the saved logo', async () => {
-    apiDatabase.storeSettings.logoUrl = '/local-images/5';
+    apiDatabase.storeImages.push({ id: 2, imagemUrl: SAVED_LOGO, tipo: 'LOGO' });
     await renderHeader();
-    expect(await screen.findByRole('img', { name: 'MultiKoisas' })).toHaveAttribute('src', '/local-images/5');
+    expect(await screen.findByRole('img', { name: 'MultiKoisas' })).toHaveAttribute('src', SAVED_LOGO);
     expect(screen.getByText('Tudo em um só lugar')).not.toHaveClass('ml-13');
   });
 
@@ -109,8 +111,8 @@ describe('SiteHeader', () => {
   });
 
   it('shows the saved store logo', async () => {
-    apiDatabase.storeSettings.logoUrl = '/local-images/5';
+    apiDatabase.storeImages.push({ id: 2, imagemUrl: SAVED_LOGO, tipo: 'LOGO' });
     await renderHeader();
-    expect(await screen.findByRole('img', { name: 'MultiKoisas' })).toHaveAttribute('src', '/local-images/5');
+    expect(await screen.findByRole('img', { name: 'MultiKoisas' })).toHaveAttribute('src', SAVED_LOGO);
   });
 });

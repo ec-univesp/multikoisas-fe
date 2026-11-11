@@ -9,9 +9,3 @@ export const getFromApi = async <Item>(path: string): Promise<Item[]> => {
   if (!response.ok) throw new Error(`API ${path} responded ${response.status}`);
   return response.json();
 };
-
-export const getObjectFromApi = async <Data>(path: string): Promise<Data> => {
-  const response = await fetch(`/api${path}`, { cache: 'no-store' });
-  if (!response.ok) throw new Error(`API ${path} responded ${response.status}`);
-  return response.json();
-};

@@ -1,4 +1,4 @@
-import { DEFAULT_STORE_SETTINGS, type ApiDatabase } from '@/shared/local-api/database';
+import type { ApiDatabase } from '@/shared/local-api/database';
 
 export const SUPABASE_IMAGES = 'https://avphmmvnlrbidhjrzozx.supabase.co/storage/v1/object/public/imagem';
 
@@ -51,7 +51,9 @@ const seed = (): ApiDatabase => ({
     { produtoId: 7, canalVendaId: 2, link: 'https://shopee.com.br/caixa' },
   ],
   users: [{ id: 8, username: 'admin', email: 'pi2alunos@gmail.com', role: 'ADMIN' }],
-  storeSettings: { ...DEFAULT_STORE_SETTINGS },
+  stores: [{ id: 1, nomeLoja: 'multikoisas', descricaoLoja: 'Tudo em um só lugar' }],
+  // The placeholder row the real API returns.
+  storeImages: [{ id: 1, imagemUrl: 'URL 1', tipo: 'LOGO' }],
   nextId: 100,
 });
 

@@ -3,25 +3,25 @@ import { describe, expect, it } from 'vitest';
 import { StoreSettingsForm } from '../../StoreSettingsForm';
 
 describe('StoreSettingsForm', () => {
-  it('starts empty while the store has no address', () => {
-    render(<StoreSettingsForm settings={{ address: null }} />);
-    expect(screen.getByLabelText('Endereço')).toHaveValue('');
+  it('starts empty while the store has no description', () => {
+    render(<StoreSettingsForm settings={{ description: null }} />);
+    expect(screen.getByLabelText('Descrição da loja')).toHaveValue('');
   });
 
-  it('starts with the current address', () => {
-    render(<StoreSettingsForm settings={{ address: 'Rua Exemplo, 100' }} />);
-    expect(screen.getByLabelText('Endereço')).toHaveValue('Rua Exemplo, 100');
+  it('starts with the current description in a text area', () => {
+    render(<StoreSettingsForm settings={{ description: 'Tudo em um só lugar' }} />);
+    const description = screen.getByLabelText('Descrição da loja');
+    expect(description.tagName).toBe('TEXTAREA');
+    expect(description).toHaveValue('Tudo em um só lugar');
   });
 
-  it('leaves the google rating, count and link to google itself', () => {
-    render(<StoreSettingsForm settings={{ address: null }} />);
-    expect(screen.queryByLabelText('Link das avaliações no Google')).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('Nota no Google')).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('Quantidade de avaliações')).not.toBeInTheDocument();
+  it('leaves the address out of the panel', () => {
+    render(<StoreSettingsForm settings={{ description: null }} />);
+    expect(screen.queryByLabelText('Endereço')).not.toBeInTheDocument();
   });
 
-  it('uses a 16px font on the address', () => {
-    render(<StoreSettingsForm settings={{ address: null }} />);
-    expect(screen.getByLabelText('Endereço')).toHaveClass('text-base');
+  it('uses a 16px font on the description', () => {
+    render(<StoreSettingsForm settings={{ description: null }} />);
+    expect(screen.getByLabelText('Descrição da loja')).toHaveClass('text-base!');
   });
 });

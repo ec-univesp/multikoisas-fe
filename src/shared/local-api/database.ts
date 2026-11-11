@@ -6,16 +6,8 @@ export type PurchaseLinkRow = { produtoId: number; canalVendaId: number; link: s
 export type ProductImageRow = { id: number; produtoId: number; imagemUrl: string };
 export type UserRow = { id: number; username: string; email: string; role: string };
 export type SocialNetworkRow = { id: number; descricao: string; link: string };
-export type StoreSettingsRow = {
-  address: string | null;
-  logoUrl: string | null;
-};
-
-// The real API does not store these yet (SKI-135).
-export const DEFAULT_STORE_SETTINGS: StoreSettingsRow = {
-  address: 'Av. Prof. Luiz Inácio de Anhaia Melo, 2085 - Centreville, Santo André - SP',
-  logoUrl: null,
-};
+export type StoreRow = { id: number; nomeLoja: string; descricaoLoja: string };
+export type StoreImageRow = { id: number; imagemUrl: string; tipo: string };
 
 export type ApiDatabase = {
   products: ProductRow[];
@@ -26,31 +18,20 @@ export type ApiDatabase = {
   salesChannels: SalesChannelRow[];
   purchaseLinks: PurchaseLinkRow[];
   users: UserRow[];
-  storeSettings: StoreSettingsRow;
+  stores: StoreRow[];
+  storeImages: StoreImageRow[];
   nextId: number;
 };
 
-export type DatabaseSeed = Omit<ApiDatabase, 'nextId' | 'storeSettings' | 'users'> & {
-  storeSettings?: unknown;
-  users?: UserRow[];
-};
-
-const textOr = (value: unknown, fallback: string | null) =>
-  value === null || typeof value === 'string' ? value : fallback;
-
-const toStoreSettingsRow = (saved: unknown): StoreSettingsRow => {
-  const fields = new Map<string, unknown>(typeof saved === 'object' && saved !== null ? Object.entries(saved) : []);
-  return {
-    address: textOr(fields.get('address'), DEFAULT_STORE_SETTINGS.address),
-    logoUrl: textOr(fields.get('logoUrl'), DEFAULT_STORE_SETTINGS.logoUrl),
-  };
-};
+export type DatabaseSeed = Omit<ApiDatabase, 'nextId' | 'stores' | 'storeImages' | 'users'> &
+  Partial<Pick<ApiDatabase, 'stores' | 'storeImages' | 'users'>>;
 
 export const createDatabase = (seed: DatabaseSeed): ApiDatabase => {
   const rows = {
     ...structuredClone(seed),
     users: structuredClone(seed.users ?? []),
-    storeSettings: toStoreSettingsRow(seed.storeSettings),
+    stores: structuredClone(seed.stores ?? []),
+    storeImages: structuredClone(seed.storeImages ?? []),
   };
   const ids = [
     ...rows.products,
@@ -59,6 +40,8 @@ export const createDatabase = (seed: DatabaseSeed): ApiDatabase => {
     ...rows.socialNetworks,
     ...rows.salesChannels,
     ...rows.users,
+    ...rows.stores,
+    ...rows.storeImages,
   ].map((row) => row.id);
   return { ...rows, nextId: Math.max(0, ...ids) + 1 };
 };

@@ -16,47 +16,48 @@ const replaceText = async (label: string, value: string) => {
 
 describe('StoreSettingsForm saving', () => {
   it('waits for the saved settings and starts with them', async () => {
-    apiDatabase.storeSettings.address = 'Rua Salva, 1';
     render(<StoreSettingsForm />);
     expect(screen.getByRole('status')).toHaveTextContent('Carregando...');
-    expect(await screen.findByLabelText('Endereço')).toHaveValue('Rua Salva, 1');
+    expect(await screen.findByLabelText('Descrição da loja')).toHaveValue('Tudo em um só lugar');
   });
 
   it('offers to try again, without the fields, when the saved settings cannot be read', async () => {
-    server.use(http.get('*/configuracao', () => new HttpResponse(null, { status: 500 }), { once: true }));
+    server.use(
+      http.get('*/loja', () => new HttpResponse(null, { status: 500 }), { once: true }),
+    );
     const user = userEvent.setup();
     render(<StoreSettingsForm />);
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível carregar os dados da loja.');
-    expect(screen.queryByLabelText('Endereço')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Descrição da loja')).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Tentar de novo' }));
 
-    expect(await screen.findByLabelText('Endereço')).toBeInTheDocument();
+    expect(await screen.findByLabelText('Descrição da loja')).toBeInTheDocument();
   });
 
   it('saves the changed settings', async () => {
     const user = userEvent.setup();
     render(<StoreSettingsForm />);
-    await screen.findByLabelText('Endereço');
+    await screen.findByLabelText('Descrição da loja');
 
-    await replaceText('Endereço', 'Rua Nova, 10');
+    await replaceText('Descrição da loja', '  Utilidades para a casa  ');
     await user.click(screen.getByRole('button', { name: 'Salvar dados' }));
 
     expect(await screen.findByRole('status')).toHaveTextContent('Dados salvos.');
-    expect(apiDatabase.storeSettings).toEqual({ address: 'Rua Nova, 10', logoUrl: null });
+    expect(apiDatabase.stores).toEqual([{ id: 1, nomeLoja: 'multikoisas', descricaoLoja: 'Utilidades para a casa' }]);
   });
 
   it('keeps saving disabled while saving', async () => {
     let answerSave = () => {};
     server.use(
       http.put(
-        '*/configuracao',
+        '*/loja/:name',
         () => new Promise<Response>((resolve) => (answerSave = () => resolve(HttpResponse.json({})))),
       ),
     );
     const user = userEvent.setup();
     render(<StoreSettingsForm />);
-    await screen.findByLabelText('Endereço');
+    await screen.findByLabelText('Descrição da loja');
 
     await user.click(screen.getByRole('button', { name: 'Salvar dados' }));
 
@@ -66,10 +67,10 @@ describe('StoreSettingsForm saving', () => {
   });
 
   it('tells when the settings could not be saved', async () => {
-    server.use(http.put('*/configuracao', () => HttpResponse.text('Espaço do navegador cheio', { status: 507 })));
+    server.use(http.put('*/loja/:name', () => new HttpResponse(null, { status: 500 })));
     const user = userEvent.setup();
     render(<StoreSettingsForm />);
-    await screen.findByLabelText('Endereço');
+    await screen.findByLabelText('Descrição da loja');
 
     await user.click(screen.getByRole('button', { name: 'Salvar dados' }));
 
@@ -80,18 +81,18 @@ describe('StoreSettingsForm saving', () => {
   it('drops the saved message once a field changes', async () => {
     const user = userEvent.setup();
     render(<StoreSettingsForm />);
-    await screen.findByLabelText('Endereço');
+    await screen.findByLabelText('Descrição da loja');
     await user.click(screen.getByRole('button', { name: 'Salvar dados' }));
     await screen.findByText('Dados salvos.');
 
-    await user.type(screen.getByLabelText('Endereço'), ' fundos');
+    await user.type(screen.getByLabelText('Descrição da loja'), ' e organização');
 
     expect(screen.queryByText('Dados salvos.')).not.toBeInTheDocument();
   });
 
   it('no longer says saving is unavailable', async () => {
     render(<StoreSettingsForm />);
-    await screen.findByLabelText('Endereço');
+    await screen.findByLabelText('Descrição da loja');
     expect(screen.queryByText(/ainda não está disponível/)).not.toBeInTheDocument();
   });
 });

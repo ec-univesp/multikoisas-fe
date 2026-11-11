@@ -1,6 +1,9 @@
 export type StoreSettings = {
-  address: string | null;
+  description: string | null;
   logoUrl: string | null;
+  photoUrl: string | null;
 };
 
-export type StoreSettingsValues = Omit<StoreSettings, 'logoUrl'>;
+export type StoreSettingsValues = Pick<StoreSettings, 'description'>;
+
+export type StoreImageType = 'LOGO' | 'CAPA';

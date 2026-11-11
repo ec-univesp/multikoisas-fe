@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw';
 import { createApiHandlers } from '@/shared/local-api/handlers';
 import { createMemoryImageStore } from '@/shared/local-api/imageStore';
-import { apiDatabase, SUPABASE_IMAGES } from './apiDatabase';
+import { apiDatabase } from './apiDatabase';
 
 export const TEST_API_CREDENTIALS = { username: 'api-admin', password: 'api-secret', token: 'jwt-de-teste' };
 
@@ -21,8 +21,6 @@ export const handlers = [
   ...createApiHandlers(apiDatabase, {
     onChange: () => true,
     images: createMemoryImageStore(),
-    // Vitest jsdom replaces the file name with "blob" in the multipart body.
-    imageUrl: (id) => `${SUPABASE_IMAGES}/upload-${id}`,
     reproduceApiBugs: true,
   }),
 ];
