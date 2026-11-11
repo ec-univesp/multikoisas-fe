@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { fetchGooglePlace } from '@/entities/google-place';
 import { ShowcaseSearchProvider } from '@/features/showcase-filter';
-import { LocalApiProvider } from '@/shared/local-api/LocalApiProvider';
 import { GoogleReviewsBadge } from '@/widgets/google-reviews-badge';
 import { SiteFooter } from '@/widgets/site-footer';
 import { SiteHeader } from '@/widgets/site-header';
@@ -23,26 +22,24 @@ export default async function SiteLayout({ children }: Readonly<{ children: Reac
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
       <script dangerouslySetInnerHTML={{ __html: forceLightTheme }} />
-      <LocalApiProvider>
-        <ShowcaseSearchProvider>
-          <SiteHeader />
-          <main className="flex-1">{children}</main>
-        </ShowcaseSearchProvider>
-        <SiteFooter />
-        <aside
-          aria-label="Contatos da loja"
-          className="fixed top-1/2 right-4 z-40 flex -translate-y-1/2 flex-col items-end gap-3"
-        >
-          <GoogleReviewsBadge
-            place={
-              googlePlace
-                ? { rating: googlePlace.rating, reviewCount: googlePlace.reviewCount, mapsUrl: googlePlace.mapsUrl }
-                : null
-            }
-          />
-          <WhatsAppFloatingButton />
-        </aside>
-      </LocalApiProvider>
+      <ShowcaseSearchProvider>
+        <SiteHeader />
+        <main className="flex-1">{children}</main>
+      </ShowcaseSearchProvider>
+      <SiteFooter />
+      <aside
+        aria-label="Contatos da loja"
+        className="fixed top-1/2 right-4 z-40 flex -translate-y-1/2 flex-col items-end gap-3"
+      >
+        <GoogleReviewsBadge
+          place={
+            googlePlace
+              ? { rating: googlePlace.rating, reviewCount: googlePlace.reviewCount, mapsUrl: googlePlace.mapsUrl }
+              : null
+          }
+        />
+        <WhatsAppFloatingButton />
+      </aside>
     </div>
   );
 }

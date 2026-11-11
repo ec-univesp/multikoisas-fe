@@ -58,8 +58,6 @@ const PHOTO_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif
 
 const LOGO_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml']);
 
-const SERVED_TYPES = new Set([...PHOTO_TYPES, ...LOGO_TYPES]);
-
 const LOCAL_PHOTO_PATH = '/local-images/';
 
 const isOptionalText = (value: unknown) => value === undefined || value === null || typeof value === 'string';
@@ -481,14 +479,3 @@ export const createApiHandlers = (
     }),
   ];
 };
-
-export const createLocalImagesHandler = (images: Pick<ImageStore, 'get'>) =>
-  http.get<{ id: string }>('*/local-images/:id', async ({ params }) => {
-    const file = await images.get(Number(params.id));
-    if (!file) return new HttpResponse(null, { status: 404 });
-    const contentType = SERVED_TYPES.has(file.type) ? file.type : 'application/octet-stream';
-    return new HttpResponse(await file.arrayBuffer(), {
-      // An svg opened as a page could run its scripts on the site origin.
-      headers: { 'Content-Type': contentType, 'Content-Security-Policy': "script-src 'none'" },
-    });
-  });
