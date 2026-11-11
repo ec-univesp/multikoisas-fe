@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "MultiKoisas API",
-    "description": "Todas as rotas da API do back-end (multikoisas-univesp). Rode primeiro \"Login\" com username e password das variáveis da coleção: o token fica salvo e vai sozinho nas rotas que exigem login. Requisições marcadas \"(grava no banco)\" alteram o banco real do time.",
+    "description": "Todas as rotas da API do back-end (multikoisas-univesp), conferidas com o Swagger em 11/11/2026. Funciona no Postman e no Bruno (Bruno: Import Collection > Postman Collection). Rode primeiro \"Login\" com username e password das variáveis da coleção: o token fica salvo e vai sozinho nas rotas que exigem login. Requisições marcadas \"(grava no banco)\" alteram o banco real do time: use nomes de teste e apague depois. Tipos de imagem da loja: LOGO, PERFIL, CAPA, BANNER, GALERIA.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -670,6 +670,42 @@
           }
         },
         {
+          "name": "Trocar link de compra do produto (grava no banco)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/canalvendaproduto?produtoId=0&canalVendaId=0",
+              "host": ["{{baseUrl}}"],
+              "path": ["canalvendaproduto"],
+              "query": [
+                {
+                  "key": "produtoId",
+                  "value": "0"
+                },
+                {
+                  "key": "canalVendaId",
+                  "value": "0"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"link\": \"https://exemplo.com/novo-link\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
           "name": "Desvincular link do produto (grava no banco)",
           "request": {
             "method": "DELETE",
@@ -796,6 +832,24 @@
           }
         },
         {
+          "name": "Buscar rede social por id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/socialnetwork?id=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["socialnetwork"],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Buscar rede social pelo nome",
           "request": {
             "method": "GET",
@@ -843,7 +897,7 @@
           }
         },
         {
-          "name": "Atualizar rede social (grava no banco)",
+          "name": "Trocar link da rede social (grava no banco)",
           "request": {
             "method": "PUT",
             "header": [
@@ -853,19 +907,19 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/socialnetwork/:description",
+              "raw": "{{baseUrl}}/socialnetwork/:id",
               "host": ["{{baseUrl}}"],
-              "path": ["socialnetwork", ":description"],
+              "path": ["socialnetwork", ":id"],
               "variable": [
                 {
-                  "key": "description",
-                  "value": "Rede de teste"
+                  "key": "id",
+                  "value": "0"
                 }
               ]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"descricao\": \"Rede de teste\",\n  \"link\": \"https://exemplo.com/novo\"\n}",
+              "raw": "{\n  \"link\": \"https://exemplo.com/novo\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -880,13 +934,13 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/socialnetwork/:description",
+              "raw": "{{baseUrl}}/socialnetwork/:id",
               "host": ["{{baseUrl}}"],
-              "path": ["socialnetwork", ":description"],
+              "path": ["socialnetwork", ":id"],
               "variable": [
                 {
-                  "key": "description",
-                  "value": "Rede de teste"
+                  "key": "id",
+                  "value": "0"
                 }
               ]
             }
@@ -1016,6 +1070,222 @@
                 {
                   "key": "username",
                   "value": "teste"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "9 - Loja",
+      "item": [
+        {
+          "name": "Listar lojas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/loja",
+              "host": ["{{baseUrl}}"],
+              "path": ["loja"]
+            }
+          }
+        },
+        {
+          "name": "Buscar loja pelo nome",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/loja?nome=multikoisas",
+              "host": ["{{baseUrl}}"],
+              "path": ["loja"],
+              "query": [
+                {
+                  "key": "nome",
+                  "value": "multikoisas"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Criar loja (grava no banco)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/loja",
+              "host": ["{{baseUrl}}"],
+              "path": ["loja"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nomeLoja\": \"Loja de teste\",\n  \"descricaoLoja\": \"Descrição de teste\",\n  \"endereco\": \"Rua de teste, 1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Atualizar descrição e endereço da loja (grava no banco)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/loja/:nomeLoja",
+              "host": ["{{baseUrl}}"],
+              "path": ["loja", ":nomeLoja"],
+              "variable": [
+                {
+                  "key": "nomeLoja",
+                  "value": "Loja de teste"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"descricaoLoja\": \"Descrição nova\",\n  \"endereco\": \"Rua nova, 2\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Apagar loja (grava no banco)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/loja?nome=Loja de teste",
+              "host": ["{{baseUrl}}"],
+              "path": ["loja"],
+              "query": [
+                {
+                  "key": "nome",
+                  "value": "Loja de teste"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "10 - Imagens da loja",
+      "item": [
+        {
+          "name": "Listar imagens da loja",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/imagemloja",
+              "host": ["{{baseUrl}}"],
+              "path": ["imagemloja"]
+            }
+          }
+        },
+        {
+          "name": "Logo da loja",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/imagemloja?tipo=LOGO",
+              "host": ["{{baseUrl}}"],
+              "path": ["imagemloja"],
+              "query": [
+                {
+                  "key": "tipo",
+                  "value": "LOGO"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Foto de capa da loja",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/imagemloja?tipo=CAPA",
+              "host": ["{{baseUrl}}"],
+              "path": ["imagemloja"],
+              "query": [
+                {
+                  "key": "tipo",
+                  "value": "CAPA"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Enviar logo da loja (grava no banco)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/imagemloja?tipo=LOGO",
+              "host": ["{{baseUrl}}"],
+              "path": ["imagemloja"],
+              "query": [
+                {
+                  "key": "tipo",
+                  "value": "LOGO"
+                }
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Apagar imagem da loja (grava no banco)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/imagemloja/:tipo?id=0",
+              "host": ["{{baseUrl}}"],
+              "path": ["imagemloja", ":tipo"],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "0"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "tipo",
+                  "value": "LOGO"
                 }
               ]
             }
