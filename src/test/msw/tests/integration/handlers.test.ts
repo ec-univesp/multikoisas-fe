@@ -209,6 +209,12 @@ describe('multikoisas-api handlers', () => {
     expect(await unknown.text()).toBe('Descrição não encontrado.');
   });
 
+  it('hands a token only to the right API credentials', async () => {
+    const accepted = await send('POST', '/api/auth/login', { username: 'api-admin', password: 'api-secret' });
+    expect(await accepted.json()).toEqual({ token: 'jwt-de-teste' });
+    expect((await send('POST', '/api/auth/login', { username: 'api-admin', password: 'errada' })).status).toBe(403);
+  });
+
   it('lists every product image on /imagem and filters them by product', async () => {
     const images = await (await send('GET', `${SERVER_ORIGIN}/imagem`)).json();
     expect(images).toHaveLength(6);

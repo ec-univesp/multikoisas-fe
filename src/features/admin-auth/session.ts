@@ -1,4 +1,5 @@
 export const SESSION_COOKIE_NAME = 'multikoisas_session';
+export const API_TOKEN_COOKIE_NAME = 'multikoisas_api_token';
 
 const MINIMUM_SECRET_LENGTH = 32;
 const TOKEN_PATTERN = /^(\d+)\.([A-Za-z0-9_-]+)$/;
