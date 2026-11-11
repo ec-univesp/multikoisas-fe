@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -38,6 +40,20 @@ describe('UserDropdown', () => {
 
     expect(screen.getByRole('link', { name: 'Configurações de site' })).toHaveAttribute('href', '/store');
     expect(screen.getAllByRole('link')).toHaveLength(1);
+  });
+
+  it('shows the site version from package.json below "Sair"', async () => {
+    const { version } = JSON.parse(readFileSync(path.join(process.cwd(), 'package.json'), 'utf8'));
+    const user = userEvent.setup();
+    const { container } = render(<UserDropdown />);
+
+    await user.click(container.querySelector('.dropdown-toggle') as HTMLButtonElement);
+
+    const versionLabel = screen.getByText(`v${version}`);
+    expect(versionLabel.textContent).toMatch(/^v\d+\.\d+\.\d+$/);
+    expect(screen.getByRole('button', { name: 'Sair' }).compareDocumentPosition(versionLabel)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
   });
 
   it('shows only the word Administrador, without the template stock photo', () => {
