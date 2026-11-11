@@ -111,7 +111,37 @@ describe('proxy', () => {
       const response = await proxy(buildRequest('/api/produto'));
 
       expect(response.headers.get('x-middleware-next')).toBe('1');
+      expect(response.status).toBe(200);
       expect(forwardedAuthorization(response)).toBeNull();
+    });
+
+    it.each(['/api/user', '/api/user?username=admin'])(
+      'forwards a read of %s, which the api keeps for admins, with the stored api token',
+      async (path) => {
+        const response = await proxy(buildRequest(path, await validToken()));
+
+        expect(response.headers.get('x-middleware-next')).toBe('1');
+        expect(forwardedAuthorization(response)).toBe(`Bearer ${apiToken}`);
+      },
+    );
+
+    it('refuses a read of the users without a panel session before reaching the api', async () => {
+      const apiRequests = recordApiRequests();
+
+      const response = await proxy(buildRequest('/api/user'));
+
+      expect(response.status).toBe(401);
+      expect(apiRequests).toEqual([]);
+    });
+
+    it.each([
+      ['GET', '/api/produto'],
+      ['POST', '/api/produto'],
+    ])('keeps the site cookies away from the api on a %s', async (method, path) => {
+      const response = await proxy(buildRequest(path, await validToken(), method));
+
+      expect(response.headers.get('x-middleware-override-headers')?.split(',')).not.toContain('cookie');
+      expect(response.headers.get('x-middleware-request-cookie')).toBeNull();
     });
 
     it.each(['POST', 'PUT', 'DELETE'])(
@@ -180,7 +210,7 @@ describe('proxy', () => {
     );
 
     it.each(['/api/auth/login', '/api/configuracao', '/api'])(
-      'refuses a write to %s, which the panel never makes, without using the api token',
+      'refuses a write to %s, which is not a store resource, without using the api token',
       async (path) => {
         const apiRequests = recordApiRequests();
 

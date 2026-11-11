@@ -27,13 +27,26 @@ const isPanelWritableResource = (pathname: string) => PANEL_WRITABLE_RESOURCES.h
 
 const signInToSave = () => NextResponse.json({ error: 'Entre no painel para salvar.' }, { status: 401 });
 
+// The site cookies (session and api token) never travel to the api.
+const headersWithoutCookies = (request: NextRequest) => {
+  const headers = new Headers(request.headers);
+  headers.delete('cookie');
+  return headers;
+};
+
+const forwardWithoutCookies = (request: NextRequest) =>
+  NextResponse.next({ request: { headers: headersWithoutCookies(request) } });
+
 const forwardWithApiToken = (request: NextRequest) => {
   const apiToken = request.cookies.get(API_TOKEN_COOKIE_NAME)?.value;
   if (!apiToken) return signInToSave();
-  const headers = new Headers(request.headers);
+  const headers = headersWithoutCookies(request);
   headers.set('authorization', `Bearer ${apiToken}`);
   return NextResponse.next({ request: { headers } });
 };
+
+// The api keeps every /user route, reads included, for admins.
+const isAdminOnlyRead = (pathname: string) => pathname.split('/')[2] === 'user';
 
 const isFromAnotherSite = (request: NextRequest) => {
   const origin = request.headers.get('origin');
@@ -42,7 +55,8 @@ const isFromAnotherSite = (request: NextRequest) => {
 
 export const proxy = async (request: NextRequest) => {
   const { pathname } = request.nextUrl;
-  if (isApiPath(pathname) && READ_METHODS.has(request.method)) return NextResponse.next();
+  const isPublicRead = isApiPath(pathname) && READ_METHODS.has(request.method) && !isAdminOnlyRead(pathname);
+  if (isPublicRead) return forwardWithoutCookies(request);
 
   const hasValidSession =
     request.cookies.has(API_TOKEN_COOKIE_NAME) &&
@@ -52,6 +66,9 @@ export const proxy = async (request: NextRequest) => {
       Date.now(),
     ));
 
+  if (isApiPath(pathname) && READ_METHODS.has(request.method)) {
+    return hasValidSession ? forwardWithApiToken(request) : signInToSave();
+  }
   if (isApiPath(pathname)) {
     if (isFromAnotherSite(request)) return NextResponse.json({ error: 'Gravação não permitida.' }, { status: 403 });
     if (!hasValidSession) return signInToSave();
