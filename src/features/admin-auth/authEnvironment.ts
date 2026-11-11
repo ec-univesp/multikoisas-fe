@@ -1,6 +1,6 @@
 type AuthEnvironment = Record<string, string | undefined>;
 
-// Only for `pnpm dev` on a machine without .env.local: production and tests never get here.
+// Only for `vlt run dev` on a machine without .env.local: production and tests never get here.
 const DEVELOPMENT_SESSION_SECRET = 'multikoisas-dev-session-secret-nao-usar-em-producao';
 
 export const resolveSessionSecret = (environment: AuthEnvironment): string | undefined => {
