@@ -133,7 +133,7 @@ describe('multikoisas-api handlers', () => {
     const created = await send('POST', '/api/canalvenda', { nome: 'Mercado Livre' });
     expect(created.status).toBe(201);
     expect(await created.json()).toEqual({ id: 100, nome: 'Mercado Livre' });
-    expect((await send('PUT', '/api/canalvenda/100', { nome: 'Mercado Livre BR' })).status).toBe(204);
+    expect((await send('PUT', '/api/canalvenda/100', { nome: 'Mercado Livre BR' })).status).toBe(200);
     expect(await (await send('GET', '/api/canalvenda?id=100')).json()).toEqual([{ id: 100, nome: 'Mercado Livre BR' }]);
     expect((await send('DELETE', '/api/canalvenda/100')).status).toBe(204);
     expect((await send('DELETE', '/api/canalvenda/100')).status).toBe(404);
