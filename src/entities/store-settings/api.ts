@@ -1,8 +1,8 @@
 import { getFromApi } from '@/shared/api/getFromApi';
 import { toDisplayableImageUrl } from '@/shared/api/imageUrl';
-import type { StoreImageType, StoreSettings } from './types';
+import type { StoreImageType, StoreSettings, StoreSettingsValues } from './types';
 
-type ApiStore = { id: number; nomeLoja: string; descricaoLoja: string | null };
+type ApiStore = { id: number; nomeLoja: string; descricaoLoja: string | null; endereco: string | null };
 type ApiStoreImage = { id: number; imagemUrl: string; tipo: string };
 type StoreSettingsListener = (settings: StoreSettings) => void;
 
@@ -53,6 +53,7 @@ export const fetchStoreSettings = async (): Promise<StoreSettings> => {
   const imagesOf = (type: StoreImageType) => storeImages.filter((image) => image.tipo === type);
   return {
     description: store.value?.descricaoLoja?.trim() || null,
+    address: store.value?.endereco?.trim() || null,
     logoUrl: newestImageUrl(imagesOf('LOGO')),
     photoUrl: newestImageUrl(imagesOf('CAPA')),
   };
@@ -82,10 +83,11 @@ const deleteDisplayableImages = async (type: StoreImageType, images: ApiStoreIma
   return deletions.find((deletion) => deletion.status === 'rejected');
 };
 
-export const saveStoreDescription = async (description: string) => {
+export const saveStoreSettings = async ({ description, address }: StoreSettingsValues) => {
   const store = await fetchStore();
-  if (store) await sendToApi('PUT', `/loja/${encodeURIComponent(store.nomeLoja)}`, { descricaoLoja: description });
-  else await sendToApi('POST', '/loja', { nomeLoja: STORE_NAME, descricaoLoja: description });
+  const fields = { descricaoLoja: description, endereco: address };
+  if (store) await sendToApi('PUT', `/loja/${encodeURIComponent(store.nomeLoja)}`, fields);
+  else await sendToApi('POST', '/loja', { nomeLoja: STORE_NAME, ...fields });
   return reloadStoreSettings();
 };
 

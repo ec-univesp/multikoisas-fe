@@ -51,7 +51,14 @@ const seed = (): ApiDatabase => ({
     { produtoId: 7, canalVendaId: 2, link: 'https://shopee.com.br/caixa' },
   ],
   users: [{ id: 8, username: 'admin', email: 'pi2alunos@gmail.com', role: 'ADMIN' }],
-  stores: [{ id: 1, nomeLoja: 'multikoisas', descricaoLoja: 'Tudo em um só lugar' }],
+  stores: [
+    {
+      id: 1,
+      nomeLoja: 'multikoisas',
+      descricaoLoja: 'Tudo em um só lugar',
+      endereco: 'Av. Prof. Luiz Inácio de Anhaia Melo, 2085 - Centreville, Santo André - SP',
+    },
+  ],
   // The placeholder row the real API returns.
   storeImages: [{ id: 1, imagemUrl: 'URL 1', tipo: 'LOGO' }],
   nextId: 100,

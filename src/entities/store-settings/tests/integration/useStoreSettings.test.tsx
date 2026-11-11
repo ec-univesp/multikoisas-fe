@@ -3,7 +3,7 @@ import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
 import { apiDatabase } from '@/test/msw/apiDatabase';
 import { server } from '@/test/msw/server';
-import { saveStoreDescription } from '../../api';
+import { saveStoreSettings } from '../../api';
 import { STORE_SETTINGS } from '../../storeSettings';
 import { useStoreSettings } from '../../useStoreSettings';
 
@@ -31,7 +31,7 @@ describe('useStoreSettings', () => {
     const { result } = renderHook(() => useStoreSettings());
     await waitFor(() => expect(result.current.status).toBe('ready'));
 
-    await act(() => saveStoreDescription('Nova descrição'));
+    await act(() => saveStoreSettings({ description: 'Nova descrição', address: null }));
 
     expect(result.current.settings.description).toBe('Nova descrição');
   });
@@ -46,7 +46,7 @@ describe('useStoreSettings', () => {
       ),
     );
     const { result } = renderHook(() => useStoreSettings());
-    await act(() => saveStoreDescription('Nova descrição'));
+    await act(() => saveStoreSettings({ description: 'Nova descrição', address: null }));
     expect(result.current.status).toBe('ready');
 
     await act(async () => failRead());

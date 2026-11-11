@@ -371,7 +371,12 @@ describe('local api users without the api bugs', () => {
   });
 });
 
-const STORE = { id: 1, nomeLoja: 'multikoisas', descricaoLoja: 'Tudo em um só lugar' };
+const STORE = {
+  id: 1,
+  nomeLoja: 'multikoisas',
+  descricaoLoja: 'Tudo em um só lugar',
+  endereco: 'Av. Prof. Luiz Inácio de Anhaia Melo, 2085 - Centreville, Santo André - SP',
+};
 
 describe('local api store', () => {
   it('finds the store by name ignoring case and answers 404 when there is none', async () => {
@@ -380,14 +385,25 @@ describe('local api store', () => {
     expect((await send('GET', '/api/loja?nome=outra')).status).toBe(404);
   });
 
-  it('creates the store and changes its description by name', async () => {
-    const created = await send('POST', '/api/loja', { nomeLoja: 'multikoisas', descricaoLoja: 'Primeira' });
+  it('creates the store and changes its description and address by name', async () => {
+    const created = await send('POST', '/api/loja', {
+      nomeLoja: 'multikoisas',
+      descricaoLoja: 'Primeira',
+      endereco: 'Rua A, 1',
+    });
     expect(created.status).toBe(201);
-    expect(await created.json()).toEqual({ id: 5, nomeLoja: 'multikoisas', descricaoLoja: 'Primeira' });
+    expect(await created.json()).toEqual({
+      id: 5,
+      nomeLoja: 'multikoisas',
+      descricaoLoja: 'Primeira',
+      endereco: 'Rua A, 1',
+    });
 
-    const updated = await send('PUT', '/api/loja/multikoisas', { descricaoLoja: 'Segunda' });
+    const updated = await send('PUT', '/api/loja/multikoisas', { descricaoLoja: 'Segunda', endereco: 'Rua B, 2' });
     expect(updated.status).toBe(200);
-    expect(database.stores).toEqual([{ id: 5, nomeLoja: 'multikoisas', descricaoLoja: 'Segunda' }]);
+    expect(database.stores).toEqual([
+      { id: 5, nomeLoja: 'multikoisas', descricaoLoja: 'Segunda', endereco: 'Rua B, 2' },
+    ]);
     expect(onChange).toHaveBeenCalledTimes(2);
   });
 
@@ -399,10 +415,12 @@ describe('local api store', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  it('answers 507 and keeps the description when the browser refuses to save it', async () => {
+  it('answers 507 and keeps the description and the address when the browser refuses to save them', async () => {
     database.stores.push({ ...STORE });
     onChange.mockReturnValue(false);
-    expect((await send('PUT', '/api/loja/multikoisas', { descricaoLoja: 'Outra' })).status).toBe(507);
+    expect((await send('PUT', '/api/loja/multikoisas', { descricaoLoja: 'Outra', endereco: 'Rua C, 3' })).status).toBe(
+      507,
+    );
     expect(database.stores).toEqual([STORE]);
   });
 });

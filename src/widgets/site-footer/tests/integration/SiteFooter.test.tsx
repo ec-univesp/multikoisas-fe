@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { STORE_ADDRESS } from '@/entities/store-settings';
 import { apiDatabase, SUPABASE_IMAGES } from '@/test/msw/apiDatabase';
 import { server } from '@/test/msw/server';
-import { waitForLoaded } from '@/test/waitForLoaded';
+import { waitForApiAnswers, waitForLoaded } from '@/test/waitForLoaded';
 import { SiteFooter } from '../../SiteFooter';
 
 const renderFooter = async () => {
@@ -80,6 +80,20 @@ describe('SiteFooter', () => {
     render(<SiteFooter />);
     const address = within(screen.getByRole('contentinfo')).getByText(STORE_ADDRESS);
     expect(address.tagName).toBe('ADDRESS');
+  });
+
+  it('shows the address saved in the api', async () => {
+    apiDatabase.stores[0].endereco = 'Rua das Flores, 10 - Centro, Santo André - SP';
+    render(<SiteFooter />);
+    const footer = screen.getByRole('contentinfo');
+    expect((await within(footer).findByText('Rua das Flores, 10 - Centro, Santo André - SP')).tagName).toBe('ADDRESS');
+  });
+
+  it('keeps the known address when the store has none saved', async () => {
+    apiDatabase.stores[0].endereco = null;
+    await renderFooter();
+    await waitForApiAnswers();
+    expect(within(screen.getByRole('contentinfo')).getByText(STORE_ADDRESS).tagName).toBe('ADDRESS');
   });
 
   it('hides the social networks block when the store has none', async () => {
