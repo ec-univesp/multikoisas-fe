@@ -20,13 +20,21 @@ beforeEach(() => {
   apiRequests = recordApiRequests();
 });
 
-const respondWith = (method: 'post' | 'delete', path: string, status: number) =>
+const respondWith = (method: 'post' | 'put' | 'delete', path: string, status: number) =>
   server.use(http[method](path, () => new HttpResponse(null, { status })));
 
 const hang = (method: 'post' | 'delete', path: string) => server.use(http[method](path, () => delay('infinite')));
 
 const deleteFromApi = (canalVendaId: number) => {
   apiDatabase.salesChannels = apiDatabase.salesChannels.filter((salesChannel) => salesChannel.id !== canalVendaId);
+};
+
+const renameSalesChannel = async (user: ReturnType<typeof userEvent.setup>, currentName: string, newName: string) => {
+  await user.click(screen.getByRole('button', { name: `Editar ${currentName}` }));
+  const nameInput = screen.getByLabelText('Nome do canal');
+  await user.clear(nameInput);
+  await user.type(nameInput, newName);
+  await user.click(screen.getByRole('button', { name: 'Salvar canal' }));
 };
 
 const renderPanel = (initialSalesChannels: SalesChannel[] = salesChannels) =>
@@ -39,12 +47,11 @@ const submitNewSalesChannel = async (user: ReturnType<typeof userEvent.setup>, n
 };
 
 describe('SalesChannelAdminPanel', () => {
-  it('lists the sales channels with their count and no edit action', () => {
+  it('lists the sales channels with their count', () => {
     renderPanel();
     expect(screen.getByText('4 canais cadastrados')).toBeInTheDocument();
     expect(screen.getByText('Shopee')).toBeInTheDocument();
     expect(screen.getByText('TikTok')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Editar/ })).not.toBeInTheDocument();
   });
 
   it('uses the singular count for a single sales channel', () => {
@@ -136,6 +143,60 @@ describe('SalesChannelAdminPanel', () => {
     expect(screen.getByRole('button', { name: 'Cancelar' })).toBeDisabled();
     await user.keyboard('{Escape}');
     expect(screen.getByLabelText('Nome do canal')).toBeInTheDocument();
+  });
+
+  it('renames the sales channel in the api and shows the saved name when reopened', async () => {
+    const user = userEvent.setup();
+    renderPanel();
+
+    await user.click(screen.getByRole('button', { name: 'Editar Shopee' }));
+    expect(screen.getByText('Editar canal')).toBeInTheDocument();
+    await user.clear(screen.getByLabelText('Nome do canal'));
+    await user.type(screen.getByLabelText('Nome do canal'), '  Shopee   Brasil ');
+    await user.click(screen.getByRole('button', { name: 'Salvar canal' }));
+
+    expect(await screen.findByText('Shopee Brasil')).toBeInTheDocument();
+    expect(screen.queryByText('Shopee')).not.toBeInTheDocument();
+    expect(apiDatabase.salesChannels).toContainEqual({ id: 2, nome: 'Shopee Brasil' });
+    expect(apiRequests).toEqual(['PUT /api/canalvenda/2']);
+
+    await user.click(screen.getByRole('button', { name: 'Editar Shopee Brasil' }));
+    expect(screen.getByLabelText('Nome do canal')).toHaveValue('Shopee Brasil');
+  });
+
+  it('lets a sales channel be saved keeping its own name', async () => {
+    const user = userEvent.setup();
+    renderPanel();
+
+    await user.click(screen.getByRole('button', { name: 'Editar Shopee' }));
+    await user.click(screen.getByRole('button', { name: 'Salvar canal' }));
+
+    expect(screen.queryByLabelText('Nome do canal')).not.toBeInTheDocument();
+    expect(apiRequests).toEqual(['PUT /api/canalvenda/2']);
+    expect(apiDatabase.salesChannels).toContainEqual({ id: 2, nome: 'Shopee' });
+  });
+
+  it('keeps the form open with the name-taken message when the api answers 409 on rename', async () => {
+    const user = userEvent.setup();
+    renderPanel();
+
+    await renameSalesChannel(user, 'Shopee', 'MagaLu');
+
+    expect(await screen.findByText('Já existe um canal com esse nome.')).toHaveAttribute('role', 'alert');
+    expect(screen.getByLabelText('Nome do canal')).toBeInTheDocument();
+    expect(screen.getByText('Shopee')).toBeInTheDocument();
+  });
+
+  it('keeps the form open with a message when the api fails to rename', async () => {
+    respondWith('put', '*/canalvenda/:id', 500);
+    const user = userEvent.setup();
+    renderPanel();
+
+    await renameSalesChannel(user, 'Shopee', 'Shopee Brasil');
+
+    expect(await screen.findByText('Não foi possível salvar o canal. Tente de novo.')).toBeInTheDocument();
+    expect(screen.getByLabelText('Nome do canal')).toBeInTheDocument();
+    expect(screen.getByText('Shopee')).toBeInTheDocument();
   });
 
   it('keeps the sales channel when the deletion is cancelled', async () => {
