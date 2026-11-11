@@ -40,7 +40,7 @@ beforeEach(() => {
   apiRequests = recordApiRequests();
 });
 
-const respondWith = (method: 'post' | 'delete', path: string, status: number) =>
+const respondWith = (method: 'post' | 'put' | 'delete', path: string, status: number) =>
   server.use(http[method](path, () => new HttpResponse(null, { status })));
 
 const hang = (method: 'get' | 'post' | 'delete', path: string) =>
@@ -733,8 +733,7 @@ describe('ProductAdminPanel', () => {
         'GET /api/canalvendaproduto?produtoId=1',
         'PUT /api/produto/1',
         'DELETE /api/canalvendaproduto',
-        'DELETE /api/canalvendaproduto',
-        'POST /api/canalvendaproduto',
+        'PUT /api/canalvendaproduto?produtoId=1&canalVendaId=2',
         'POST /api/canalvendaproduto',
       ]);
     });
@@ -824,14 +823,15 @@ describe('ProductAdminPanel', () => {
     });
 
     it('shows the links the api really kept when changing a link fails halfway', async () => {
-      respondWith('post', '*/canalvendaproduto', 500);
+      respondWith('put', '*/canalvendaproduto', 500);
       const user = userEvent.setup();
-      renderPanel([buildProduct({ storeLinks: [{ store: 'shopee', url: 'https://shopee.com.br/garrafa-termica' }] })]);
+      renderPanel();
 
       await user.click(screen.getByRole('button', { name: 'Editar Garrafa Térmica 1L' }));
       const shopeeLink = await screen.findByLabelText('Link da loja 1');
       await user.clear(shopeeLink);
       await user.type(shopeeLink, 'https://shopee.com.br/garrafa-nova');
+      await user.click(screen.getByRole('button', { name: 'Remover loja 2' }));
       await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
 
       expect(
@@ -839,9 +839,9 @@ describe('ProductAdminPanel', () => {
           'Produto salvo, mas os links de compra não foram atualizados. Edite o produto para tentar de novo.',
         ),
       ).toBeInTheDocument();
-      expect(screen.queryByText('Shopee')).not.toBeInTheDocument();
+      expect(screen.getByText('Shopee')).toBeInTheDocument();
       expect(purchaseLinksOf(1)).toEqual([
-        { produtoId: 1, canalVendaId: 3, link: 'https://www.instagram.com/p/garrafa' },
+        { produtoId: 1, canalVendaId: 2, link: 'https://shopee.com.br/garrafa-termica' },
       ]);
     });
 

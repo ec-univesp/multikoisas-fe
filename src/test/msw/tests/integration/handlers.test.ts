@@ -199,11 +199,10 @@ describe('multikoisas-api handlers', () => {
     expect((await send('DELETE', '/api/socialnetwork/TikTok')).status).toBe(200);
   });
 
-  it('refuses a rename with 409 and an unknown description with 409, like the real api', async () => {
+  it('changes only the link on put and answers 409 to an unknown description, like the real api', async () => {
     apiDatabase.socialNetworks.push({ id: 7, descricao: 'TikTok', link: 'https://tiktok.com/@mk' });
-    const renamed = await send('PUT', '/api/socialnetwork/TikTok', { descricao: 'Kwai', link: 'https://x' });
-    expect(renamed.status).toBe(409);
-    expect(await renamed.text()).toBe('Esta rede social já está cadastrada.');
+    const changed = await send('PUT', '/api/socialnetwork/TikTok', { descricao: 'Kwai', link: 'https://x' });
+    expect(await changed.json()).toEqual({ id: 7, descricao: 'TikTok', link: 'https://x' });
     const unknown = await send('PUT', '/api/socialnetwork/tiktok', { link: 'https://x' });
     expect(unknown.status).toBe(409);
     expect(await unknown.text()).toBe('Descrição não encontrado.');
