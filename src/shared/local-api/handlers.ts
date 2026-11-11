@@ -407,6 +407,20 @@ export const createApiHandlers = (
       );
     }),
 
+    http.put<never, Pick<PurchaseLinkRow, 'link'>>(`${baseUrl}/canalvendaproduto`, async ({ request }) => {
+      const query = queryOf(request);
+      const { link } = await request.json();
+      if (!link?.trim()) return springError(400, 'Bad Request', request);
+      const purchaseLink = database.purchaseLinks.find(
+        (candidate) =>
+          candidate.produtoId === Number(query.get('produtoId')) &&
+          candidate.canalVendaId === Number(query.get('canalVendaId')),
+      );
+      if (!purchaseLink) return springError(404, 'Not Found', request);
+      purchaseLink.link = link;
+      return saved(HttpResponse.json({ mensagem: 'Link do canal de venda atualizado com sucesso.' }));
+    }),
+
     http.delete<never, PurchaseLinkRow>(`${baseUrl}/canalvendaproduto`, async ({ request }) => {
       const { produtoId, canalVendaId, link } = await request.json();
       if (!link?.trim()) return springError(400, 'Bad Request', request);

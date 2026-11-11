@@ -75,12 +75,29 @@ describe('local api handlers', () => {
     await send('DELETE', '/api/categoriaproduto', { produtoId: 5, categoriaId: 2 });
     await send('POST', '/api/canalvendaproduto', { produtoId: 5, canalVendaId: 4, link: 'https://x.com/a' });
     await send('DELETE', '/api/canalvendaproduto', { produtoId: 5, canalVendaId: 4, link: 'https://x.com/a' });
+    await send('PUT', '/api/canalvendaproduto?produtoId=1&canalVendaId=4', { link: 'https://shopee.com.br/novo' });
     await send('PUT', '/api/socialnetwork/Instagram', { link: 'https://instagram.com/novo' });
     await send('DELETE', '/api/socialnetwork/Instagram');
     await send('DELETE', '/api/canalvenda/6');
     await send('DELETE', '/api/produto/1');
     await send('DELETE', '/api/categoria/2');
-    expect(onChange).toHaveBeenCalledTimes(14);
+    expect(onChange).toHaveBeenCalledTimes(15);
+  });
+
+  it('changes the link of a product in a sales channel and refuses a pair that does not exist', async () => {
+    const changed = await send('PUT', '/api/canalvendaproduto?produtoId=1&canalVendaId=4', {
+      link: 'https://shopee.com.br/balde-novo',
+    });
+    expect(changed.status).toBe(200);
+    expect(database.purchaseLinks).toEqual([
+      { produtoId: 1, canalVendaId: 4, link: 'https://shopee.com.br/balde-novo' },
+    ]);
+
+    expect((await send('PUT', '/api/canalvendaproduto?produtoId=1&canalVendaId=9', { link: 'https://x.com' })).status).toBe(
+      404,
+    );
+    expect((await send('PUT', '/api/canalvendaproduto?produtoId=1&canalVendaId=4', { link: ' ' })).status).toBe(400);
+    expect(onChange).toHaveBeenCalledTimes(1);
   });
 
   it('does not report reads nor writes the api refuses', async () => {

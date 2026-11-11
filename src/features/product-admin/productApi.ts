@@ -230,8 +230,8 @@ export class PurchaseLinkError extends Error {
   }
 }
 
-const isSameLink = (first: PurchaseLink, second: PurchaseLink) =>
-  first.salesChannelId === second.salesChannelId && first.url === second.url;
+const sameChannelIn = (links: readonly PurchaseLink[], link: PurchaseLink) =>
+  links.find((candidate) => candidate.salesChannelId === link.salesChannelId);
 
 export const syncPurchaseLinks = async (
   product: Product,
@@ -239,11 +239,19 @@ export const syncPurchaseLinks = async (
   desiredLinks: readonly PurchaseLink[],
   salesChannels: readonly SalesChannel[],
 ): Promise<Product> => {
-  const removedLinks = currentLinks.filter((current) => !desiredLinks.some((desired) => isSameLink(current, desired)));
-  const addedLinks = desiredLinks.filter((desired) => !currentLinks.some((current) => isSameLink(current, desired)));
-  if (removedLinks.length === 0 && addedLinks.length === 0) return product;
+  const removedLinks = currentLinks.filter((current) => !sameChannelIn(desiredLinks, current));
+  const addedLinks = desiredLinks.filter((desired) => !sameChannelIn(currentLinks, desired));
+  const changedLinks = desiredLinks.filter((desired) => {
+    const current = sameChannelIn(currentLinks, desired);
+    return current !== undefined && current.url !== desired.url;
+  });
+  if (removedLinks.length + addedLinks.length + changedLinks.length === 0) return product;
   try {
     for (const link of removedLinks) await callApi('DELETE', '/canalvendaproduto', toApiPurchaseLink(product.id, link));
+    for (const link of changedLinks) {
+      const pair = `produtoId=${product.id}&canalVendaId=${link.salesChannelId}`;
+      await callApi('PUT', `/canalvendaproduto?${pair}`, { link: link.url });
+    }
     for (const link of addedLinks) await callApi('POST', '/canalvendaproduto', toApiPurchaseLink(product.id, link));
   } catch {
     const keptLinks = await fetchPurchaseLinks(product.id).catch(() => null);
