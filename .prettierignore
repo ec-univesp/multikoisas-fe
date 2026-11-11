@@ -5,5 +5,5 @@ coverage
 docs
 .claude
 public
-pnpm-lock.yaml
+vlt-lock.json
 next-env.d.ts
