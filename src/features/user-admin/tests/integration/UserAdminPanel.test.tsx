@@ -228,7 +228,6 @@ describe('UserAdminPanel', () => {
       ...createApiHandlers(apiDatabase, {
         onChange: () => true,
         images: createMemoryImageStore(),
-        imageUrl: String,
         reproduceApiBugs: false,
       }),
     );

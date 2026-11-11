@@ -43,6 +43,8 @@ const uploadLogo = (content: string, type = 'image/png') =>
     ].join('\r\n'),
   });
 
+const UPLOADED_IMAGES = 'https://avphmmvnlrbidhjrzozx.supabase.co/storage/v1/object/public/imagem/upload-';
+
 const VALID_SETTINGS = { address: 'Rua Nova, 10 - Santo André - SP' };
 const SEED_ADDRESS = 'Av. Prof. Luiz Inácio de Anhaia Melo, 2085 - Centreville, Santo André - SP';
 
@@ -67,7 +69,6 @@ beforeEach(() => {
       baseUrl: '/api',
       onChange,
       images,
-      imageUrl: (id) => `http://localhost/local-images/${id}`,
       reproduceApiBugs: true,
     }),
   );
@@ -112,7 +113,7 @@ describe('local api handlers', () => {
   it('keeps an uploaded photo in the image store', async () => {
     const uploaded = await uploadPhoto(1, 'png-bytes');
     expect(uploaded.status).toBe(201);
-    expect(await uploaded.json()).toEqual({ id: 5, produtoId: 1, imagemUrl: 'http://localhost/local-images/5' });
+    expect(await uploaded.json()).toEqual({ id: 5, produtoId: 1, imagemUrl: `${UPLOADED_IMAGES}5` });
     expect(onChange).toHaveBeenCalledTimes(1);
 
     const stored = await images.get(5);
@@ -179,7 +180,6 @@ describe('local api handlers', () => {
       baseUrl: '/api',
       onChange,
       images,
-      imageUrl: String,
       reproduceApiBugs: true,
     });
     const answerTo = (path: string) => getResponse(handlers, new Request(new URL(path, location.origin)));
@@ -197,8 +197,7 @@ describe('local api handlers without the api bugs', () => {
         baseUrl: '/api',
         onChange,
         images,
-        imageUrl: (id) => `http://localhost/local-images/${id}`,
-        reproduceApiBugs: false,
+          reproduceApiBugs: false,
       }),
     );
   });
@@ -242,7 +241,7 @@ describe('local api handlers without the api bugs', () => {
     database.purchaseLinks = [];
     database.productCategories = [];
     await uploadPhoto(1, 'frente');
-    database.productImages.push({ id: 7, produtoId: 8, imagemUrl: 'http://localhost/local-images/7' });
+    database.productImages.push({ id: 7, produtoId: 8, imagemUrl: `${UPLOADED_IMAGES}7` });
     await images.save(7, new Blob(['outro'], { type: 'image/png' }));
 
     expect((await send('DELETE', '/api/produto/1')).status).toBe(200);
@@ -361,8 +360,7 @@ describe('local api users without the api bugs', () => {
         baseUrl: '/api',
         onChange,
         images,
-        imageUrl: String,
-        reproduceApiBugs: false,
+          reproduceApiBugs: false,
       }),
     );
   });

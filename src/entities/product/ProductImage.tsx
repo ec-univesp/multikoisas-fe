@@ -2,7 +2,6 @@
 
 import Image, { type ImageProps } from 'next/image';
 import { useState } from 'react';
-import { isLocalImageUrl } from './imageUrl';
 import { PRODUCT_IMAGE_PLACEHOLDER } from './types';
 
 type ProductImageProps = Omit<ImageProps, 'src' | 'onError'> & { src: string };
@@ -14,7 +13,6 @@ export const ProductImage = ({ src, alt, ...imageProps }: ProductImageProps) => 
       {...imageProps}
       src={failedSrc === src ? PRODUCT_IMAGE_PLACEHOLDER : src}
       alt={alt}
-      unoptimized={imageProps.unoptimized || isLocalImageUrl(src)}
       onError={() => setFailedSrc(src)}
     />
   );

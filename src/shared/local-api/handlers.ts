@@ -5,7 +5,6 @@ import type { ImageStore } from './imageStore';
 export type ApiHandlerOptions = {
   onChange: () => boolean;
   images: Pick<ImageStore, 'save' | 'remove'>;
-  imageUrl: (id: number) => string;
   baseUrl?: string;
   reproduceApiBugs: boolean;
 };
@@ -58,7 +57,12 @@ const PHOTO_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif
 
 const LOGO_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml']);
 
+// A host PRODUCT_IMAGE_HOSTS accepts, so the uploads display like the real API ones.
+const UPLOADED_IMAGES_URL = 'https://avphmmvnlrbidhjrzozx.supabase.co/storage/v1/object/public/imagem/upload-';
+
 const LOCAL_PHOTO_PATH = '/local-images/';
+
+const uploadedImageUrl = (id: number) => `${UPLOADED_IMAGES_URL}${id}`;
 
 const isOptionalText = (value: unknown) => value === undefined || value === null || typeof value === 'string';
 
@@ -82,7 +86,7 @@ const storageFull = () => HttpResponse.text('Espaço do navegador cheio', { stat
 
 export const createApiHandlers = (
   database: ApiDatabase,
-  { onChange, images, imageUrl, baseUrl = '*', reproduceApiBugs }: ApiHandlerOptions,
+  { onChange, images, baseUrl = '*', reproduceApiBugs }: ApiHandlerOptions,
 ) => {
   const saved = (response: Response) => (onChange() ? response : storageFull());
 
@@ -122,7 +126,7 @@ export const createApiHandlers = (
       }
       if (!database.products.some((product) => product.id === id)) return springError(404, 'Not Found', request);
       const localPhotoIds = database.productImages
-        .filter((productImage) => productImage.produtoId === id && productImage.imagemUrl.includes(LOCAL_PHOTO_PATH))
+        .filter((productImage) => productImage.produtoId === id && productImage.imagemUrl.startsWith(UPLOADED_IMAGES_URL))
         .map((productImage) => productImage.id);
       database.productImages = database.productImages.filter((productImage) => productImage.produtoId !== id);
       database.purchaseLinks = database.purchaseLinks.filter((link) => link.produtoId !== id);
@@ -228,7 +232,7 @@ export const createApiHandlers = (
       if (!PHOTO_TYPES.has(file.type)) return springError(415, 'Unsupported Media Type', request);
       const id = database.nextId++;
       await images.save(id, file);
-      const productImage = { id, produtoId: Number(produtoId), imagemUrl: imageUrl(id) };
+      const productImage = { id, produtoId: Number(produtoId), imagemUrl: uploadedImageUrl(id) };
       database.productImages.push(productImage);
       if (!onChange()) {
         database.productImages.pop();
