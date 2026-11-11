@@ -1,6 +1,6 @@
 {
   "name": "multikoisas-fe",
-  "version": "0.15.1",
+  "version": "0.15.2",
   "private": true,
   "engines": {
     "node": ">=20.9"
