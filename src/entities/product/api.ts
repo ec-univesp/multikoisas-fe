@@ -38,7 +38,20 @@ const toImageUrls = (apiImages: readonly ApiProductImage[]): string[] =>
 
 const isStoreSlug = (slug: string): slug is StoreSlug => Object.hasOwn(STORE_PRESENTATION, slug);
 
-export const isStoreChannelName = (name: string): boolean => isStoreSlug(toBaseSlug(name));
+// Full store names the owner may give a sales channel in the panel.
+const STORE_NAME_ALIASES: Record<string, StoreSlug> = {
+  'magazine-luiza': 'magalu',
+  mercadolivre: 'mercado-livre',
+  'ali-express': 'aliexpress',
+};
+
+export const toStoreSlug = (channelName: string): StoreSlug | null => {
+  const slug = toBaseSlug(channelName);
+  const store = STORE_NAME_ALIASES[slug] ?? slug;
+  return isStoreSlug(store) ? store : null;
+};
+
+export const isStoreChannelName = (name: string): boolean => toStoreSlug(name) !== null;
 
 // ponytail: a channel without an entry in STORE_PRESENTATION (Instagram, TikTok) does not become a purchase button.
 export const toStoreLinks = (
@@ -48,8 +61,8 @@ export const toStoreLinks = (
   apiPurchaseLinks
     .flatMap((apiPurchaseLink) => {
       const apiSalesChannel = apiSalesChannels.find((candidate) => candidate.id === apiPurchaseLink.canalVendaId);
-      const store = apiSalesChannel ? toBaseSlug(apiSalesChannel.nome) : '';
-      return isStoreSlug(store) && apiPurchaseLink.link ? [{ store, url: apiPurchaseLink.link }] : [];
+      const store = apiSalesChannel ? toStoreSlug(apiSalesChannel.nome) : null;
+      return store && apiPurchaseLink.link ? [{ store, url: apiPurchaseLink.link }] : [];
     })
     .filter(
       (storeLink, position, storeLinks) => storeLinks.findIndex(({ store }) => store === storeLink.store) === position,
