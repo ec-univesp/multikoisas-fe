@@ -4,8 +4,8 @@
 
 [build.environment]
   NODE_VERSION = "22"
-  # A Netlify não conhece o vlt e rodaria npm install antes do build; o --dry-run desliga essa etapa.
-  NPM_FLAGS = "--dry-run"
+  # A Netlify não conhece o vlt e roda npm install antes do build; com --version o npm só mostra a versão e quem instala é o vlt.
+  NPM_FLAGS = "--version"
   # O cache do Turbopack guarda o valor das variaveis de ambiente e nao e publicado.
   SECRETS_SCAN_OMIT_PATHS = ".netlify/.next/cache/**,.next/cache/**"
 
