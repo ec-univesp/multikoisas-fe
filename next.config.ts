@@ -1,7 +1,10 @@
 import type { NextConfig } from 'next';
-import { PRODUCT_IMAGE_HOSTS, PRODUCT_IMAGE_PATH } from './src/entities/product/imageUrl';
+import { PRODUCT_IMAGE_HOSTS, PRODUCT_IMAGE_PATH } from './src/shared/api/imageUrl';
+import { API_URL } from './src/shared/api/getFromApi';
 
 const nextConfig: NextConfig = {
+  // multikoisas-api sends no CORS headers: the browser talks to the same origin.
+  rewrites: async () => [{ source: '/api/:path*', destination: `${API_URL}/:path*` }],
   // Old portuguese routes stay reachable for links already shared.
   redirects: async () => [
     { source: '/vitrine', destination: '/showcase', permanent: true },

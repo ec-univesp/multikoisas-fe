@@ -1,8 +1,7 @@
 import type { Metadata } from 'next';
 import PageBreadcrumb from '@/components/common/PageBreadCrumb';
-import { LocalDataReset } from '@/features/local-data-reset';
 import { SocialNetworkAdminScreen } from '@/features/social-network-admin';
-import { StoreLogoField } from '@/features/store-logo';
+import { StoreImageField } from '@/features/store-image';
 import { StoreSettingsForm } from '@/features/store-settings-form';
 
 export const metadata: Metadata = {
@@ -17,7 +16,13 @@ const StorePage = () => (
       <h3 id="store-logo-title" className="mb-4 text-lg font-semibold text-gray-800">
         Logo da vitrine
       </h3>
-      <StoreLogoField />
+      <StoreImageField type="LOGO" />
+    </section>
+    <section aria-labelledby="store-photo-title" className="mb-8">
+      <h3 id="store-photo-title" className="mb-4 text-lg font-semibold text-gray-800">
+        Foto da loja
+      </h3>
+      <StoreImageField type="CAPA" />
     </section>
     <section aria-labelledby="store-settings-title" className="mb-8">
       <h3 id="store-settings-title" className="mb-4 text-lg font-semibold text-gray-800">
@@ -25,17 +30,11 @@ const StorePage = () => (
       </h3>
       <StoreSettingsForm />
     </section>
-    <section aria-labelledby="social-networks-title" className="mb-8">
+    <section aria-labelledby="social-networks-title">
       <h3 id="social-networks-title" className="mb-4 text-lg font-semibold text-gray-800">
         Redes sociais
       </h3>
       <SocialNetworkAdminScreen />
-    </section>
-    <section aria-labelledby="sample-data-title">
-      <h3 id="sample-data-title" className="mb-4 text-lg font-semibold text-gray-800">
-        Dados de exemplo
-      </h3>
-      <LocalDataReset />
     </section>
   </div>
 );

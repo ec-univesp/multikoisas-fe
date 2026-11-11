@@ -14,3 +14,13 @@ describe('next.config redirects', () => {
     ]);
   });
 });
+
+describe('next.config rewrites', () => {
+  it('sends the browser /api calls to the multikoisas api on the same origin', async () => {
+    const rewrites = await nextConfig.rewrites?.();
+
+    expect(rewrites).toEqual([
+      { source: '/api/:path*', destination: 'https://multikoisas-univesp.onrender.com/:path*' },
+    ]);
+  });
+});

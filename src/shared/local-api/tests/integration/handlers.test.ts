@@ -2,7 +2,7 @@ import { getResponse } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { server } from '@/test/msw/server';
 import { createDatabase, type ApiDatabase } from '../../database';
-import { createApiHandlers, createLocalImagesHandler } from '../../handlers';
+import { createApiHandlers } from '../../handlers';
 import { createMemoryImageStore, type ImageStore } from '../../imageStore';
 
 const send = (method: string, path: string, body?: unknown) =>
@@ -28,23 +28,8 @@ const uploadPhoto = (produtoId: number, content: string, type = 'image/png') =>
     ].join('\r\n'),
   });
 
-const uploadLogo = (content: string, type = 'image/png') =>
-  fetch('/api/configuracao/logo', {
-    method: 'POST',
-    headers: { 'Content-Type': 'multipart/form-data; boundary=limite' },
-    body: [
-      '--limite',
-      'Content-Disposition: form-data; name="file"; filename="logo.png"',
-      `Content-Type: ${type}`,
-      '',
-      content,
-      '--limite--',
-      '',
-    ].join('\r\n'),
-  });
+const UPLOADED_IMAGES = 'https://avphmmvnlrbidhjrzozx.supabase.co/storage/v1/object/public/imagem/upload-';
 
-const VALID_SETTINGS = { address: 'Rua Nova, 10 - Santo André - SP' };
-const SEED_ADDRESS = 'Av. Prof. Luiz Inácio de Anhaia Melo, 2085 - Centreville, Santo André - SP';
 
 let database: ApiDatabase;
 let images: ImageStore;
@@ -67,10 +52,8 @@ beforeEach(() => {
       baseUrl: '/api',
       onChange,
       images,
-      imageUrl: (id) => `http://localhost/local-images/${id}`,
       reproduceApiBugs: true,
     }),
-    createLocalImagesHandler(images),
   );
 });
 
@@ -92,12 +75,42 @@ describe('local api handlers', () => {
     await send('DELETE', '/api/categoriaproduto', { produtoId: 5, categoriaId: 2 });
     await send('POST', '/api/canalvendaproduto', { produtoId: 5, canalVendaId: 4, link: 'https://x.com/a' });
     await send('DELETE', '/api/canalvendaproduto', { produtoId: 5, canalVendaId: 4, link: 'https://x.com/a' });
+    await send('PUT', '/api/canalvendaproduto?produtoId=1&canalVendaId=4', { link: 'https://shopee.com.br/novo' });
     await send('PUT', '/api/socialnetwork/Instagram', { link: 'https://instagram.com/novo' });
     await send('DELETE', '/api/socialnetwork/Instagram');
     await send('DELETE', '/api/canalvenda/6');
     await send('DELETE', '/api/produto/1');
     await send('DELETE', '/api/categoria/2');
-    expect(onChange).toHaveBeenCalledTimes(14);
+    expect(onChange).toHaveBeenCalledTimes(15);
+  });
+
+  it('changes only the link of a social network, never its name', async () => {
+    const changed = await send('PUT', '/api/socialnetwork/Instagram', {
+      descricao: 'Insta',
+      link: 'https://instagram.com/novo',
+    });
+    expect(changed.status).toBe(200);
+    expect(await changed.json()).toEqual({ id: 3, descricao: 'Instagram', link: 'https://instagram.com/novo' });
+
+    expect((await send('PUT', '/api/socialnetwork/Instagram', { link: ' ' })).status).toBe(400);
+    expect((await send('PUT', '/api/socialnetwork/TikTok', { link: 'https://t.co' })).status).toBe(409);
+    expect(onChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('changes the link of a product in a sales channel and refuses a pair that does not exist', async () => {
+    const changed = await send('PUT', '/api/canalvendaproduto?produtoId=1&canalVendaId=4', {
+      link: 'https://shopee.com.br/balde-novo',
+    });
+    expect(changed.status).toBe(200);
+    expect(database.purchaseLinks).toEqual([
+      { produtoId: 1, canalVendaId: 4, link: 'https://shopee.com.br/balde-novo' },
+    ]);
+
+    expect((await send('PUT', '/api/canalvendaproduto?produtoId=1&canalVendaId=9', { link: 'https://x.com' })).status).toBe(
+      404,
+    );
+    expect((await send('PUT', '/api/canalvendaproduto?produtoId=1&canalVendaId=4', { link: ' ' })).status).toBe(400);
+    expect(onChange).toHaveBeenCalledTimes(1);
   });
 
   it('does not report reads nor writes the api refuses', async () => {
@@ -110,19 +123,15 @@ describe('local api handlers', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  it('keeps an uploaded photo in the image store and serves it back', async () => {
+  it('keeps an uploaded photo in the image store', async () => {
     const uploaded = await uploadPhoto(1, 'png-bytes');
     expect(uploaded.status).toBe(201);
-    expect(await uploaded.json()).toEqual({ id: 5, produtoId: 1, imagemUrl: 'http://localhost/local-images/5' });
+    expect(await uploaded.json()).toEqual({ id: 5, produtoId: 1, imagemUrl: `${UPLOADED_IMAGES}5` });
     expect(onChange).toHaveBeenCalledTimes(1);
 
-    const served = await fetch('/local-images/5');
-    expect(served.headers.get('content-type')).toBe('image/png');
-    expect(await served.text()).toBe('png-bytes');
-  });
-
-  it('answers 404 for a photo that is not stored', async () => {
-    expect((await fetch('/local-images/99')).status).toBe(404);
+    const stored = await images.get(5);
+    expect(stored?.type).toBe('image/png');
+    expect(await stored?.text()).toBe('png-bytes');
   });
 
   it('removes the stored file when the photo is deleted', async () => {
@@ -165,11 +174,6 @@ describe('local api handlers', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  it('serves a stored file of another type as plain bytes', async () => {
-    await images.save(9, new Blob(['<script>alert(1)</script>'], { type: 'text/html' }));
-    expect((await fetch('/local-images/9')).headers.get('content-type')).toBe('application/octet-stream');
-  });
-
   it('deletes a product even when a stored photo cannot be removed, and leaves remote photos alone', async () => {
     database.productImages.push({ id: 8, produtoId: 1, imagemUrl: 'https://res.cloudinary.com/mk/balde.png' });
     await images.save(8, new Blob(['outra'], { type: 'image/png' }));
@@ -189,7 +193,6 @@ describe('local api handlers', () => {
       baseUrl: '/api',
       onChange,
       images,
-      imageUrl: String,
       reproduceApiBugs: true,
     });
     const answerTo = (path: string) => getResponse(handlers, new Request(new URL(path, location.origin)));
@@ -207,8 +210,7 @@ describe('local api handlers without the api bugs', () => {
         baseUrl: '/api',
         onChange,
         images,
-        imageUrl: (id) => `http://localhost/local-images/${id}`,
-        reproduceApiBugs: false,
+          reproduceApiBugs: false,
       }),
     );
   });
@@ -229,30 +231,11 @@ describe('local api handlers without the api bugs', () => {
     expect((await send('POST', '/api/socialnetwork', { descricao: ' ', link: 'https://t.co' })).status).toBe(400);
   });
 
-  it('renames a social network and refuses only a name taken by another network', async () => {
-    database.socialNetworks.push({ id: 9, descricao: 'Shopee', link: 'https://shopee.com.br/mk' });
-
-    const kept = await send('PUT', '/api/socialnetwork/Instagram', {
-      descricao: 'Instagram',
-      link: 'https://instagram.com/novo',
-    });
-    expect(kept.status).toBe(200);
-    expect(await kept.json()).toEqual({ id: 3, descricao: 'Instagram', link: 'https://instagram.com/novo' });
-
-    const renamed = await send('PUT', '/api/socialnetwork/Instagram', { descricao: 'Insta' });
-    expect(await renamed.json()).toEqual({ id: 3, descricao: 'Insta', link: 'https://instagram.com/novo' });
-    expect(onChange).toHaveBeenCalledTimes(2);
-
-    expect((await send('PUT', '/api/socialnetwork/Insta', { descricao: 'Shopee' })).status).toBe(409);
-    expect((await send('PUT', '/api/socialnetwork/Instagram', { descricao: 'Novo' })).status).toBe(409);
-    expect(database.socialNetworks.map((socialNetwork) => socialNetwork.descricao)).toEqual(['Insta', 'Shopee']);
-  });
-
   it('deletes a product without purchase link nor category along with its photos', async () => {
     database.purchaseLinks = [];
     database.productCategories = [];
     await uploadPhoto(1, 'frente');
-    database.productImages.push({ id: 7, produtoId: 8, imagemUrl: 'http://localhost/local-images/7' });
+    database.productImages.push({ id: 7, produtoId: 8, imagemUrl: `${UPLOADED_IMAGES}7` });
     await images.save(7, new Blob(['outro'], { type: 'image/png' }));
 
     expect((await send('DELETE', '/api/produto/1')).status).toBe(200);
@@ -371,8 +354,7 @@ describe('local api users without the api bugs', () => {
         baseUrl: '/api',
         onChange,
         images,
-        imageUrl: String,
-        reproduceApiBugs: false,
+          reproduceApiBugs: false,
       }),
     );
   });
@@ -390,114 +372,103 @@ describe('local api users without the api bugs', () => {
   });
 });
 
-describe('local api store settings', () => {
-  it('reads the store settings', async () => {
-    const answer = await send('GET', '/api/configuracao');
-    expect(answer.status).toBe(200);
-    expect(await answer.json()).toEqual({ address: SEED_ADDRESS, logoUrl: null });
+const STORE = { id: 1, nomeLoja: 'multikoisas', descricaoLoja: 'Tudo em um só lugar' };
+
+describe('local api store', () => {
+  it('finds the store by name ignoring case and answers 404 when there is none', async () => {
+    database.stores.push({ ...STORE });
+    expect(await (await send('GET', '/api/loja?nome=MultiKoisas')).json()).toEqual([STORE]);
+    expect((await send('GET', '/api/loja?nome=outra')).status).toBe(404);
   });
 
-  it('saves the store settings and keeps the logo', async () => {
-    database.storeSettings.logoUrl = '/local-images/50';
-    const saved = await send('PUT', '/api/configuracao', VALID_SETTINGS);
-    expect(saved.status).toBe(200);
-    expect(await saved.json()).toEqual({ ...VALID_SETTINGS, logoUrl: '/local-images/50' });
-    expect(database.storeSettings).toEqual({ ...VALID_SETTINGS, logoUrl: '/local-images/50' });
-    expect(onChange).toHaveBeenCalledTimes(1);
-  });
+  it('creates the store and changes its description by name', async () => {
+    const created = await send('POST', '/api/loja', { nomeLoja: 'multikoisas', descricaoLoja: 'Primeira' });
+    expect(created.status).toBe(201);
+    expect(await created.json()).toEqual({ id: 5, nomeLoja: 'multikoisas', descricaoLoja: 'Primeira' });
 
-  it('saves empty fields as missing', async () => {
-    expect((await send('PUT', '/api/configuracao', { address: ' ' })).status).toBe(200);
-    expect(database.storeSettings).toEqual({ address: null, logoUrl: null });
-  });
-
-  it.each([{ address: 10 }])('refuses invalid store settings %o', async (invalidField) => {
-    const refused = await send('PUT', '/api/configuracao', { ...VALID_SETTINGS, ...invalidField });
-    expect(refused.status).toBe(400);
-    expect(database.storeSettings.address).toBe(SEED_ADDRESS);
-    expect(onChange).not.toHaveBeenCalled();
-  });
-
-  it('answers 507 and keeps the settings when the browser refuses to save them', async () => {
-    onChange.mockReturnValue(false);
-    expect((await send('PUT', '/api/configuracao', VALID_SETTINGS)).status).toBe(507);
-    expect(database.storeSettings.address).toBe(SEED_ADDRESS);
-  });
-
-  it.each(['null', '[]', '"Rua Nova"'])('refuses the store settings body %s', async (body) => {
-    const refused = await fetch('/api/configuracao', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body,
-    });
-    expect(refused.status).toBe(400);
-    expect(database.storeSettings.address).toBe(SEED_ADDRESS);
-    expect(onChange).not.toHaveBeenCalled();
-  });
-
-  it('keeps the omitted store settings and clears the ones sent empty', async () => {
-    expect((await send('PUT', '/api/configuracao', {})).status).toBe(200);
-    expect(database.storeSettings.address).toBe(SEED_ADDRESS);
-    expect((await send('PUT', '/api/configuracao', { address: null })).status).toBe(200);
-    expect(database.storeSettings.address).toBeNull();
-  });
-
-  it('ignores the google fields the store no longer keeps', async () => {
-    expect((await send('PUT', '/api/configuracao', { ...VALID_SETTINGS, googleRating: 4.9 })).status).toBe(200);
-    expect(database.storeSettings).toEqual({ ...VALID_SETTINGS, logoUrl: null });
-  });
-
-  it('keeps an uploaded logo in the image store, serves it and forgets the previous one', async () => {
-    const first = await uploadLogo('primeira');
-    expect(first.status).toBe(200);
-    expect(await first.json()).toEqual(expect.objectContaining({ logoUrl: '/local-images/5' }));
-
-    expect((await uploadLogo('<svg/>', 'image/svg+xml')).status).toBe(200);
-    expect(database.storeSettings.logoUrl).toBe('/local-images/6');
-    expect(await images.get(5)).toBeUndefined();
-    const served = await fetch('/local-images/6');
-    expect(served.headers.get('content-type')).toBe('image/svg+xml');
-    expect(await served.text()).toBe('<svg/>');
+    const updated = await send('PUT', '/api/loja/multikoisas', { descricaoLoja: 'Segunda' });
+    expect(updated.status).toBe(200);
+    expect(database.stores).toEqual([{ id: 5, nomeLoja: 'multikoisas', descricaoLoja: 'Segunda' }]);
     expect(onChange).toHaveBeenCalledTimes(2);
   });
 
-  it.each(['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'])('accepts a %s logo', async (type) => {
-    expect((await uploadLogo('bytes', type)).status).toBe(200);
-  });
-
-  it('refuses a logo of another type, too big or missing', async () => {
-    expect((await uploadLogo('gif', 'image/gif')).status).toBe(415);
-    expect((await uploadLogo('x'.repeat(1_048_577))).status).toBe(413);
-    expect((await uploadLogo('')).status).toBe(400);
-    expect((await fetch('/api/configuracao/logo', { method: 'POST', body: new FormData() })).status).toBe(400);
-    expect(database.storeSettings.logoUrl).toBeNull();
+  it('refuses a store without name, a name taken and a description change of a missing store', async () => {
+    database.stores.push({ ...STORE });
+    expect((await send('POST', '/api/loja', { nomeLoja: ' ' })).status).toBe(400);
+    expect((await send('POST', '/api/loja', { nomeLoja: 'multikoisas' })).status).toBe(409);
+    expect((await send('PUT', '/api/loja/outra', { descricaoLoja: 'x' })).status).toBe(404);
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  it('keeps the previous logo when the browser refuses to save the new one', async () => {
-    await uploadLogo('primeira');
+  it('answers 507 and keeps the description when the browser refuses to save it', async () => {
+    database.stores.push({ ...STORE });
     onChange.mockReturnValue(false);
-    expect((await uploadLogo('segunda')).status).toBe(507);
-    expect(database.storeSettings.logoUrl).toBe('/local-images/5');
-    expect(await images.get(5)).toBeDefined();
-    expect(await images.get(6)).toBeUndefined();
+    expect((await send('PUT', '/api/loja/multikoisas', { descricaoLoja: 'Outra' })).status).toBe(507);
+    expect(database.stores).toEqual([STORE]);
+  });
+});
+
+const uploadStoreImage = (tipo: string, content: string, type = 'image/png') =>
+  fetch(`/api/imagemloja?tipo=${tipo}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'multipart/form-data; boundary=limite' },
+    body: [
+      '--limite',
+      'Content-Disposition: form-data; name="file"; filename="logo.png"',
+      `Content-Type: ${type}`,
+      '',
+      content,
+      '--limite--',
+      '',
+    ].join('\r\n'),
   });
 
-  it('goes back to the default logo and forgets the stored one', async () => {
-    await uploadLogo('primeira');
-    const removed = await send('DELETE', '/api/configuracao/logo');
-    expect(removed.status).toBe(200);
-    expect(await removed.json()).toEqual(expect.objectContaining({ logoUrl: null }));
-    expect(database.storeSettings.logoUrl).toBeNull();
+describe('local api store images', () => {
+  it('lists the images of a type and answers 404 with a message when there is none', async () => {
+    database.storeImages.push({ id: 1, imagemUrl: 'URL 1', tipo: 'LOGO' });
+    expect(await (await send('GET', '/api/imagemloja?tipo=LOGO')).json()).toEqual([
+      { id: 1, imagemUrl: 'URL 1', tipo: 'LOGO' },
+    ]);
+    const none = await send('GET', '/api/imagemloja?tipo=CAPA');
+    expect(none.status).toBe(404);
+    expect(await none.json()).toEqual({ message: 'Nenhuma imagem encontrada.' });
+  });
+
+  it('keeps an uploaded store image at an https url', async () => {
+    const uploaded = await uploadStoreImage('CAPA', 'fachada');
+    expect(uploaded.status).toBe(201);
+    expect(database.storeImages).toEqual([{ id: 5, imagemUrl: `${UPLOADED_IMAGES}5`, tipo: 'CAPA' }]);
+    expect(await (await images.get(5))?.text()).toBe('fachada');
+    expect(onChange).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'])('accepts a %s store image', async (type) => {
+    expect((await uploadStoreImage('LOGO', 'bytes', type)).status).toBe(201);
+  });
+
+  it('refuses an unknown type, another file type, a file too big or missing', async () => {
+    expect((await uploadStoreImage('FUNDO', 'bytes')).status).toBe(400);
+    expect((await uploadStoreImage('LOGO', 'gif', 'image/gif')).status).toBe(415);
+    expect((await uploadStoreImage('LOGO', 'x'.repeat(1_048_577))).status).toBe(413);
+    expect((await uploadStoreImage('LOGO', '')).status).toBe(400);
+    expect((await fetch('/api/imagemloja?tipo=LOGO', { method: 'POST', body: new FormData() })).status).toBe(400);
+    expect(database.storeImages).toEqual([]);
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('forgets the upload when the browser refuses to save it', async () => {
+    onChange.mockReturnValue(false);
+    expect((await uploadStoreImage('LOGO', 'bytes')).status).toBe(507);
+    expect(database.storeImages).toEqual([]);
     expect(await images.get(5)).toBeUndefined();
-    expect((await send('DELETE', '/api/configuracao/logo')).status).toBe(200);
   });
 
-  it('keeps the logo when the browser refuses to save the default one', async () => {
-    await uploadLogo('primeira');
-    onChange.mockReturnValue(false);
-    expect((await send('DELETE', '/api/configuracao/logo')).status).toBe(507);
-    expect(database.storeSettings.logoUrl).toBe('/local-images/5');
-    expect(await images.get(5)).toBeDefined();
+  it('deletes a store image of the type and answers 404 when it does not exist', async () => {
+    await uploadStoreImage('LOGO', 'bytes');
+    expect((await send('DELETE', '/api/imagemloja/CAPA?id=5')).status).toBe(404);
+    expect((await send('DELETE', '/api/imagemloja/LOGO?id=5')).status).toBe(200);
+    expect(database.storeImages).toEqual([]);
+    expect(await images.get(5)).toBeUndefined();
+    expect(onChange).toHaveBeenCalledTimes(2);
   });
 });

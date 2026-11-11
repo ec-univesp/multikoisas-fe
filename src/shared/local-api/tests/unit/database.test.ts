@@ -23,6 +23,16 @@ describe('createDatabase', () => {
     ).toBe(61);
   });
 
+  it('continues the ids after the store rows and starts without them when the seed has none', () => {
+    const database = createDatabase({
+      ...seed,
+      stores: [{ id: 70, nomeLoja: 'multikoisas', descricaoLoja: 'Tudo em um só lugar' }],
+      storeImages: [{ id: 80, imagemUrl: 'URL 1', tipo: 'LOGO' }],
+    });
+    expect(database.nextId).toBe(81);
+    expect(createDatabase(seed)).toEqual(expect.objectContaining({ stores: [], storeImages: [] }));
+  });
+
   it('starts with no users when the seed has none', () => {
     expect(createDatabase({ ...seed, users: undefined }).users).toEqual([]);
   });

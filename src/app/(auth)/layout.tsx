@@ -18,7 +18,6 @@ import {
   Wrench,
 } from 'lucide-react';
 import { StoreLogo } from '@/entities/store-settings';
-import { LocalApiProvider } from '@/shared/local-api/LocalApiProvider';
 
 const PANEL_ICON_KINDS = [
   Hammer,
@@ -131,9 +130,7 @@ export default function AuthLayout({ children }: Readonly<{ children: React.Reac
         </div>
 
         <div className="relative max-w-md">
-          <LocalApiProvider fallback={TEXT_BRAND}>
-            <StoreLogo fallback={TEXT_BRAND} />
-          </LocalApiProvider>
+          <StoreLogo fallback={TEXT_BRAND} />
           <p className="mt-1 text-sm font-medium text-white/80 lg:text-base">Painel da loja</p>
           <p className="mt-5 hidden text-sm leading-relaxed text-white/60 lg:block lg:text-base">
             Produtos, fotos e links de compra da vitrine, tudo num lugar só.

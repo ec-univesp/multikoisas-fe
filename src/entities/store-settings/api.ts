@@ -1,7 +1,12 @@
-import { getObjectFromApi } from '@/shared/api/getFromApi';
-import type { StoreSettings, StoreSettingsValues } from './types';
+import { getFromApi } from '@/shared/api/getFromApi';
+import { toDisplayableImageUrl } from '@/shared/api/imageUrl';
+import type { StoreImageType, StoreSettings } from './types';
 
+type ApiStore = { id: number; nomeLoja: string; descricaoLoja: string | null };
+type ApiStoreImage = { id: number; imagemUrl: string; tipo: string };
 type StoreSettingsListener = (settings: StoreSettings) => void;
+
+const STORE_NAME = 'multikoisas';
 
 const listeners = new Set<StoreSettingsListener>();
 
@@ -12,26 +17,88 @@ export const onStoreSettingsSaved = (listener: StoreSettingsListener) => {
   };
 };
 
-const sendToApi = async (method: string, path: string, init: RequestInit = {}): Promise<StoreSettings> => {
-  const response = await fetch(`/api${path}`, { method, ...init });
+const sendToApi = async (method: string, path: string, body?: unknown) => {
+  const init: RequestInit =
+    body instanceof FormData || body === undefined
+      ? { method, body }
+      : { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
+  const response = await fetch(`/api${path}`, init);
   if (!response.ok) throw new Error(`${method} ${path} responded ${response.status}`);
-  const settings: StoreSettings = await response.json();
+};
+
+const fetchStore = async (): Promise<ApiStore | null> =>
+  (await getFromApi<ApiStore>(`/loja?nome=${STORE_NAME}`))[0] ?? null;
+
+const fetchStoreImages = (type: StoreImageType) => getFromApi<ApiStoreImage>(`/imagemloja?tipo=${type}`);
+
+// The API keeps placeholders such as "URL 1" among the images; only displayable ones are shown or deleted.
+const displayableImages = (images: ApiStoreImage[]) =>
+  images.flatMap((image) => {
+    const imagemUrl = toDisplayableImageUrl(image.imagemUrl);
+    return imagemUrl ? [{ ...image, imagemUrl }] : [];
+  });
+
+const newestImageUrl = (images: ApiStoreImage[]) =>
+  displayableImages(images).sort((first, second) => second.id - first.id)[0]?.imagemUrl ?? null;
+
+const valueOf = <Value>(result: PromiseSettledResult<Value>) => (result.status === 'fulfilled' ? result.value : null);
+
+export const fetchStoreSettings = async (): Promise<StoreSettings> => {
+  const results = await Promise.allSettled([fetchStore(), fetchStoreImages('LOGO'), fetchStoreImages('CAPA')]);
+  // Without the store row the panel would offer an empty description and save it over the real one.
+  if (results[0].status === 'rejected') throw new Error('The store row could not be read');
+  const [store, logos, photos] = results;
+  return {
+    description: valueOf(store)?.descricaoLoja?.trim() || null,
+    logoUrl: newestImageUrl(valueOf(logos) ?? []),
+    photoUrl: newestImageUrl(valueOf(photos) ?? []),
+  };
+};
+
+let inFlightRead: Promise<StoreSettings> | null = null;
+
+export const readStoreSettings = ({ fresh = false } = {}) => {
+  if (inFlightRead && !fresh) return inFlightRead;
+  const read = fetchStoreSettings().finally(() => {
+    if (inFlightRead === read) inFlightRead = null;
+  });
+  inFlightRead = read;
+  return read;
+};
+
+const reloadStoreSettings = async () => {
+  const settings = await readStoreSettings({ fresh: true });
   listeners.forEach((listener) => listener(settings));
   return settings;
 };
 
-export const fetchStoreSettings = () => getObjectFromApi<StoreSettings>('/configuracao');
-
-export const saveStoreSettings = (values: StoreSettingsValues) =>
-  sendToApi('PUT', '/configuracao', {
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(values),
-  });
-
-export const saveStoreLogo = (file: File) => {
-  const form = new FormData();
-  form.append('file', file);
-  return sendToApi('POST', '/configuracao/logo', { body: form });
+const deleteDisplayableImages = async (type: StoreImageType, images: ApiStoreImage[]) => {
+  const deletions = await Promise.allSettled(
+    displayableImages(images).map((image) => sendToApi('DELETE', `/imagemloja/${type}?id=${image.id}`)),
+  );
+  return deletions.find((deletion) => deletion.status === 'rejected');
 };
 
-export const removeStoreLogo = () => sendToApi('DELETE', '/configuracao/logo');
+export const saveStoreDescription = async (description: string) => {
+  const store = await fetchStore();
+  if (store) await sendToApi('PUT', `/loja/${encodeURIComponent(store.nomeLoja)}`, { descricaoLoja: description });
+  else await sendToApi('POST', '/loja', { nomeLoja: STORE_NAME, descricaoLoja: description });
+  return reloadStoreSettings();
+};
+
+export const saveStoreImage = async (type: StoreImageType, file: File) => {
+  const olderImages = await fetchStoreImages(type);
+  const form = new FormData();
+  form.append('file', file);
+  await sendToApi('POST', `/imagemloja?tipo=${type}`, form);
+  // ponytail: an older image that fails to delete stays behind; the newest one is the one shown.
+  await deleteDisplayableImages(type, olderImages);
+  return reloadStoreSettings().catch(() => null);
+};
+
+export const removeStoreImage = async (type: StoreImageType) => {
+  const failedDeletion = await deleteDisplayableImages(type, await fetchStoreImages(type));
+  const settings = await reloadStoreSettings();
+  if (failedDeletion) throw failedDeletion.reason;
+  return settings;
+};

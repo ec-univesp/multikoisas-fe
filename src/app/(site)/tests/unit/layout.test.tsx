@@ -1,8 +1,8 @@
 import { Children, isValidElement, type ReactElement, type ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
 import { ShowcaseSearchProvider } from '@/features/showcase-filter';
-import { LocalApiProvider } from '@/shared/local-api/LocalApiProvider';
 import { GoogleReviewsBadge } from '@/widgets/google-reviews-badge';
+import { SiteFooter } from '@/widgets/site-footer';
 import { SiteHeader } from '@/widgets/site-header';
 import { WhatsAppFloatingButton } from '@/widgets/whatsapp-floating-button';
 import SiteLayout from '../../layout';
@@ -40,12 +40,14 @@ describe('SiteLayout', () => {
     expect(isValidElement(whatsApp) && whatsApp.type).toBe(WhatsAppFloatingButton);
   });
 
-  it('waits for the local api around the whole site but forces the light theme before it starts', async () => {
-    const layout = await SiteLayout({ children: <p>página</p> });
-    const provider = findElementByType(layout, LocalApiProvider);
-    expect(findElementByType(provider, ShowcaseSearchProvider)).toBeDefined();
-    expect(findElementByType(provider, 'aside')).toBeDefined();
-    expect(findElementByType(provider, 'script')).toBeUndefined();
-    expect(findElementByType(layout, 'script')).toBeDefined();
+  it('forces the light theme and renders the site right away, without waiting for a browser api', async () => {
+    const layout = (await SiteLayout({ children: <p>página</p> })) as ElementWithChildren;
+    const [script, ...site] = Children.toArray(layout.props.children);
+    expect(isValidElement(script) && script.type).toBe('script');
+    expect(site.map((element) => isValidElement(element) && element.type)).toEqual([
+      ShowcaseSearchProvider,
+      SiteFooter,
+      'aside',
+    ]);
   });
 });
