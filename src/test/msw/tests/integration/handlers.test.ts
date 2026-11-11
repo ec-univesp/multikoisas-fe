@@ -187,25 +187,26 @@ describe('multikoisas-api handlers', () => {
     expect((await send('GET', '/api/socialnetwork?name=TikTok')).status).toBe(404);
   });
 
-  it('finds, updates the link and deletes a social network by its exact description', async () => {
+  it('finds a social network by its exact description, updates the link and deletes it by id', async () => {
     apiDatabase.socialNetworks.push({ id: 7, descricao: 'TikTok', link: 'https://tiktok.com/@mk' });
     expect((await send('GET', '/api/socialnetwork?name=tiktok')).status).toBe(404);
     expect(await (await send('GET', '/api/socialnetwork?name=TikTok')).json()).toEqual([
       { id: 7, descricao: 'TikTok', link: 'https://tiktok.com/@mk' },
     ]);
-    const updated = await send('PUT', '/api/socialnetwork/TikTok', { link: 'https://tiktok.com/@multikoisas' });
+    const updated = await send('PUT', '/api/socialnetwork/7', { link: 'https://tiktok.com/@multikoisas' });
     expect(await updated.json()).toEqual({ id: 7, descricao: 'TikTok', link: 'https://tiktok.com/@multikoisas' });
-    expect((await send('DELETE', '/api/socialnetwork/tiktok')).status).toBe(404);
-    expect((await send('DELETE', '/api/socialnetwork/TikTok')).status).toBe(200);
+    expect((await send('DELETE', '/api/socialnetwork/TikTok')).status).toBe(404);
+    expect((await send('DELETE', '/api/socialnetwork/99')).status).toBe(404);
+    expect((await send('DELETE', '/api/socialnetwork/7')).status).toBe(200);
   });
 
-  it('changes only the link on put and answers 409 to an unknown description, like the real api', async () => {
+  it('changes only the link on put and answers 404 to an unknown id, like the real api', async () => {
     apiDatabase.socialNetworks.push({ id: 7, descricao: 'TikTok', link: 'https://tiktok.com/@mk' });
-    const changed = await send('PUT', '/api/socialnetwork/TikTok', { descricao: 'Kwai', link: 'https://x' });
+    const changed = await send('PUT', '/api/socialnetwork/7', { descricao: 'Kwai', link: 'https://x' });
     expect(await changed.json()).toEqual({ id: 7, descricao: 'TikTok', link: 'https://x' });
-    const unknown = await send('PUT', '/api/socialnetwork/tiktok', { link: 'https://x' });
-    expect(unknown.status).toBe(409);
-    expect(await unknown.text()).toBe('Descrição não encontrado.');
+    expect((await send('PUT', '/api/socialnetwork/7', { link: ' ' })).status).toBe(400);
+    expect((await send('PUT', '/api/socialnetwork/99', { link: 'https://x' })).status).toBe(404);
+    expect((await send('PUT', '/api/socialnetwork/TikTok', { link: 'https://x' })).status).toBe(404);
   });
 
   it('hands a token only to the right API credentials', async () => {

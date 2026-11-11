@@ -326,7 +326,7 @@ describe('SocialNetworkAdminPanel', () => {
     apiDatabase.socialNetworks.push({ id: 3, descricao: 'Minha  Loja', link: 'loja.com' });
     const bodies: unknown[] = [];
     server.use(
-      http.put('*/socialnetwork/:description', async ({ request }) => {
+      http.put('*/socialnetwork/:id', async ({ request }) => {
         bodies.push(await request.clone().json());
       }),
     );
@@ -340,8 +340,25 @@ describe('SocialNetworkAdminPanel', () => {
     expect(await screen.findByText('https://loja.com')).toBeInTheDocument();
     expect(screen.queryByText('Link sem https, não aparece na vitrine')).not.toBeInTheDocument();
     expect(apiDatabase.socialNetworks).toContainEqual({ id: 3, descricao: 'Minha  Loja', link: 'https://loja.com' });
-    expect(apiRequests).toEqual(['PUT /api/socialnetwork/Minha%20%20Loja']);
+    expect(apiRequests).toEqual(['PUT /api/socialnetwork/3']);
     expect(bodies).toEqual([{ link: 'https://loja.com' }]);
+  });
+
+  it('changes and deletes a network with spaces and accents in the name through its id, whatever the put answers', async () => {
+    apiDatabase.socialNetworks.push({ id: 3, descricao: 'Coleção Única', link: 'https://colecao.com' });
+    server.use(http.put('*/socialnetwork/:id', () => new HttpResponse(null, { status: 200 })));
+    const user = userEvent.setup();
+    renderPanel([{ id: 3, name: 'Coleção Única', url: 'https://colecao.com' }]);
+
+    await user.click(screen.getByRole('button', { name: 'Editar Coleção Única' }));
+    await fillLink(user, 'https://colecao.com/nova');
+    expect(await screen.findByText('https://colecao.com/nova')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Apagar Coleção Única' }));
+    await user.click(screen.getByRole('button', { name: 'Apagar' }));
+
+    expect(await screen.findByText('Nenhuma rede cadastrada.')).toBeInTheDocument();
+    expect(apiRequests).toEqual(['PUT /api/socialnetwork/3', 'DELETE /api/socialnetwork/3']);
   });
 
   it('shows the name read-only when editing and explains how to change it', async () => {
@@ -383,11 +400,11 @@ describe('SocialNetworkAdminPanel', () => {
     );
     expect(screen.queryByLabelText('Nome da rede')).not.toBeInTheDocument();
     expect(screen.getByText('2 redes cadastradas')).toBeInTheDocument();
-    expect(apiRequests).toEqual(['PUT /api/socialnetwork/TikTok', 'GET /api/socialnetwork']);
+    expect(apiRequests).toEqual(['PUT /api/socialnetwork/9', 'GET /api/socialnetwork']);
   });
 
   it('keeps the form open with a generic message on another 409 from the edit', async () => {
-    respondWith('put', '*/socialnetwork/:description', 409);
+    respondWith('put', '*/socialnetwork/:id', 409);
     const user = userEvent.setup();
     renderPanel();
 
@@ -417,7 +434,7 @@ describe('SocialNetworkAdminPanel', () => {
 
     expect(await screen.findByText('Nenhuma rede cadastrada.')).toBeInTheDocument();
     expect(apiDatabase.socialNetworks.map((socialNetwork) => socialNetwork.descricao)).toEqual(['Instagram']);
-    expect(apiRequests).toEqual(['DELETE /api/socialnetwork/Shopee']);
+    expect(apiRequests).toEqual(['DELETE /api/socialnetwork/2']);
   });
 
   it('drops a social network that was already deleted elsewhere (api answers 404)', async () => {
@@ -432,7 +449,7 @@ describe('SocialNetworkAdminPanel', () => {
   });
 
   it('keeps the social network with a generic message on other delete failures', async () => {
-    respondWith('delete', '*/socialnetwork/:description', 401);
+    respondWith('delete', '*/socialnetwork/:id', 401);
     const user = userEvent.setup();
     renderPanel();
 
@@ -446,7 +463,7 @@ describe('SocialNetworkAdminPanel', () => {
   });
 
   it('blocks cancel, Escape and a second confirmation while the social network is being deleted', async () => {
-    server.use(http.delete('*/socialnetwork/:description', () => delay('infinite')));
+    server.use(http.delete('*/socialnetwork/:id', () => delay('infinite')));
     const user = userEvent.setup();
     renderPanel();
 

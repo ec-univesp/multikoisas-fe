@@ -17,7 +17,7 @@ const toSocialNetwork = (socialNetwork: SocialNetworkResponse): SocialNetwork =>
   url: socialNetwork.link,
 });
 
-const pathOf = (socialNetwork: SocialNetwork): string => `/api/socialnetwork/${encodeURIComponent(socialNetwork.name)}`;
+const pathOf = (socialNetwork: SocialNetwork): string => `/api/socialnetwork/${socialNetwork.id}`;
 
 const sendToApi = (method: string, path: string, body: { descricao?: string; link: string }): Promise<Response> =>
   fetch(path, {
@@ -47,9 +47,10 @@ export const updateSocialNetwork = async (
 ): Promise<SocialNetwork> => {
   const request = `PUT ${pathOf(socialNetwork)}`;
   const response = await sendToApi('PUT', pathOf(socialNetwork), { link: url });
+  if (response.status === HTTP_NOT_FOUND) throw new SocialNetworkChangedElsewhereError(`${request} responded 404`);
   if (response.status === HTTP_CONFLICT) throw await conflictErrorOf(response, request);
   if (!response.ok) throw new Error(`${request} responded ${response.status}`);
-  return toSocialNetwork(await response.json());
+  return { ...socialNetwork, url };
 };
 
 export const deleteSocialNetwork = async (socialNetwork: SocialNetwork): Promise<void> => {
