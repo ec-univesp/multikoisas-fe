@@ -10,13 +10,13 @@ O site mostra os produtos e leva o visitante para comprar nas lojas parceiras: a
 [![Site no ar](https://img.shields.io/badge/site-multikoisas.netlify.app-0CCE6B?style=flat-square&logo=netlify&logoColor=white)](https://multikoisas.netlify.app)
 [![API](https://img.shields.io/badge/API-Swagger-85EA2D?style=flat-square&logo=swagger&logoColor=black)](https://multikoisas-univesp.onrender.com/swagger-ui/index.html)
 [![Tarefas](https://img.shields.io/badge/tarefas-Linear-5E6AD2?style=flat-square&logo=linear&logoColor=white)](https://linear.app/skimpara/project/pi2-site-multikoisas-f810dc2fae75)
-![Versão](https://img.shields.io/badge/versão-0.15.1-4F46E5?style=flat-square)
+![Versão](https://img.shields.io/badge/versão-0.15.2-4F46E5?style=flat-square)
 
 ![Next.js](https://img.shields.io/badge/Next.js-16-000000?style=flat-square&logo=nextdotjs&logoColor=white)
 ![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-estrito-3178C6?style=flat-square&logo=typescript&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)
-![pnpm](https://img.shields.io/badge/pnpm-11-F69220?style=flat-square&logo=pnpm&logoColor=white)
+![vlt](https://img.shields.io/badge/pacotes-vlt-111111?style=flat-square)
 ![MSW](https://img.shields.io/badge/MSW-API_simulada_nos_testes-FF6A33?style=flat-square&logo=mockserviceworker&logoColor=white)
 ![Spring Boot](https://img.shields.io/badge/back--end-Spring_Boot-6DB33F?style=flat-square&logo=springboot&logoColor=white)
 
@@ -44,16 +44,16 @@ Projeto integrador da UNIVESP · time Squad PI2
 
 ## Duas superfícies, um projeto
 
-| Endereço                | O que é                                                                                 |
-| ----------------------- | --------------------------------------------------------------------------------------- |
-| `/`                     | Página inicial: a loja, produtos em destaque, como comprar, avaliações do Google e mapa |
-| `/showcase`             | Vitrine com todos os produtos, busca e filtro por categoria                             |
-| `/product/<slug>`       | Página do produto: fotos, descrição e os botões das lojas onde comprar                  |
-| `/panel`                | Login do painel                                                                         |
-| `/admin/products`       | Produtos: criar, editar, apagar, fotos, categoria e links de compra                     |
-| `/admin/categories`     | Categorias                                                                              |
-| `/admin/sales-channels` | Canais de venda (Shopee, Mercado Livre, Magalu...)                                      |
-| `/admin/users`          | Usuários do painel                                                                      |
+| Endereço                | O que é                                                                                   |
+| ----------------------- | ----------------------------------------------------------------------------------------- |
+| `/`                     | Página inicial: a loja, produtos em destaque, como comprar, avaliações do Google e mapa   |
+| `/showcase`             | Vitrine com todos os produtos, busca e filtro por categoria                               |
+| `/product/<slug>`       | Página do produto: fotos, descrição e os botões das lojas onde comprar                    |
+| `/panel`                | Login do painel                                                                           |
+| `/admin/products`       | Produtos: criar, editar, apagar, fotos, categoria e links de compra                       |
+| `/admin/categories`     | Categorias                                                                                |
+| `/admin/sales-channels` | Canais de venda (Shopee, Mercado Livre, Magalu...)                                        |
+| `/admin/users`          | Usuários do painel                                                                        |
 | `/store`                | Configurações de site: descrição, endereço, logo e foto da loja, redes sociais e WhatsApp |
 
 ## Como o front fala com a API
@@ -69,30 +69,55 @@ Os dados vêm da API do time, um serviço Spring Boot publicado no Render (<http
 
 ### Testar a API no Postman ou no Bruno
 
-Importe `collections/multikoisas-api.postman_collection.json` no Postman (**Import**) ou no Bruno (**Import Collection → Postman Collection**). Preencha `username` e `password` nas variáveis da coleção e rode **0 - Login**: o token fica salvo e vai sozinho nas rotas que pedem login. As requisições com **(grava no banco)** no nome alteram o banco real do time.
+A coleção `collections/multikoisas-api.postman_collection.json` tem todas as rotas do Swagger, conferidas em 11/11/2026, separadas por assunto:
+
+| Pasta                    | O que testa                                                          |
+| ------------------------ | -------------------------------------------------------------------- |
+| 0 - Login                | Entrar com usuário e senha e guardar o token                         |
+| 1 - Produtos             | Listar, buscar, criar, editar e apagar produto                       |
+| 2 - Categorias           | Listar, buscar pelo nome, criar, renomear e apagar categoria         |
+| 3 - Categoria do produto | Ligar e desligar categoria de um produto                             |
+| 4 - Canais de venda      | Listar, buscar pelo nome, criar, renomear e apagar canal             |
+| 5 - Links de compra      | Links de um produto: ligar, trocar o link e desligar                 |
+| 6 - Imagens              | Fotos de um produto: listar, enviar e apagar                         |
+| 7 - Redes sociais        | Listar, buscar por id ou nome, criar, trocar o link e apagar pelo id |
+| 8 - Usuários             | Usuários do painel                                                   |
+| 9 - Loja                 | Descrição e endereço da loja                                         |
+| 10 - Imagens da loja     | Logo e foto de capa da loja                                          |
+
+Como usar:
+
+1. **Postman:** clique em **Import** e escolha o arquivo. **Bruno:** clique em **Import Collection**, escolha **Postman Collection** e o arquivo.
+2. Nas variáveis da coleção, preencha `username` e `password` com a conta do painel.
+3. Rode **0 - Login**. O token fica salvo e vai sozinho nas rotas que pedem login.
+4. Troque os números de exemplo (`0`, `1`) pelo id do registro que quer testar.
+
+As requisições com **(grava no banco)** no nome alteram o banco real do time: use nomes de teste, como "TESTE QA", e apague o que criar.
 
 ## Como rodar na sua máquina
 
-Você precisa de **Node.js 20 ou mais novo** e **pnpm**. Para conferir o que já tem instalado:
+Você precisa de **Node.js 20 ou mais novo** e do gerenciador de pacotes **[vlt](https://www.vlt.io/)**. Para conferir o que já tem instalado:
 
 ```bash
 node --version
-pnpm --version
+vlt --version
 ```
 
-Se o `pnpm` não estiver instalado, a forma mais simples é pelo próprio Node:
+Se o `vlt` não estiver instalado:
 
 ```bash
-corepack enable pnpm
+npm install -g vlt
 ```
+
+Não precisa rodar `vlt setup` nem criar conta: o `vlt.json` do projeto já aponta para o registro público do npm.
 
 Com isso resolvido:
 
 ```bash
 git clone https://github.com/ec-univesp/multikoisas-fe.git
 cd multikoisas-fe
-pnpm install
-pnpm dev
+vlt install
+vlt run dev
 ```
 
 Abra <http://localhost:3000> e a vitrine aparece. O painel fica em <http://localhost:3000/panel>.
@@ -101,19 +126,19 @@ Abra <http://localhost:3000> e a vitrine aparece. O painel fica em <http://local
 
 Copie o `.env.example` para `.env.local` e preencha. Nenhuma delas vai para o repositório.
 
-| Variável                | Para quê                                                                                                      |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `MULTIKOISAS_API_URL`   | Endereço da API do time; sem ela, <https://multikoisas-univesp.onrender.com>                                  |
-| `SESSION_SECRET`        | Texto aleatório com 32 caracteres ou mais (`openssl rand -base64 48`); em `pnpm dev` há um de desenvolvimento |
-| `GOOGLE_PLACES_API_KEY` | Chave da Places API (New); sem ela a seção de avaliações do Google não aparece                                |
+| Variável                | Para quê                                                                                                         |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `MULTIKOISAS_API_URL`   | Endereço da API do time; sem ela, <https://multikoisas-univesp.onrender.com>                                     |
+| `SESSION_SECRET`        | Texto aleatório com 32 caracteres ou mais (`openssl rand -base64 48`); em `vlt run dev` há um de desenvolvimento |
+| `GOOGLE_PLACES_API_KEY` | Chave da Places API (New); sem ela a seção de avaliações do Google não aparece                                   |
 
 O login do painel usa as contas cadastradas na API (as mesmas de **Usuários** no painel).
 
 ### Se algo der errado
 
-**`pnpm: command not found`**: o corepack não foi habilitado. Rode `corepack enable pnpm` e abra um terminal novo.
+**`vlt: command not found`**: o vlt não foi instalado. Rode `npm install -g vlt` e abra um terminal novo.
 
-**A porta 3000 já está em uso**: outro projeto está rodando nela. Suba em outra porta com `pnpm dev --port 3001`.
+**A porta 3000 já está em uso**: outro projeto está rodando nela. Suba em outra porta com `vlt run dev --port 3001`.
 
 **No macOS, o git reclama da licença do Xcode**: aponte as ferramentas de linha de comando para a instalação leve com
 `sudo xcode-select --switch /Library/Developer/CommandLineTools`.
@@ -121,14 +146,15 @@ O login do painel usa as contas cadastradas na API (as mesmas de **Usuários** n
 ## Comandos disponíveis
 
 ```bash
-pnpm dev             # servidor de desenvolvimento
-pnpm build           # compila para produção
-pnpm start           # roda o que foi compilado (use depois do build)
-pnpm lint            # procura problemas de código
-pnpm typecheck       # confere os tipos do TypeScript
-pnpm test            # roda os testes uma vez
-pnpm test:watch      # roda os testes e fica observando os arquivos
-pnpm test:coverage   # roda os testes e mede a cobertura (mínimo de 90%)
+vlt install            # instala as dependências do vlt-lock.json
+vlt run dev            # servidor de desenvolvimento
+vlt run build          # compila para produção
+vlt run start          # roda o que foi compilado (use depois do build)
+vlt run lint           # procura problemas de código
+vlt run typecheck      # confere os tipos do TypeScript
+vlt run test           # roda os testes uma vez
+vlt run test:watch     # roda os testes e fica observando os arquivos
+vlt run test:coverage  # roda os testes e mede a cobertura (mínimo de 90%)
 ```
 
 ## Arquitetura: Feature-Sliced Design

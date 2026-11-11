@@ -1,21 +1,13 @@
 [build]
-  command = "pnpm build"
+  command = "npx --yes vlt@1.7.0 ci && npx --yes vlt@1.7.0 run build"
   publish = ".next"
 
 [build.environment]
   NODE_VERSION = "22"
+  # A Netlify não conhece o vlt e rodaria npm install antes do build; o --dry-run desliga essa etapa.
+  NPM_FLAGS = "--dry-run"
   # O cache do Turbopack guarda o valor das variaveis de ambiente e nao e publicado.
   SECRETS_SCAN_OMIT_PATHS = ".netlify/.next/cache/**,.next/cache/**"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
-
-# Branch de produção é a main; developer e feature branches saem como preview.
-[context.production]
-  command = "pnpm build"
-
-[context.deploy-preview]
-  command = "pnpm build"
-
-[context.branch-deploy]
-  command = "pnpm build"
