@@ -1,5 +1,5 @@
 import type { NextConfig } from 'next';
-import { PRODUCT_IMAGE_HOSTS, PRODUCT_IMAGE_PATH } from './src/entities/product/imageUrl';
+import { PRODUCT_IMAGE_HOSTS, PRODUCT_IMAGE_PATH } from './src/shared/api/imageUrl';
 import { API_URL } from './src/shared/api/getFromApi';
 
 const nextConfig: NextConfig = {

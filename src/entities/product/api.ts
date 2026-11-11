@@ -1,5 +1,5 @@
 import { getFromApi } from '@/shared/api/getFromApi';
-import { toDisplayableImageUrl } from './imageUrl';
+import { toDisplayableImageUrl } from '@/shared/api/imageUrl';
 import { toBaseSlug } from './toBaseSlug';
 import { STORE_PRESENTATION, type Category, type Product, type StoreLink, type StoreSlug } from './types';
 
