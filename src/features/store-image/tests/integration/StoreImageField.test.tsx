@@ -9,6 +9,8 @@ import { StoreImageField } from '../../StoreImageField';
 const SAVED_LOGO = `${SUPABASE_IMAGES}/logo.png`;
 const UPLOADED_IMAGE = `${SUPABASE_IMAGES}/upload-100`;
 
+const PLACEHOLDER_LOGO = { id: 1, imagemUrl: 'URL 1', tipo: 'LOGO' };
+
 const saveLogo = () => apiDatabase.storeImages.push({ id: 5, imagemUrl: SAVED_LOGO, tipo: 'LOGO' });
 
 const logo = () => new File(['png'], 'logo.png', { type: 'image/png' });
@@ -54,7 +56,7 @@ describe('StoreImageField saving', () => {
     expect(screen.getByRole('img', { name: 'Logo atual' })).toHaveAttribute('src', UPLOADED_IMAGE);
     expect(screen.queryByAltText('Prévia da logo nova')).not.toBeInTheDocument();
     expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:logo-1');
-    expect(apiDatabase.storeImages).toEqual([{ id: 100, imagemUrl: UPLOADED_IMAGE, tipo: 'LOGO' }]);
+    expect(apiDatabase.storeImages).toEqual([PLACEHOLDER_LOGO, { id: 100, imagemUrl: UPLOADED_IMAGE, tipo: 'LOGO' }]);
     expect(screen.getByRole('button', { name: 'Salvar logo' })).toBeDisabled();
   });
 
@@ -82,7 +84,7 @@ describe('StoreImageField saving', () => {
     expect(screen.getByRole('status')).toHaveFocus();
     expect(screen.getByRole('img', { name: 'Logo atual' })).toHaveTextContent('MultiKoisas');
     expect(screen.queryByRole('button', { name: 'Voltar para a logo padrão' })).not.toBeInTheDocument();
-    expect(apiDatabase.storeImages).toEqual([]);
+    expect(apiDatabase.storeImages).toEqual([PLACEHOLDER_LOGO]);
   });
 
   it('tells when it could not go back to the default logo', async () => {

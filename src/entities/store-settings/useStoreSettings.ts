@@ -1,8 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { LoadState } from '@/shared/api/useLoadOnMount';
-import { fetchStoreSettings, onStoreSettingsSaved } from './api';
+import { onStoreSettingsSaved, readStoreSettings } from './api';
 import { STORE_SETTINGS } from './storeSettings';
 import type { StoreSettings } from './types';
 
@@ -15,21 +15,32 @@ type StoreSettingsState = {
 export const useStoreSettings = (): StoreSettingsState => {
   const [loadState, setLoadState] = useState<LoadState<StoreSettings>>({ status: 'loading' });
 
-  const load = useCallback(() => {
-    fetchStoreSettings().then(
-      (data) => setLoadState({ status: 'ready', data }),
-      () => setLoadState((current) => (current.status === 'ready' ? current : { status: 'error' })),
+  const latestUpdate = useRef(0);
+
+  const load = useCallback((fresh: boolean) => {
+    const update = ++latestUpdate.current;
+    const isLatest = () => update === latestUpdate.current;
+    readStoreSettings({ fresh }).then(
+      (data) => isLatest() && setLoadState({ status: 'ready', data }),
+      () => isLatest() && setLoadState({ status: 'error' }),
     );
   }, []);
 
   const retry = useCallback(() => {
     setLoadState({ status: 'loading' });
-    load();
+    load(true);
   }, [load]);
 
-  useEffect(load, [load]);
+  useEffect(() => load(false), [load]);
 
-  useEffect(() => onStoreSettingsSaved((data) => setLoadState({ status: 'ready', data })), []);
+  useEffect(
+    () =>
+      onStoreSettingsSaved((data) => {
+        latestUpdate.current += 1;
+        setLoadState({ status: 'ready', data });
+      }),
+    [],
+  );
 
   if (loadState.status === 'ready') return { status: 'ready', settings: loadState.data, retry };
   return { status: loadState.status, settings: STORE_SETTINGS, retry };

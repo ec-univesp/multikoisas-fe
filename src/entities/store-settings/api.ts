@@ -1,4 +1,5 @@
 import { getFromApi } from '@/shared/api/getFromApi';
+import { toDisplayableImageUrl } from '@/shared/api/imageUrl';
 import type { StoreImageType, StoreSettings } from './types';
 
 type ApiStore = { id: number; nomeLoja: string; descricaoLoja: string | null };
@@ -30,34 +31,52 @@ const fetchStore = async (): Promise<ApiStore | null> =>
 
 const fetchStoreImages = (type: StoreImageType) => getFromApi<ApiStoreImage>(`/imagemloja?tipo=${type}`);
 
-// The API keeps placeholders such as "URL 1" among the images.
-const isHttpsUrl = (url: string) => URL.canParse(url) && new URL(url).protocol === 'https:';
+// The API keeps placeholders such as "URL 1" among the images; only displayable ones are shown or deleted.
+const displayableImages = (images: ApiStoreImage[]) =>
+  images.flatMap((image) => {
+    const imagemUrl = toDisplayableImageUrl(image.imagemUrl);
+    return imagemUrl ? [{ ...image, imagemUrl }] : [];
+  });
 
 const newestImageUrl = (images: ApiStoreImage[]) =>
-  images.filter((image) => isHttpsUrl(image.imagemUrl)).sort((first, second) => second.id - first.id)[0]
-    ?.imagemUrl ?? null;
+  displayableImages(images).sort((first, second) => second.id - first.id)[0]?.imagemUrl ?? null;
+
+const valueOf = <Value>(result: PromiseSettledResult<Value>) => (result.status === 'fulfilled' ? result.value : null);
 
 export const fetchStoreSettings = async (): Promise<StoreSettings> => {
-  const [store, logos, photos] = await Promise.all([
-    fetchStore(),
-    fetchStoreImages('LOGO'),
-    fetchStoreImages('CAPA'),
-  ]);
+  const results = await Promise.allSettled([fetchStore(), fetchStoreImages('LOGO'), fetchStoreImages('CAPA')]);
+  if (results.every((result) => result.status === 'rejected')) throw new Error('The store settings could not be read');
+  const [store, logos, photos] = results;
   return {
-    description: store?.descricaoLoja?.trim() || null,
-    logoUrl: newestImageUrl(logos),
-    photoUrl: newestImageUrl(photos),
+    description: valueOf(store)?.descricaoLoja?.trim() || null,
+    logoUrl: newestImageUrl(valueOf(logos) ?? []),
+    photoUrl: newestImageUrl(valueOf(photos) ?? []),
   };
 };
 
+let inFlightRead: Promise<StoreSettings> | null = null;
+
+export const readStoreSettings = ({ fresh = false } = {}) => {
+  if (inFlightRead && !fresh) return inFlightRead;
+  const read = fetchStoreSettings().finally(() => {
+    if (inFlightRead === read) inFlightRead = null;
+  });
+  inFlightRead = read;
+  return read;
+};
+
 const reloadStoreSettings = async () => {
-  const settings = await fetchStoreSettings();
+  const settings = await readStoreSettings({ fresh: true });
   listeners.forEach((listener) => listener(settings));
   return settings;
 };
 
-const deleteStoreImage = (type: StoreImageType, image: ApiStoreImage) =>
-  sendToApi('DELETE', `/imagemloja/${type}?id=${image.id}`);
+const deleteDisplayableImages = async (type: StoreImageType, images: ApiStoreImage[]) => {
+  const deletions = await Promise.allSettled(
+    displayableImages(images).map((image) => sendToApi('DELETE', `/imagemloja/${type}?id=${image.id}`)),
+  );
+  return deletions.find((deletion) => deletion.status === 'rejected');
+};
 
 export const saveStoreDescription = async (description: string) => {
   const store = await fetchStore();
@@ -72,12 +91,13 @@ export const saveStoreImage = async (type: StoreImageType, file: File) => {
   form.append('file', file);
   await sendToApi('POST', `/imagemloja?tipo=${type}`, form);
   // ponytail: an older image that fails to delete stays behind; the newest one is the one shown.
-  await Promise.allSettled(olderImages.map((image) => deleteStoreImage(type, image)));
-  return reloadStoreSettings();
+  await deleteDisplayableImages(type, olderImages);
+  return reloadStoreSettings().catch(() => null);
 };
 
 export const removeStoreImage = async (type: StoreImageType) => {
-  const images = await fetchStoreImages(type);
-  await Promise.all(images.map((image) => deleteStoreImage(type, image)));
-  return reloadStoreSettings();
+  const failedDeletion = await deleteDisplayableImages(type, await fetchStoreImages(type));
+  const settings = await reloadStoreSettings();
+  if (failedDeletion) throw failedDeletion.reason;
+  return settings;
 };

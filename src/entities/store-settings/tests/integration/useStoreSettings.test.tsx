@@ -18,7 +18,10 @@ describe('useStoreSettings', () => {
   });
 
   it('keeps the default settings when they cannot be read', async () => {
-    server.use(http.get('*/loja', () => new HttpResponse(null, { status: 500 })));
+    server.use(
+      http.get('*/loja', () => new HttpResponse(null, { status: 500 })),
+      http.get('*/imagemloja', () => new HttpResponse(null, { status: 500 })),
+    );
     const { result } = renderHook(() => useStoreSettings());
     await waitFor(() => expect(result.current.status).toBe('error'));
     expect(result.current.settings).toEqual(STORE_SETTINGS);
@@ -53,7 +56,10 @@ describe('useStoreSettings', () => {
   });
 
   it('reads the settings again on retry after a failure', async () => {
-    server.use(http.get('*/loja', () => new HttpResponse(null, { status: 500 }), { once: true }));
+    server.use(
+      http.get('*/loja', () => new HttpResponse(null, { status: 500 }), { once: true }),
+      http.get('*/imagemloja', () => new HttpResponse(null, { status: 500 })),
+    );
     const { result } = renderHook(() => useStoreSettings());
     await waitFor(() => expect(result.current.status).toBe('error'));
 
@@ -61,5 +67,33 @@ describe('useStoreSettings', () => {
 
     expect(result.current.status).toBe('loading');
     await waitFor(() => expect(result.current.status).toBe('ready'));
+  });
+
+  it('shares one read between every part of the page that shows the settings', async () => {
+    let storeReads = 0;
+    server.use(
+      http.get('*/loja', () => {
+        storeReads += 1;
+      }),
+    );
+    const { result } = renderHook(() => [useStoreSettings(), useStoreSettings(), useStoreSettings()]);
+
+    await waitFor(() => expect(result.current.every((state) => state.status === 'ready')).toBe(true));
+    expect(storeReads).toBe(1);
+  });
+
+  it('reads again on retry even while another read is going on', async () => {
+    let storeReads = 0;
+    server.use(
+      http.get('*/loja', () => {
+        storeReads += 1;
+      }),
+    );
+    const { result } = renderHook(() => useStoreSettings());
+
+    act(() => result.current.retry());
+
+    await waitFor(() => expect(result.current.status).toBe('ready'));
+    expect(storeReads).toBe(2);
   });
 });
