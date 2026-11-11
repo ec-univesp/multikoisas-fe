@@ -31,6 +31,8 @@ const fetchStore = async (): Promise<ApiStore | null> =>
 
 const fetchStoreImages = (type: StoreImageType) => getFromApi<ApiStoreImage>(`/imagemloja?tipo=${type}`);
 
+const fetchAllStoreImages = () => getFromApi<ApiStoreImage>('/imagemloja');
+
 // The API keeps placeholders such as "URL 1" among the images; only displayable ones are shown or deleted.
 const displayableImages = (images: ApiStoreImage[]) =>
   images.flatMap((image) => {
@@ -44,14 +46,15 @@ const newestImageUrl = (images: ApiStoreImage[]) =>
 const valueOf = <Value>(result: PromiseSettledResult<Value>) => (result.status === 'fulfilled' ? result.value : null);
 
 export const fetchStoreSettings = async (): Promise<StoreSettings> => {
-  const results = await Promise.allSettled([fetchStore(), fetchStoreImages('LOGO'), fetchStoreImages('CAPA')]);
+  const [store, images] = await Promise.allSettled([fetchStore(), fetchAllStoreImages()]);
   // Without the store row the panel would offer an empty description and save it over the real one.
-  if (results[0].status === 'rejected') throw new Error('The store row could not be read');
-  const [store, logos, photos] = results;
+  if (store.status === 'rejected') throw new Error('The store row could not be read');
+  const storeImages = valueOf(images) ?? [];
+  const imagesOf = (type: StoreImageType) => storeImages.filter((image) => image.tipo === type);
   return {
-    description: valueOf(store)?.descricaoLoja?.trim() || null,
-    logoUrl: newestImageUrl(valueOf(logos) ?? []),
-    photoUrl: newestImageUrl(valueOf(photos) ?? []),
+    description: store.value?.descricaoLoja?.trim() || null,
+    logoUrl: newestImageUrl(imagesOf('LOGO')),
+    photoUrl: newestImageUrl(imagesOf('CAPA')),
   };
 };
 
