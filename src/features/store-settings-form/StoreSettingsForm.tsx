@@ -4,7 +4,7 @@ import { useState, type FormEvent } from 'react';
 import TextArea from '@/components/form/input/TextArea';
 import Label from '@/components/form/Label';
 import Button from '@/components/ui/button/Button';
-import { saveStoreDescription, useStoreSettings, type StoreSettingsValues } from '@/entities/store-settings';
+import { saveStoreSettings, useStoreSettings, type StoreSettingsValues } from '@/entities/store-settings';
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'failed';
 
@@ -21,7 +21,7 @@ const StoreSettingsFields = ({ initialSettings }: { initialSettings: StoreSettin
     event.preventDefault();
     setSaveState('saving');
     try {
-      await saveStoreDescription(description.trim());
+      await saveStoreSettings({ description: description.trim(), address: initialSettings.address });
       setSaveState('saved');
     } catch {
       setSaveState('failed');
