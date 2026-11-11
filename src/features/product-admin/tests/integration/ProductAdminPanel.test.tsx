@@ -18,6 +18,8 @@ const salesChannels: SalesChannel[] = [
   { id: 3, name: 'Instagram' },
   { id: 4, name: 'Facebook' },
   { id: 8, name: 'MagaLu' },
+  { id: 14, name: 'MAGAZINE LUIZA' },
+  { id: 15, name: 'Mercado Livre' },
 ];
 
 const buildProduct = (overrides: Partial<Product>): Product => ({
@@ -391,7 +393,7 @@ describe('ProductAdminPanel', () => {
 
       await user.click(screen.getByRole('button', { name: 'Novo produto' }));
       await fillProductForm(user, { name: 'Vassoura', categoryId: '2', description: 'Macia.' });
-      expect(screen.getByText('JPG, PNG ou WebP, até 1 MB cada.')).toBeInTheDocument();
+      expect(screen.getByText('JPG, PNG ou WebP, até 5 MB cada.')).toBeInTheDocument();
       await user.upload(screen.getByLabelText('Fotos'), [photo('frente.png'), photo('lado.webp', 'image/webp')]);
       expect(screen.getByAltText('Foto 1')).toHaveAttribute('src', expect.stringMatching(/^blob:/));
       expect(screen.getByAltText('Foto 2')).toBeInTheDocument();
@@ -586,7 +588,7 @@ describe('ProductAdminPanel', () => {
   });
 
   describe('photo validation and partial failures', () => {
-    it('keeps out of the list the files that are not jpg, png or webp or pass 1 MB', async () => {
+    it('keeps out of the list the files that are not jpg, png or webp or pass 5 MB', async () => {
       const user = userEvent.setup({ applyAccept: false });
       renderPanel([]);
 
@@ -594,13 +596,13 @@ describe('ProductAdminPanel', () => {
       await fillProductForm(user, { name: 'Vassoura', categoryId: '2', description: 'Macia.' });
       await user.upload(screen.getByLabelText('Fotos'), [
         photo('nota.pdf', 'application/pdf'),
-        photo('grande.png', 'image/png', 1_048_577),
+        photo('grande.png', 'image/png', 5_242_881),
         photo('frente.jpg', 'image/jpeg'),
-        photo('limite.webp', 'image/webp', 1_048_576),
+        photo('limite.webp', 'image/webp', 5_242_880),
       ]);
 
       expect(screen.getByText('nota.pdf: use JPG, PNG ou WebP.')).toBeInTheDocument();
-      expect(screen.getByText('grande.png: a foto passa de 1 MB.')).toBeInTheDocument();
+      expect(screen.getByText('grande.png: a foto passa de 5 MB.')).toBeInTheDocument();
       expect(screen.getByAltText('Foto 2')).toBeInTheDocument();
       expect(screen.queryByAltText('Foto 3')).not.toBeInTheDocument();
       await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
@@ -817,9 +819,20 @@ describe('ProductAdminPanel', () => {
 
       await user.click(screen.getByRole('button', { name: 'Editar Garrafa Térmica 1L' }));
       expect(await screen.findByLabelText('Loja 2')).toHaveValue('3');
-      expect(optionsOf(screen.getByLabelText('Loja 2'))).toEqual(['Shopee', 'Instagram', 'MagaLu']);
+      expect(optionsOf(screen.getByLabelText('Loja 2'))).toEqual([
+        'Shopee',
+        'Instagram',
+        'MagaLu',
+        'MAGAZINE LUIZA',
+        'Mercado Livre',
+      ]);
       await user.click(screen.getByRole('button', { name: 'Adicionar loja' }));
-      expect(optionsOf(screen.getByLabelText('Loja 3'))).toEqual(['Shopee', 'MagaLu']);
+      expect(optionsOf(screen.getByLabelText('Loja 3'))).toEqual([
+        'Shopee',
+        'MagaLu',
+        'MAGAZINE LUIZA',
+        'Mercado Livre',
+      ]);
     });
 
     it('shows the links the api really kept when changing a link fails halfway', async () => {

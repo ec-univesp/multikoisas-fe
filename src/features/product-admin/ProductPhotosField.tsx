@@ -21,11 +21,11 @@ type ProductPhotosFieldProps = {
 type PhotoTile = { key: string; src: string; isMarkedForRemoval: boolean; onToggle: () => void };
 
 const ACCEPTED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const MAX_PHOTO_BYTES = 1_048_576;
+const MAX_PHOTO_BYTES = 5_242_880;
 
 const rejectionOf = (file: File): string | null => {
   if (!ACCEPTED_PHOTO_TYPES.includes(file.type)) return `${file.name}: use JPG, PNG ou WebP.`;
-  if (file.size > MAX_PHOTO_BYTES) return `${file.name}: a foto passa de 1 MB.`;
+  if (file.size > MAX_PHOTO_BYTES) return `${file.name}: a foto passa de 5 MB.`;
   return null;
 };
 
@@ -82,7 +82,7 @@ export const ProductPhotosField = ({
         Adicionar fotos
       </Button>
       <p id="product-photos-hint" className="mt-1.5 text-xs text-gray-500">
-        JPG, PNG ou WebP, até 1 MB cada.
+        JPG, PNG ou WebP, até 5 MB cada.
       </p>
       {existingPhotos === null && (
         <p role="alert" className="mt-1.5 text-xs text-error-500">

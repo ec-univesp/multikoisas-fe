@@ -41,6 +41,17 @@ describe('fetchProducts', () => {
     expect(garrafa.storeLinks).toEqual([{ store: 'magalu', url: 'https://shopee.com.br/garrafa-termica' }]);
   });
 
+  it.each([
+    ['MAGAZINE LUIZA', 'magalu'],
+    ['Magazine Luiza', 'magalu'],
+    ['MERCADO LIVRE', 'mercado-livre'],
+    ['MercadoLivre', 'mercado-livre'],
+  ])('names the store from the full channel name %s', async (channelName, store) => {
+    server.use(http.get('*/canalvenda', () => HttpResponse.json([{ id: 2, nome: channelName }])));
+    const [garrafa] = await fetchProducts();
+    expect(garrafa.storeLinks).toEqual([{ store, url: 'https://shopee.com.br/garrafa-termica' }]);
+  });
+
   it('keeps only the first link of a store listed twice for the same product', async () => {
     server.use(
       http.get('*/canalvendaproduto', () =>

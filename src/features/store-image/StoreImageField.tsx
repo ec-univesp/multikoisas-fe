@@ -4,16 +4,11 @@ import { useEffect, useRef, useState } from 'react';
 import FileInput from '@/components/form/input/FileInput';
 import Label from '@/components/form/Label';
 import Button from '@/components/ui/button/Button';
-import {
-  removeStoreImage,
-  saveStoreImage,
-  useStoreSettings,
-  type StoreImageType,
-} from '@/entities/store-settings';
+import { removeStoreImage, saveStoreImage, useStoreSettings, type StoreImageType } from '@/entities/store-settings';
 import { BrandMark } from '@/shared/ui/BrandMark';
 
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml'];
-const MAX_IMAGE_BYTES = 1_048_576;
+const MAX_IMAGE_BYTES = 5_242_880;
 
 type ImageMessage = { kind: 'success' | 'failure'; text: string };
 
@@ -49,7 +44,7 @@ const IMAGE_CLASS: Record<StoreImageType, string> = {
 
 const rejectionOf = (file: File): string | null => {
   if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) return 'Use uma imagem JPG, PNG, WebP ou SVG.';
-  if (file.size > MAX_IMAGE_BYTES) return 'A imagem passa de 1 MB.';
+  if (file.size > MAX_IMAGE_BYTES) return 'A imagem passa de 5 MB.';
   return null;
 };
 
@@ -143,7 +138,7 @@ export const StoreImageField = ({ type }: { type: StoreImageType }) => {
           className="text-base!"
         />
         <p id={`${inputId}-hint`} className="mt-1.5 text-xs text-gray-500">
-          JPG, PNG, WebP ou SVG, até 1 MB.
+          JPG, PNG, WebP ou SVG, até 5 MB.
         </p>
         {rejectionMessage && (
           <p role="alert" className="mt-1.5 text-xs text-error-500">
