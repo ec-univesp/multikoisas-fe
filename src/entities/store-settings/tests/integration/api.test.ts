@@ -66,14 +66,18 @@ describe('store settings api', () => {
     expect(await fetchStoreSettings()).toEqual({ description: 'Tudo em um só lugar', logoUrl: null, photoUrl: null });
   });
 
-  it('still reads the description and the other image when one image type cannot be read', async () => {
-    apiDatabase.storeImages.push(LOGO);
-    server.use(http.get('*/imagemloja', ({ request }) => (request.url.includes('tipo=CAPA') ? failing() : undefined)));
+  it('reads the logo and the photo with a single image request, so an empty store gets one 404 instead of two', async () => {
+    apiDatabase.storeImages.push(LOGO, PHOTO);
+    const imageRequests: string[] = [];
+    server.events.on('request:start', ({ request }) => {
+      if (new URL(request.url).pathname.endsWith('/imagemloja')) imageRequests.push(new URL(request.url).search);
+    });
     expect(await fetchStoreSettings()).toEqual({
       description: 'Tudo em um só lugar',
       logoUrl: LOGO.imagemUrl,
-      photoUrl: null,
+      photoUrl: PHOTO.imagemUrl,
     });
+    expect(imageRequests).toEqual(['']);
   });
 
   it('saves the description of the store', async () => {
@@ -86,7 +90,9 @@ describe('store settings api', () => {
   it('creates the store when it does not exist yet', async () => {
     apiDatabase.stores = [];
     await saveStoreDescription('Primeira');
-    expect(apiDatabase.stores).toEqual([expect.objectContaining({ nomeLoja: 'multikoisas', descricaoLoja: 'Primeira' })]);
+    expect(apiDatabase.stores).toEqual([
+      expect.objectContaining({ nomeLoja: 'multikoisas', descricaoLoja: 'Primeira' }),
+    ]);
   });
 
   it('uploads a new image and deletes only the older displayable ones of the same type', async () => {
@@ -122,13 +128,17 @@ describe('store settings api', () => {
 
   it('removes every displayable image of the type and leaves the placeholder rows alone', async () => {
     apiDatabase.storeImages.push(LOGO, PHOTO);
-    expect(await removeStoreImage('LOGO')).toEqual(expect.objectContaining({ logoUrl: null, photoUrl: PHOTO.imagemUrl }));
+    expect(await removeStoreImage('LOGO')).toEqual(
+      expect.objectContaining({ logoUrl: null, photoUrl: PHOTO.imagemUrl }),
+    );
     expect(apiDatabase.storeImages).toEqual([PLACEHOLDER_LOGO, PHOTO]);
   });
 
   it('deletes what it can, shows the result and then fails when an image cannot be removed', async () => {
     apiDatabase.storeImages.push(OLD_LOGO, LOGO);
-    server.use(http.delete('*/imagemloja/:type', ({ request }) => (request.url.endsWith('id=3') ? failing() : undefined)));
+    server.use(
+      http.delete('*/imagemloja/:type', ({ request }) => (request.url.endsWith('id=3') ? failing() : undefined)),
+    );
     const notified: (string | null)[] = [];
     const stopListening = onStoreSettingsSaved((settings) => notified.push(settings.logoUrl));
 
