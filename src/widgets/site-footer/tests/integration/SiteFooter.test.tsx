@@ -1,14 +1,14 @@
 import { render, screen, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
-import type { StoreSettingsValues } from '@/entities/store-settings';
-import { apiDatabase } from '@/test/msw/apiDatabase';
+import { STORE_ADDRESS } from '@/entities/store-settings';
+import { apiDatabase, SUPABASE_IMAGES } from '@/test/msw/apiDatabase';
 import { server } from '@/test/msw/server';
 import { waitForLoaded } from '@/test/waitForLoaded';
 import { SiteFooter } from '../../SiteFooter';
 
-const renderFooter = async (props: { settings?: StoreSettingsValues } = {}) => {
-  render(<SiteFooter {...props} />);
+const renderFooter = async () => {
+  render(<SiteFooter />);
   await waitForLoaded();
 };
 
@@ -76,20 +76,10 @@ describe('SiteFooter', () => {
     expect(screen.queryByRole('link', { name: 'Site' })).not.toBeInTheDocument();
   });
 
-  it('shows the store address when it is registered', async () => {
-    const settings: StoreSettingsValues = {
-      address: 'Rua das Flores, 100 - São Paulo, SP',
-    };
-    await renderFooter({ settings });
-    const address = within(screen.getByRole('contentinfo')).getByText('Rua das Flores, 100 - São Paulo, SP');
+  it('shows the store address right away', () => {
+    render(<SiteFooter />);
+    const address = within(screen.getByRole('contentinfo')).getByText(STORE_ADDRESS);
     expect(address.tagName).toBe('ADDRESS');
-  });
-
-  it('leaves out the address when none is registered', async () => {
-    await renderFooter({
-      settings: { address: null },
-    });
-    expect(screen.getByRole('contentinfo').querySelector('address')).not.toBeInTheDocument();
   });
 
   it('hides the social networks block when the store has none', async () => {
@@ -98,19 +88,11 @@ describe('SiteFooter', () => {
     expect(screen.queryByRole('navigation', { name: 'Siga a MultiKoisas' })).not.toBeInTheDocument();
   });
 
-  it('shows the saved address and logo when no settings are given', async () => {
-    apiDatabase.storeSettings.address = 'Rua Nova, 10 - Santo André - SP';
-    apiDatabase.storeSettings.logoUrl = '/local-images/5';
+  it('shows the saved logo', async () => {
+    const savedLogo = `${SUPABASE_IMAGES}/logo.png`;
+    apiDatabase.storeImages.push({ id: 2, imagemUrl: savedLogo, tipo: 'LOGO' });
     render(<SiteFooter />);
     const footer = screen.getByRole('contentinfo');
-    expect(await within(footer).findByText('Rua Nova, 10 - Santo André - SP')).toBeInTheDocument();
-    expect(within(footer).getByRole('img', { name: 'MultiKoisas' })).toHaveAttribute('src', '/local-images/5');
-  });
-
-  it('leaves out the address while the saved settings load and shows the default one when they fail', async () => {
-    server.use(http.get('*/configuracao', () => new HttpResponse(null, { status: 500 })));
-    render(<SiteFooter />);
-    expect(screen.getByRole('contentinfo').querySelector('address')).not.toBeInTheDocument();
-    expect(await screen.findByText(/Anhaia Melo, 2085/)).toBeInTheDocument();
+    expect(await within(footer).findByRole('img', { name: 'MultiKoisas' })).toHaveAttribute('src', savedLogo);
   });
 });

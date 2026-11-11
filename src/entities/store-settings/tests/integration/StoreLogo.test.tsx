@@ -1,11 +1,13 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { apiDatabase } from '@/test/msw/apiDatabase';
+import { apiDatabase, SUPABASE_IMAGES } from '@/test/msw/apiDatabase';
 import { waitForApiAnswers } from '@/test/waitForLoaded';
 import { StoreLogo } from '../../StoreLogo';
 
+const SAVED_LOGO = `${SUPABASE_IMAGES}/logo.png`;
+
 describe('StoreLogo', () => {
-  it('shows the default brand mark while the store has no logo', async () => {
+  it('shows the default brand mark while the store has no valid logo', async () => {
     render(<StoreLogo tone="onDark" />);
     expect(screen.getByText('Koisas')).toBeInTheDocument();
     await waitForApiAnswers();
@@ -19,15 +21,15 @@ describe('StoreLogo', () => {
   });
 
   it('shows the saved logo', async () => {
-    apiDatabase.storeSettings.logoUrl = '/local-images/5';
+    apiDatabase.storeImages.push({ id: 2, imagemUrl: SAVED_LOGO, tipo: 'LOGO' });
     render(<StoreLogo />);
     const logo = await screen.findByRole('img', { name: 'MultiKoisas' });
-    expect(logo).toHaveAttribute('src', '/local-images/5');
+    expect(logo).toHaveAttribute('src', SAVED_LOGO);
     expect(logo).toHaveClass('h-11', 'object-contain', 'max-w-48');
   });
 
   it('keeps the saved logo narrow in the compact menu', async () => {
-    apiDatabase.storeSettings.logoUrl = '/local-images/5';
+    apiDatabase.storeImages.push({ id: 2, imagemUrl: SAVED_LOGO, tipo: 'LOGO' });
     render(<StoreLogo compact />);
     expect(await screen.findByRole('img', { name: 'MultiKoisas' })).toHaveClass('max-w-11');
   });

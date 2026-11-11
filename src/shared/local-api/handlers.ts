@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw';
-import type { ApiDatabase, ProductCategoryRow, PurchaseLinkRow, StoreSettingsRow, UserRow } from './database';
+import type { ApiDatabase, ProductCategoryRow, PurchaseLinkRow, UserRow } from './database';
 import type { ImageStore } from './imageStore';
 
 export type ApiHandlerOptions = {
@@ -32,7 +32,7 @@ type ProductBody = { nome?: string; descricaoProduto?: string };
 type ProductImageBody = { id?: number; produtoId?: number };
 type SocialNetworkBody = { descricao?: string; link?: string };
 type UserBody = Partial<Omit<UserRow, 'id'>> & { password?: string };
-type StoreSettingsChanges = Partial<Omit<StoreSettingsRow, 'logoUrl'>>;
+type StoreBody = { nomeLoja?: string; descricaoLoja?: string };
 
 const SOCIAL_NETWORK_TAKEN = 'Esta rede social já está cadastrada.';
 
@@ -55,32 +55,14 @@ const MAX_UPLOAD_BYTES = 1_048_576;
 
 const PHOTO_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif']);
 
-const LOGO_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml']);
+const STORE_IMAGE_FILE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml']);
+
+const STORE_IMAGE_TYPES = new Set(['LOGO', 'PERFIL', 'CAPA', 'BANNER', 'GALERIA']);
 
 // A host PRODUCT_IMAGE_HOSTS accepts, so the uploads display like the real API ones.
 const UPLOADED_IMAGES_URL = 'https://avphmmvnlrbidhjrzozx.supabase.co/storage/v1/object/public/imagem/upload-';
 
-const LOCAL_PHOTO_PATH = '/local-images/';
-
 const uploadedImageUrl = (id: number) => `${UPLOADED_IMAGES_URL}${id}`;
-
-const isOptionalText = (value: unknown) => value === undefined || value === null || typeof value === 'string';
-
-const toText = (value: unknown) => (typeof value === 'string' ? value.trim() || null : null);
-
-// Mirrors the store settings form: empty fields are saved as null, omitted fields keep their value.
-const toStoreSettingsChanges = (body: unknown): StoreSettingsChanges | null => {
-  if (typeof body !== 'object' || body === null || Array.isArray(body)) return null;
-  const changes: StoreSettingsChanges = {};
-  if ('address' in body) {
-    if (!isOptionalText(body.address)) return null;
-    changes.address = toText(body.address);
-  }
-  return changes;
-};
-
-const localImageIdOf = (url: string | null) =>
-  url?.startsWith(LOCAL_PHOTO_PATH) ? Number(url.slice(LOCAL_PHOTO_PATH.length)) : null;
 
 const storageFull = () => HttpResponse.text('Espaço do navegador cheio', { status: 507 });
 
@@ -438,48 +420,73 @@ export const createApiHandlers = (
       return saved(HttpResponse.json({ mensagem: 'Canal de venda desassociado do produto com sucesso.' }));
     }),
 
-    // Local api only: the real one does not store the store settings yet (SKI-135).
-    http.get(`${baseUrl}/configuracao`, () => HttpResponse.json(database.storeSettings)),
+    http.get(`${baseUrl}/loja`, ({ request }) => {
+      const name = queryOf(request).get('nome');
+      return listResponse(database.stores.filter((store) => matchesText(name, store.nomeLoja)));
+    }),
 
-    http.put(`${baseUrl}/configuracao`, async ({ request }) => {
-      const settings = toStoreSettingsChanges(await request.json());
-      if (!settings) return springError(400, 'Bad Request', request);
-      const previousSettings = database.storeSettings;
-      database.storeSettings = { ...previousSettings, ...settings };
-      if (onChange()) return HttpResponse.json(database.storeSettings);
-      database.storeSettings = previousSettings;
+    http.post<never, StoreBody>(`${baseUrl}/loja`, async ({ request }) => {
+      const { nomeLoja, descricaoLoja = '' } = await request.json();
+      if (!nomeLoja?.trim()) return springError(400, 'Bad Request', request);
+      if (database.stores.some((store) => matchesText(nomeLoja, store.nomeLoja))) {
+        return springError(409, 'Conflict', request);
+      }
+      const store = { id: database.nextId++, nomeLoja, descricaoLoja };
+      database.stores.push(store);
+      if (onChange()) return HttpResponse.json(store, { status: 201 });
+      database.stores.pop();
       return storageFull();
     }),
 
-    http.post(`${baseUrl}/configuracao/logo`, async ({ request }) => {
+    http.put<{ name: string }, StoreBody>(`${baseUrl}/loja/:name`, async ({ request, params }) => {
+      const { descricaoLoja = '' } = await request.json();
+      const store = database.stores.find((candidate) => matchesText(params.name, candidate.nomeLoja));
+      if (!store) return springError(404, 'Not Found', request);
+      const previousDescription = store.descricaoLoja;
+      store.descricaoLoja = descricaoLoja;
+      if (onChange()) return HttpResponse.json(store);
+      store.descricaoLoja = previousDescription;
+      return storageFull();
+    }),
+
+    http.get(`${baseUrl}/imagemloja`, ({ request }) => {
+      const query = queryOf(request);
+      const storeImages = database.storeImages.filter(
+        (storeImage) =>
+          matchesText(query.get('tipo'), storeImage.tipo) && matchesNumber(query.get('id'), storeImage.id),
+      );
+      if (storeImages.length === 0) {
+        return HttpResponse.json({ message: 'Nenhuma imagem encontrada.' }, { status: 404 });
+      }
+      return HttpResponse.json(storeImages);
+    }),
+
+    http.post(`${baseUrl}/imagemloja`, async ({ request }) => {
+      const tipo = queryOf(request).get('tipo') ?? '';
+      if (!STORE_IMAGE_TYPES.has(tipo)) return springError(400, 'Bad Request', request);
       const file = (await request.formData()).get('file');
       if (file === null || typeof file === 'string' || file.size === 0) return springError(400, 'Bad Request', request);
       if (file.size > MAX_UPLOAD_BYTES) return springError(413, 'Payload Too Large', request);
-      if (!LOGO_TYPES.has(file.type)) return springError(415, 'Unsupported Media Type', request);
+      if (!STORE_IMAGE_FILE_TYPES.has(file.type)) return springError(415, 'Unsupported Media Type', request);
       const id = database.nextId++;
       await images.save(id, file);
-      const previousSettings = database.storeSettings;
-      database.storeSettings = { ...previousSettings, logoUrl: `${LOCAL_PHOTO_PATH}${id}` };
-      if (!onChange()) {
-        database.storeSettings = previousSettings;
-        await images.remove(id);
-        return storageFull();
-      }
-      const previousLogoId = localImageIdOf(previousSettings.logoUrl);
-      if (previousLogoId !== null) await images.remove(previousLogoId);
-      return HttpResponse.json(database.storeSettings);
+      const storeImage = { id, imagemUrl: uploadedImageUrl(id), tipo };
+      database.storeImages.push(storeImage);
+      if (onChange()) return HttpResponse.json(storeImage, { status: 201 });
+      database.storeImages.pop();
+      await images.remove(id);
+      return storageFull();
     }),
 
-    http.delete(`${baseUrl}/configuracao/logo`, async () => {
-      const previousSettings = database.storeSettings;
-      database.storeSettings = { ...previousSettings, logoUrl: null };
-      if (!onChange()) {
-        database.storeSettings = previousSettings;
-        return storageFull();
-      }
-      const previousLogoId = localImageIdOf(previousSettings.logoUrl);
-      if (previousLogoId !== null) await images.remove(previousLogoId);
-      return HttpResponse.json(database.storeSettings);
+    http.delete<{ type: string }>(`${baseUrl}/imagemloja/:type`, async ({ request, params }) => {
+      const id = Number(queryOf(request).get('id'));
+      const remaining = database.storeImages.filter(
+        (storeImage) => !(storeImage.id === id && storeImage.tipo === params.type),
+      );
+      if (remaining.length === database.storeImages.length) return springError(404, 'Not Found', request);
+      database.storeImages = remaining;
+      await images.remove(id);
+      return saved(HttpResponse.json({ message: 'Imagem deletada com sucesso.' }));
     }),
   ];
 };

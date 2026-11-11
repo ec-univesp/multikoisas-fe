@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { StoreLogoField } from '../../StoreLogoField';
+import { StoreImageField } from '../../StoreImageField';
 
 const image = (name: string, type = 'image/png', size = 3) => new File(['x'.repeat(size)], name, { type });
 
@@ -17,9 +17,9 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('StoreLogoField', () => {
+describe('StoreImageField', () => {
   it('shows the current logo as the preview', () => {
-    render(<StoreLogoField />);
+    render(<StoreImageField type="LOGO" />);
 
     expect(screen.getByRole('img', { name: 'Logo atual' })).toHaveTextContent('MultiKoisas');
     expect(screen.queryByAltText('Prévia da logo nova')).not.toBeInTheDocument();
@@ -27,7 +27,7 @@ describe('StoreLogoField', () => {
 
   it('previews a chosen image in place of the current logo', async () => {
     const user = userEvent.setup();
-    render(<StoreLogoField />);
+    render(<StoreImageField type="LOGO" />);
 
     await user.upload(screen.getByLabelText('Nova logo'), image('logo.png'));
 
@@ -37,7 +37,7 @@ describe('StoreLogoField', () => {
 
   it('warns about an image of the wrong type and keeps the current preview', async () => {
     const user = userEvent.setup({ applyAccept: false });
-    render(<StoreLogoField />);
+    render(<StoreImageField type="LOGO" />);
     const logoInput = screen.getByLabelText<HTMLInputElement>('Nova logo');
 
     await user.upload(logoInput, image('logo.gif', 'image/gif'));
@@ -50,7 +50,7 @@ describe('StoreLogoField', () => {
 
   it('warns about an image over 1 MB and keeps the valid preview already chosen', async () => {
     const user = userEvent.setup();
-    render(<StoreLogoField />);
+    render(<StoreImageField type="LOGO" />);
 
     await user.upload(screen.getByLabelText('Nova logo'), image('logo.svg', 'image/svg+xml'));
     await user.upload(screen.getByLabelText('Nova logo'), image('big.png', 'image/png', 1_048_577));
@@ -62,7 +62,7 @@ describe('StoreLogoField', () => {
 
   it('goes back to the current logo on discard, releases the preview and accepts the same file again', async () => {
     const user = userEvent.setup();
-    render(<StoreLogoField />);
+    render(<StoreImageField type="LOGO" />);
     const logoInput = screen.getByLabelText<HTMLInputElement>('Nova logo');
     const logo = image('logo.webp', 'image/webp');
 
@@ -80,7 +80,7 @@ describe('StoreLogoField', () => {
 
   it('clears the warning once a valid image is chosen', async () => {
     const user = userEvent.setup({ applyAccept: false });
-    render(<StoreLogoField />);
+    render(<StoreImageField type="LOGO" />);
 
     await user.upload(screen.getByLabelText('Nova logo'), image('logo.gif', 'image/gif'));
     await user.upload(screen.getByLabelText('Nova logo'), image('logo.png'));
@@ -90,7 +90,7 @@ describe('StoreLogoField', () => {
 
   it('releases the previous preview when another image is chosen and the last one on unmount', async () => {
     const user = userEvent.setup();
-    const { unmount } = render(<StoreLogoField />);
+    const { unmount } = render(<StoreImageField type="LOGO" />);
 
     await user.upload(screen.getByLabelText('Nova logo'), image('first.png'));
     await user.upload(screen.getByLabelText('Nova logo'), image('second.jpg', 'image/jpeg'));
@@ -101,5 +101,13 @@ describe('StoreLogoField', () => {
     unmount();
 
     expect(URL.revokeObjectURL).toHaveBeenLastCalledWith('blob:logo-2');
+  });
+
+  it('names the store photo field after the photo', () => {
+    render(<StoreImageField type="CAPA" />);
+
+    expect(screen.getByRole('img', { name: 'Foto atual' })).toHaveTextContent('MultiKoisas');
+    expect(screen.getByLabelText('Nova foto')).toHaveClass('text-base!');
+    expect(screen.getByRole('button', { name: 'Salvar foto' })).toBeDisabled();
   });
 });

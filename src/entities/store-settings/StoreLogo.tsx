@@ -10,7 +10,7 @@ export const StoreLogo = ({ fallback, ...brandMarkProps }: StoreLogoProps) => {
   const { logoUrl } = useStoreSettings().settings;
   if (!logoUrl) return fallback ?? <BrandMark {...brandMarkProps} />;
   return (
-    // eslint-disable-next-line @next/next/no-img-element -- the logo lives in the browser image store, next/image cannot load it
+    // eslint-disable-next-line @next/next/no-img-element -- the logo can come from any https host, next/image only loads the configured ones
     <img
       src={logoUrl}
       alt="MultiKoisas"

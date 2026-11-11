@@ -18,7 +18,7 @@ export const useStoreSettings = (): StoreSettingsState => {
   const load = useCallback(() => {
     fetchStoreSettings().then(
       (data) => setLoadState({ status: 'ready', data }),
-      () => setLoadState({ status: 'error' }),
+      () => setLoadState((current) => (current.status === 'ready' ? current : { status: 'error' })),
     );
   }, []);
 
