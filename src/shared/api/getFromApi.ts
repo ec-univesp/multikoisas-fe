@@ -1,5 +1,6 @@
-// The site has no back-end: every /api request is answered in the browser by the local api (src/shared/local-api).
-// The local api answers an empty list with 404 without a body (/canalvendaproduto with 204), like the real one.
+export const API_URL = process.env.MULTIKOISAS_API_URL ?? 'https://multikoisas-univesp.onrender.com';
+
+// The API answers an empty list with a bodiless 404 (/canalvendaproduto, with 204).
 const EMPTY_LIST_STATUSES = new Set([204, 404]);
 
 export const getFromApi = async <Item>(path: string): Promise<Item[]> => {
