@@ -19,10 +19,29 @@ const renderAbout = async () => {
 };
 
 describe('AboutSection', () => {
-  it('shows the store text right away and marks the section busy while the social networks load', () => {
+  it('shows the store title right away and marks the section busy while the social networks load', async () => {
     const { container } = render(<AboutSection />);
     expect(container.querySelector('section#about')).toHaveAttribute('aria-busy', 'true');
     expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
+    await waitForLoaded();
+  });
+
+  it('holds the place of the store description and picture while they load, without the default ones', async () => {
+    const { container } = render(<AboutSection />);
+    expect(screen.queryByText(FALLBACK_DESCRIPTION)).not.toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: 'MultiKoisas' })).not.toBeInTheDocument();
+    expect(container.querySelector('.aspect-\\[4\\/3\\][aria-busy="true"]')).toBeInTheDocument();
+    await waitForLoaded();
+  });
+
+  it('shows the default description and brand tile when the store settings cannot be read', async () => {
+    server.use(
+      http.get('*/loja', () => new HttpResponse(null, { status: 500 })),
+      http.get('*/imagemloja', () => new HttpResponse(null, { status: 500 })),
+    );
+    await renderAbout();
+    expect(await screen.findByText(FALLBACK_DESCRIPTION)).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'MultiKoisas' })).toHaveClass('bg-store-navy');
   });
 
   it('opens the page with the store as the single page title, anchored for the header link', async () => {

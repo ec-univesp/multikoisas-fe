@@ -36,7 +36,9 @@ const StorePicture = ({ logoUrl, photoUrl }: { logoUrl: string | null; photoUrl:
 };
 
 export const AboutSection = () => {
-  const { description, logoUrl, photoUrl } = useStoreSettings().settings;
+  const storeSettingsState = useStoreSettings();
+  const { description, logoUrl, photoUrl } = storeSettingsState.settings;
+  const isStoreLoading = storeSettingsState.status === 'loading';
   const socialNetworksState = useSocialNetworks();
   const socialNetworks = socialNetworksState.status === 'ready' ? socialNetworksState.data : [];
   const whatsApp = socialNetworks.find(isWhatsApp);
@@ -45,7 +47,7 @@ export const AboutSection = () => {
   return (
     <section
       id="about"
-      aria-busy={socialNetworksState.status === 'loading'}
+      aria-busy={isStoreLoading || socialNetworksState.status === 'loading'}
       className="mx-auto max-w-7xl scroll-mt-4 px-4 py-6 lg:px-8"
     >
       <div className="grid gap-6 rounded-xl bg-white p-5 shadow-theme-xs lg:grid-cols-2 lg:items-center lg:p-10">
@@ -53,7 +55,11 @@ export const AboutSection = () => {
           <h1 className="text-2xl font-extrabold tracking-tight text-store-navy sm:text-3xl">
             MultiKoisas: utilidades para casa, cozinha, limpeza e organização
           </h1>
-          <p className="mt-3 text-gray-700">{description ?? DEFAULT_DESCRIPTION}</p>
+          {isStoreLoading ? (
+            <div aria-busy="true" className="mt-3 h-12 rounded bg-gray-100" />
+          ) : (
+            <p className="mt-3 text-gray-700">{description ?? DEFAULT_DESCRIPTION}</p>
+          )}
           <p className="mt-2 text-gray-600">
             Aqui na vitrine você encontra o produto certo e conclui a compra direto na loja parceira da sua preferência.
           </p>
@@ -66,7 +72,11 @@ export const AboutSection = () => {
             />
           )}
         </div>
-        <StorePicture logoUrl={logoUrl} photoUrl={photoUrl} />
+        {isStoreLoading ? (
+          <div aria-busy="true" className="aspect-[4/3] rounded-xl bg-gray-100" />
+        ) : (
+          <StorePicture logoUrl={logoUrl} photoUrl={photoUrl} />
+        )}
       </div>
     </section>
   );
