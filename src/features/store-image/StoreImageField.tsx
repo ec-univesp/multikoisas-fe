@@ -42,6 +42,11 @@ const FIELD_COPY = {
   },
 } satisfies Record<StoreImageType, Record<string, string>>;
 
+const IMAGE_CLASS: Record<StoreImageType, string> = {
+  LOGO: 'max-h-16 w-auto object-contain',
+  CAPA: 'aspect-[4/3] h-48 max-w-full rounded object-cover',
+};
+
 const rejectionOf = (file: File): string | null => {
   if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) return 'Use uma imagem JPG, PNG, WebP ou SVG.';
   if (file.size > MAX_IMAGE_BYTES) return 'A imagem passa de 1 MB.';
@@ -113,10 +118,14 @@ export const StoreImageField = ({ type }: { type: StoreImageType }) => {
       <div className="flex min-h-24 items-center justify-center rounded-lg bg-store-navy px-4 py-3">
         {previewUrl ? (
           // eslint-disable-next-line @next/next/no-img-element -- object URL preview, next/image does not load blob URLs
-          <img src={previewUrl} alt={copy.preview} className="max-h-16 w-auto object-contain" />
+          <img src={previewUrl} alt={copy.preview} className={IMAGE_CLASS[type]} />
         ) : currentUrl ? (
           // eslint-disable-next-line @next/next/no-img-element -- the image can come from any https host, next/image only loads the configured ones
-          <img src={currentUrl} alt={copy.current} className="max-h-16 w-auto object-contain" />
+          <img src={currentUrl} alt={copy.current} className={IMAGE_CLASS[type]} />
+        ) : type === 'CAPA' ? (
+          <p className="flex aspect-[4/3] h-48 max-w-full items-center justify-center text-center text-sm text-white">
+            Nenhuma foto cadastrada
+          </p>
         ) : (
           <div role="img" aria-label={copy.current}>
             <BrandMark tone="onDark" />
@@ -130,6 +139,7 @@ export const StoreImageField = ({ type }: { type: StoreImageType }) => {
           accept={ACCEPTED_IMAGE_TYPES.join(',')}
           aria-describedby={`${inputId}-hint`}
           onChange={handleChange}
+          disabled={isSaving}
           className="text-base!"
         />
         <p id={`${inputId}-hint`} className="mt-1.5 text-xs text-gray-500">
@@ -143,7 +153,7 @@ export const StoreImageField = ({ type }: { type: StoreImageType }) => {
       </div>
       <div className="flex flex-wrap items-center gap-3">
         {previewUrl && (
-          <Button variant="outline" onClick={() => replacePreview(null)}>
+          <Button variant="outline" disabled={isSaving} onClick={() => replacePreview(null)}>
             Descartar
           </Button>
         )}

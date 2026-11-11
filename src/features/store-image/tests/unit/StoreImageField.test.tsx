@@ -103,11 +103,28 @@ describe('StoreImageField', () => {
     expect(URL.revokeObjectURL).toHaveBeenLastCalledWith('blob:logo-2');
   });
 
-  it('names the store photo field after the photo', () => {
+  it('names the store photo field after the photo and says when there is none', () => {
     render(<StoreImageField type="CAPA" />);
 
-    expect(screen.getByRole('img', { name: 'Foto atual' })).toHaveTextContent('MultiKoisas');
+    expect(screen.getByText('Nenhuma foto cadastrada')).toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: 'Foto atual' })).not.toBeInTheDocument();
     expect(screen.getByLabelText('Nova foto')).toHaveClass('text-base!');
     expect(screen.getByRole('button', { name: 'Salvar foto' })).toBeDisabled();
+  });
+
+  it('previews the store photo taller than the logo', async () => {
+    const user = userEvent.setup();
+    render(
+      <>
+        <StoreImageField type="CAPA" />
+        <StoreImageField type="LOGO" />
+      </>,
+    );
+
+    await user.upload(screen.getByLabelText('Nova foto'), image('fachada.png'));
+    await user.upload(screen.getByLabelText('Nova logo'), image('logo.png'));
+
+    expect(screen.getByAltText('Prévia da foto nova')).toHaveClass('aspect-[4/3]', 'h-48');
+    expect(screen.getByAltText('Prévia da logo nova')).toHaveClass('max-h-16');
   });
 });

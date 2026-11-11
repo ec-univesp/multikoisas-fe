@@ -60,6 +60,29 @@ describe('StoreImageField saving', () => {
     expect(screen.getByRole('button', { name: 'Salvar logo' })).toBeDisabled();
   });
 
+  it('locks the file choice and the discard while the logo is being saved', async () => {
+    let finishUpload = () => {};
+    server.use(
+      http.post(
+        '*/imagemloja',
+        () => new Promise<undefined>((resolve) => (finishUpload = () => resolve(undefined))),
+        { once: true },
+      ),
+    );
+    const user = userEvent.setup();
+    render(<StoreImageField type="LOGO" />);
+
+    await user.upload(screen.getByLabelText('Nova logo'), logo());
+    await user.click(screen.getByRole('button', { name: 'Salvar logo' }));
+
+    expect(screen.getByLabelText('Nova logo')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Descartar' })).toBeDisabled();
+
+    finishUpload();
+    expect(await screen.findByRole('status')).toHaveTextContent('Logo salva.');
+    expect(screen.getByLabelText('Nova logo')).toBeEnabled();
+  });
+
   it('keeps the preview and tells when the logo could not be saved', async () => {
     server.use(http.post('*/imagemloja', () => new HttpResponse(null, { status: 507 })));
     const user = userEvent.setup();
@@ -132,7 +155,7 @@ describe('StoreImageField saving', () => {
     await user.click(screen.getByRole('button', { name: 'Remover foto' }));
 
     expect(await screen.findByText('Foto removida.')).toHaveFocus();
-    expect(screen.getByRole('img', { name: 'Foto atual' })).toHaveTextContent('MultiKoisas');
+    expect(screen.getByText('Nenhuma foto cadastrada')).toBeInTheDocument();
   });
 
   it('tells when the store photo could not be saved nor removed', async () => {
