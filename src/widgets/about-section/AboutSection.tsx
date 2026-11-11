@@ -1,14 +1,14 @@
 'use client';
 
-import Image from 'next/image';
 import { isWhatsApp, SocialNetworkLinks, useSocialNetworks, WhatsAppLink } from '@/entities/social-network';
 import { useStoreSettings } from '@/entities/store-settings';
 import { BrandMark } from '@/shared/ui/BrandMark';
-import { STORE_PHOTO, type StorePhoto } from './storePhoto';
 
-const StorePicture = ({ storePhoto }: { storePhoto: StorePhoto | null }) => {
-  const { logoUrl } = useStoreSettings().settings;
-  if (!storePhoto) {
+const DEFAULT_DESCRIPTION =
+  'A MultiKoisas é uma loja de utilidades para casa, cozinha, limpeza, ferragens e organização.';
+
+const StorePicture = ({ logoUrl, photoUrl }: { logoUrl: string | null; photoUrl: string | null }) => {
+  if (!photoUrl) {
     return (
       <div
         role="img"
@@ -16,7 +16,7 @@ const StorePicture = ({ storePhoto }: { storePhoto: StorePhoto | null }) => {
         className="flex aspect-[4/3] items-center justify-center rounded-xl bg-store-navy p-8"
       >
         {logoUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element -- the logo lives in the browser image store, next/image cannot load it
+          // eslint-disable-next-line @next/next/no-img-element -- the logo can come from any https host, next/image only loads the configured ones
           <img src={logoUrl} alt="" className="size-full object-contain" />
         ) : (
           <div className="scale-150 sm:scale-200">
@@ -29,19 +29,14 @@ const StorePicture = ({ storePhoto }: { storePhoto: StorePhoto | null }) => {
 
   return (
     <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-gray-100">
-      <Image
-        src={storePhoto.src}
-        alt={storePhoto.alt}
-        fill
-        preload
-        sizes="(max-width: 1024px) 100vw, 50vw"
-        className="object-cover"
-      />
+      {/* eslint-disable-next-line @next/next/no-img-element -- the photo can come from any https host, next/image only loads the configured ones */}
+      <img src={photoUrl} alt="Foto da loja MultiKoisas" className="size-full object-cover" />
     </div>
   );
 };
 
-export const AboutSection = ({ storePhoto = STORE_PHOTO }: { storePhoto?: StorePhoto | null }) => {
+export const AboutSection = () => {
+  const { description, logoUrl, photoUrl } = useStoreSettings().settings;
   const socialNetworksState = useSocialNetworks();
   const socialNetworks = socialNetworksState.status === 'ready' ? socialNetworksState.data : [];
   const whatsApp = socialNetworks.find(isWhatsApp);
@@ -58,9 +53,7 @@ export const AboutSection = ({ storePhoto = STORE_PHOTO }: { storePhoto?: StoreP
           <h1 className="text-2xl font-extrabold tracking-tight text-store-navy sm:text-3xl">
             MultiKoisas: utilidades para casa, cozinha, limpeza e organização
           </h1>
-          <p className="mt-3 text-gray-700">
-            A MultiKoisas é uma loja de utilidades para casa, cozinha, limpeza, ferragens e organização.
-          </p>
+          <p className="mt-3 text-gray-700">{description ?? DEFAULT_DESCRIPTION}</p>
           <p className="mt-2 text-gray-600">
             Aqui na vitrine você encontra o produto certo e conclui a compra direto na loja parceira da sua preferência.
           </p>
@@ -73,7 +66,7 @@ export const AboutSection = ({ storePhoto = STORE_PHOTO }: { storePhoto?: StoreP
             />
           )}
         </div>
-        <StorePicture storePhoto={storePhoto} />
+        <StorePicture logoUrl={logoUrl} photoUrl={photoUrl} />
       </div>
     </section>
   );

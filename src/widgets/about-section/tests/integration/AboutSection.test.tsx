@@ -1,16 +1,19 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
-import { apiDatabase } from '@/test/msw/apiDatabase';
+import { apiDatabase, SUPABASE_IMAGES } from '@/test/msw/apiDatabase';
 import { server } from '@/test/msw/server';
-import { waitForLoaded } from '@/test/waitForLoaded';
+import { waitForApiAnswers, waitForLoaded } from '@/test/waitForLoaded';
 import { AboutSection } from '../../AboutSection';
 
 const whatsAppNetwork = { id: 3, descricao: 'WhatsApp', link: 'https://wa.me/5500000000000' };
 const instagramNetwork = { id: 1, descricao: 'Instagram', link: 'https://www.instagram.com/multikoisas' };
 
-const renderAbout = async (props: Parameters<typeof AboutSection>[0] = {}) => {
-  const view = render(<AboutSection {...props} />);
+const FALLBACK_DESCRIPTION =
+  'A MultiKoisas é uma loja de utilidades para casa, cozinha, limpeza, ferragens e organização.';
+
+const renderAbout = async () => {
+  const view = render(<AboutSection />);
   await waitForLoaded();
   return view;
 };
@@ -70,21 +73,34 @@ describe('AboutSection', () => {
   });
 
   it('shows the saved store logo in place of the brand mark', async () => {
-    apiDatabase.storeSettings.logoUrl = '/local-images/5';
+    const savedLogo = `${SUPABASE_IMAGES}/logo.png`;
+    apiDatabase.storeImages.push({ id: 2, imagemUrl: savedLogo, tipo: 'LOGO' });
     await renderAbout();
     const brandTile = await screen.findByRole('img', { name: 'MultiKoisas' });
-    await waitFor(() => expect(brandTile.querySelector('img')).toHaveAttribute('src', '/local-images/5'));
+    await waitFor(() => expect(brandTile.querySelector('img')).toHaveAttribute('src', savedLogo));
     expect(brandTile.querySelector('img')).toHaveClass('object-contain');
     expect(within(brandTile).queryByText('Koisas')).not.toBeInTheDocument();
   });
 
-  it('shows the store photo once it is configured', async () => {
-    await renderAbout({ storePhoto: { src: '/images/loja/fachada.jpg', alt: 'Fachada da loja MultiKoisas' } });
-    expect(screen.getByAltText('Fachada da loja MultiKoisas')).toHaveAttribute(
-      'src',
-      expect.stringContaining('fachada.jpg'),
-    );
+  it('shows the saved store photo in place of the brand tile', async () => {
+    const savedPhoto = `${SUPABASE_IMAGES}/fachada.jpg`;
+    apiDatabase.storeImages.push({ id: 2, imagemUrl: savedPhoto, tipo: 'CAPA' });
+    await renderAbout();
+    expect(await screen.findByAltText('Foto da loja MultiKoisas')).toHaveAttribute('src', savedPhoto);
     expect(screen.queryByRole('img', { name: 'MultiKoisas' })).not.toBeInTheDocument();
+  });
+
+  it('shows the saved store description in place of the default one', async () => {
+    await renderAbout();
+    expect(await screen.findByText('Tudo em um só lugar')).toBeInTheDocument();
+    expect(screen.queryByText(FALLBACK_DESCRIPTION)).not.toBeInTheDocument();
+  });
+
+  it('keeps the default description while the store has none', async () => {
+    apiDatabase.stores = [];
+    await renderAbout();
+    await waitForApiAnswers();
+    expect(screen.getByText(FALLBACK_DESCRIPTION)).toBeInTheDocument();
   });
 
   it('never invents a phone, address or company id', async () => {
