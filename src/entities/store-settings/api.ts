@@ -45,7 +45,8 @@ const valueOf = <Value>(result: PromiseSettledResult<Value>) => (result.status =
 
 export const fetchStoreSettings = async (): Promise<StoreSettings> => {
   const results = await Promise.allSettled([fetchStore(), fetchStoreImages('LOGO'), fetchStoreImages('CAPA')]);
-  if (results.every((result) => result.status === 'rejected')) throw new Error('The store settings could not be read');
+  // Without the store row the panel would offer an empty description and save it over the real one.
+  if (results[0].status === 'rejected') throw new Error('The store row could not be read');
   const [store, logos, photos] = results;
   return {
     description: valueOf(store)?.descricaoLoja?.trim() || null,

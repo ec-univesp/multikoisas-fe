@@ -24,7 +24,6 @@ describe('StoreSettingsForm saving', () => {
   it('offers to try again, without the fields, when the saved settings cannot be read', async () => {
     server.use(
       http.get('*/loja', () => new HttpResponse(null, { status: 500 }), { once: true }),
-      http.get('*/imagemloja', () => new HttpResponse(null, { status: 500 })),
     );
     const user = userEvent.setup();
     render(<StoreSettingsForm />);

@@ -55,10 +55,10 @@ describe('store settings api', () => {
     expect((await fetchStoreSettings()).description).toBeNull();
   });
 
-  it('still reads the images when the store row cannot be read', async () => {
+  it('fails when the store row cannot be read, so the panel never offers an empty description to save over the real one', async () => {
     apiDatabase.storeImages.push(LOGO);
     server.use(http.get('*/loja', failing));
-    expect(await fetchStoreSettings()).toEqual({ description: null, logoUrl: LOGO.imagemUrl, photoUrl: null });
+    await expect(fetchStoreSettings()).rejects.toThrow();
   });
 
   it('still reads the description when the images cannot be read', async () => {
@@ -66,9 +66,14 @@ describe('store settings api', () => {
     expect(await fetchStoreSettings()).toEqual({ description: 'Tudo em um só lugar', logoUrl: null, photoUrl: null });
   });
 
-  it('fails only when nothing can be read', async () => {
-    server.use(http.get('*/loja', failing), http.get('*/imagemloja', failing));
-    await expect(fetchStoreSettings()).rejects.toThrow();
+  it('still reads the description and the other image when one image type cannot be read', async () => {
+    apiDatabase.storeImages.push(LOGO);
+    server.use(http.get('*/imagemloja', ({ request }) => (request.url.includes('tipo=CAPA') ? failing() : undefined)));
+    expect(await fetchStoreSettings()).toEqual({
+      description: 'Tudo em um só lugar',
+      logoUrl: LOGO.imagemUrl,
+      photoUrl: null,
+    });
   });
 
   it('saves the description of the store', async () => {
