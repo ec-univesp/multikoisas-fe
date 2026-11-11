@@ -13,7 +13,8 @@ type ApiLoginResult = { token: string } | { error: string };
 const MISSING_FIELDS_MESSAGE = 'Informe usuário e senha.';
 const INVALID_CREDENTIALS_MESSAGE = 'Usuário ou senha incorretos.';
 const UNAVAILABLE_MESSAGE = 'Não foi possível entrar agora. Tente de novo em instantes.';
-const LOGIN_TIMEOUT_MILLISECONDS = 30 * 1000;
+// The api sleeps on Render and takes about a minute to wake up.
+const LOGIN_TIMEOUT_MILLISECONDS = 90 * 1000;
 const DEFAULT_TOKEN_DURATION_MILLISECONDS = 2 * 60 * 60 * 1000;
 const MAXIMUM_SESSION_DURATION_MILLISECONDS = 8 * 60 * 60 * 1000;
 
@@ -54,7 +55,7 @@ export const loginAction = async (_previousState: LoginState, formData: FormData
   const sessionSecret = resolveSessionSecret(process.env);
   if (!hasValidSecret(sessionSecret)) return { error: UNAVAILABLE_MESSAGE, username };
 
-  const loginResult = await logIntoApi(username, password);
+  const loginResult = await logIntoApi(username.trim(), password);
   if ('error' in loginResult) return { error: loginResult.error, username };
 
   const now = Date.now();

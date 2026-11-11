@@ -24,7 +24,7 @@ const unavailableMessage = 'Não foi possível entrar agora. Tente de novo em in
 const encodeSegment = (value: object) => Buffer.from(JSON.stringify(value)).toString('base64url');
 const buildJwt = (payload: object) => `${encodeSegment({ alg: 'HS256' })}.${encodeSegment(payload)}.signature`;
 
-const answerLoginWith = (response: () => Response) => server.use(http.post('*/auth/login', response));
+const answerLoginWith = (response: Parameters<typeof http.post>[1]) => server.use(http.post('*/auth/login', response));
 
 const buildFormData = (username: string, password: string) => {
   const formData = new FormData();
@@ -84,6 +84,18 @@ describe('loginAction', () => {
     const sessionToken = cookieStore.set.mock.calls.find(([name]) => name === SESSION_COOKIE_NAME)?.[1];
     expect(await verifySessionToken(sessionToken, secret, now + 3600 * 1000 - 1)).toBe(true);
     expect(await verifySessionToken(sessionToken, secret, now + 3600 * 1000)).toBe(false);
+  });
+
+  it('sends the username without the spaces a phone keyboard adds', async () => {
+    let sentUsername: unknown;
+    answerLoginWith(async ({ request }) => {
+      sentUsername = ((await request.json()) as { username?: unknown }).username;
+      return HttpResponse.json({ token: buildJwt({ exp: now / 1000 + 3600 }) });
+    });
+
+    await expect(loginAction(initialState, buildFormData(' admin ', 'senha'))).rejects.toThrow('NEXT_REDIRECT');
+
+    expect(sentUsername).toBe('admin');
   });
 
   it('accepts a token whose expiry has a fraction of a second', async () => {
@@ -188,7 +200,7 @@ describe('loginAction', () => {
     expect(redirect).not.toHaveBeenCalled();
   });
 
-  it('asks to try again later when the api takes longer than 30 seconds to answer', async () => {
+  it('asks to try again later when the api takes longer than 90 seconds to answer, as on a cold start', async () => {
     const timeout = vi
       .spyOn(AbortSignal, 'timeout')
       .mockReturnValue(AbortSignal.abort(new DOMException('The operation timed out.', 'TimeoutError')));
@@ -197,7 +209,7 @@ describe('loginAction', () => {
       error: unavailableMessage,
       username: TEST_API_CREDENTIALS.username,
     });
-    expect(timeout).toHaveBeenCalledWith(30 * 1000);
+    expect(timeout).toHaveBeenCalledWith(90 * 1000);
     expect(cookieStore.set).not.toHaveBeenCalled();
     timeout.mockRestore();
   });
