@@ -18,9 +18,9 @@ export const ProductDetail = ({ product }: { product: Product }) => {
 
         <div>
           <div className="flex flex-wrap gap-2">
-            {categoryNamesOf(product).map((categoryName) => (
+            {categoryNamesOf(product).map((categoryName, position) => (
               <span
-                key={categoryName}
+                key={`${position}:${categoryName}`}
                 className="w-fit rounded-full bg-store-yellow px-2 py-0.5 text-xs font-semibold text-store-navy-950"
               >
                 {categoryName}

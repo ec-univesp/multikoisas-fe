@@ -36,8 +36,8 @@ export const ProductCard = ({
         />
       </Link>
       <div className="mt-3 flex flex-wrap gap-x-2 text-xs font-semibold tracking-wider text-store-navy uppercase">
-        {categoryNamesOf(product).map((categoryName) => (
-          <span key={categoryName}>{categoryName}</span>
+        {categoryNamesOf(product).map((categoryName, position) => (
+          <span key={`${position}:${categoryName}`}>{categoryName}</span>
         ))}
       </div>
       <h3 className="mt-1 line-clamp-2 leading-tight font-semibold text-gray-800">
