@@ -6,8 +6,7 @@ const buildProduct = (overrides: Partial<Product>): Product => ({
   id: 1,
   slug: 'x',
   name: 'X',
-  category: 'casa',
-  categoryId: null,
+  categories: [{ id: 1, name: 'casa' }],
   shortDescription: 's',
   longDescription: 'l',
   images: ['/products/x.svg'],
@@ -16,15 +15,31 @@ const buildProduct = (overrides: Partial<Product>): Product => ({
 });
 
 const catalog = [
-  buildProduct({ slug: 'garrafa', name: 'Garrafa Térmica', category: 'cozinha' }),
-  buildProduct({ slug: 'balde', name: 'Balde 12L', category: 'limpeza' }),
-  buildProduct({ slug: 'varal', name: 'Varal Sanfonado', category: 'casa' }),
-  buildProduct({ slug: 'organizador', name: 'Caixa de Organização 30L', category: 'organizacao' }),
+  buildProduct({ slug: 'garrafa', name: 'Garrafa Térmica', categories: [{ id: 1, name: 'cozinha' }] }),
+  buildProduct({ slug: 'balde', name: 'Balde 12L', categories: [{ id: 1, name: 'limpeza' }] }),
+  buildProduct({ slug: 'varal', name: 'Varal Sanfonado', categories: [{ id: 1, name: 'casa' }] }),
+  buildProduct({ slug: 'organizador', name: 'Caixa de Organização 30L', categories: [{ id: 1, name: 'organizacao' }] }),
 ];
 
 describe('filterProducts', () => {
   it('returns every product when no filter is set', () => {
     expect(filterProducts(catalog, { category: null, searchTerm: '' })).toHaveLength(4);
+  });
+
+  it('matches a product by any of its categories', () => {
+    const multiCategoryProduct = buildProduct({
+      slug: 'cesto',
+      categories: [
+        { id: 1, name: 'cozinha' },
+        { id: 2, name: 'limpeza' },
+      ],
+    });
+    expect(filterProducts([multiCategoryProduct], { category: 'cozinha', searchTerm: '' })).toEqual([
+      multiCategoryProduct,
+    ]);
+    expect(filterProducts([multiCategoryProduct], { category: 'limpeza', searchTerm: '' })).toEqual([
+      multiCategoryProduct,
+    ]);
   });
 
   it('filters by category', () => {

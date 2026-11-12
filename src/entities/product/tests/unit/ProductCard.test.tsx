@@ -8,8 +8,7 @@ const product: Product = {
   id: 1,
   slug: 'garrafa-termica-1l-1',
   name: 'Garrafa Térmica 1L',
-  category: 'Utensílios de Cozinha',
-  categoryId: 2,
+  categories: [{ id: 2, name: 'Utensílios de Cozinha' }],
   shortDescription: 'Mantém a temperatura.',
   longDescription: 'longa',
   images: ['/products/garrafa.webp'],
@@ -20,6 +19,24 @@ const product: Product = {
 };
 
 describe('ProductCard', () => {
+  it('shows every category of the product and the uncategorized label when there is none', () => {
+    const { rerender } = render(
+      <ProductCard
+        product={{
+          ...product,
+          categories: [
+            { id: 2, name: 'Utensílios de Cozinha' },
+            { id: 3, name: 'Banheiros' },
+          ],
+        }}
+      />,
+    );
+    expect(screen.getByText('Utensílios de Cozinha')).toBeInTheDocument();
+    expect(screen.getByText('Banheiros')).toBeInTheDocument();
+    rerender(<ProductCard product={{ ...product, categories: [] }} />);
+    expect(screen.getByText('Sem categoria')).toBeInTheDocument();
+  });
+
   it('shows the category, name, short description and photo', () => {
     render(<ProductCard product={product} />);
     expect(screen.getByText('Utensílios de Cozinha')).toBeInTheDocument();

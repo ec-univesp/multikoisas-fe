@@ -12,8 +12,6 @@ type ApiSalesChannel = { id: number; nome: string };
 export type ApiPurchaseLink = { produtoId: number; canalVendaId: number; link: string };
 export type Catalog = { products: Product[]; categories: Category[]; salesChannels: { id: number; name: string }[] };
 
-const UNCATEGORIZED = 'Sem categoria';
-
 const firstNonEmptyLine = (text: string): string =>
   text
     .split(/\r?\n/)
@@ -68,17 +66,24 @@ export const toStoreLinks = (
       (storeLink, position, storeLinks) => storeLinks.findIndex(({ store }) => store === storeLink.store) === position,
     );
 
+export const toLinkedCategories = (
+  apiProductCategories: readonly ApiProductCategory[],
+  categories: readonly Category[],
+): Category[] =>
+  apiProductCategories.flatMap((apiProductCategory) =>
+    categories.filter((category) => category.id === apiProductCategory.categoriaId),
+  );
+
 export const toProduct = (
   apiProduct: ApiProduct,
-  category: Category | undefined,
+  categories: Category[],
   images: string[] = [],
   storeLinks: StoreLink[] = [],
 ): Product => ({
   id: apiProduct.id,
   slug: `${toBaseSlug(apiProduct.nome)}-${apiProduct.id}`,
   name: apiProduct.nome,
-  category: category?.name ?? UNCATEGORIZED,
-  categoryId: category?.id ?? null,
+  categories,
   shortDescription: firstNonEmptyLine(apiProduct.descricaoProduto),
   longDescription: apiProduct.descricaoProduto.trim(),
   images,
@@ -105,10 +110,11 @@ export const fetchCatalog = async (): Promise<Catalog> => {
       getFromApi<ApiSalesChannel>('/canalvenda').catch((): ApiSalesChannel[] => []),
       getFromApi<ApiPurchaseLink>('/canalvendaproduto').catch((): ApiPurchaseLink[] => []),
     ]);
-  const categoryOf = (produtoId: number): Category | undefined => {
-    const productCategory = apiProductCategories.find((candidate) => candidate.produtoId === produtoId);
-    return categories.find((category) => category.id === productCategory?.categoriaId);
-  };
+  const categoriesOf = (produtoId: number): Category[] =>
+    toLinkedCategories(
+      apiProductCategories.filter((apiProductCategory) => apiProductCategory.produtoId === produtoId),
+      categories,
+    );
   const imagesOf = (produtoId: number): string[] =>
     toImageUrls(apiImages.filter((apiImage) => apiImage.produtoId === produtoId));
   const storeLinksOf = (produtoId: number): StoreLink[] =>
@@ -118,7 +124,7 @@ export const fetchCatalog = async (): Promise<Catalog> => {
     );
   return {
     products: apiProducts.map((apiProduct) =>
-      toProduct(apiProduct, categoryOf(apiProduct.id), imagesOf(apiProduct.id), storeLinksOf(apiProduct.id)),
+      toProduct(apiProduct, categoriesOf(apiProduct.id), imagesOf(apiProduct.id), storeLinksOf(apiProduct.id)),
     ),
     categories,
     salesChannels: apiSalesChannels.map((apiSalesChannel) => ({ id: apiSalesChannel.id, name: apiSalesChannel.nome })),

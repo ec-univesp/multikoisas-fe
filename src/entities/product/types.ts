@@ -54,12 +54,16 @@ export type Category = {
   name: string;
 };
 
+const UNCATEGORIZED = 'Sem categoria';
+
+export const categoryNamesOf = (product: Product): string[] =>
+  product.categories.length > 0 ? product.categories.map((category) => category.name) : [UNCATEGORIZED];
+
 export type Product = {
   id: number;
   slug: string;
   name: string;
-  category: string;
-  categoryId: number | null;
+  categories: Category[];
   shortDescription: string;
   longDescription: string;
   images: string[];
