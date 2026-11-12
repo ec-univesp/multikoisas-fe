@@ -34,7 +34,9 @@ describe('GoogleReviewsBadge', () => {
   });
 
   it('renders nothing without an https link to the store on google', () => {
-    const { container } = render(<GoogleReviewsBadge place={placeWith({ mapsUrl: 'http://maps.google.com/?cid=1' })} />);
+    const { container } = render(
+      <GoogleReviewsBadge place={placeWith({ mapsUrl: 'http://maps.google.com/?cid=1' })} />,
+    );
     expect(container).toBeEmptyDOMElement();
   });
 
