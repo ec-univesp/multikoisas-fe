@@ -173,7 +173,7 @@ export const ProductFormModal = ({
               />
             </div>
 
-            <fieldset>
+            <fieldset aria-describedby={errors.categoryIds ? 'product-categories-error' : undefined}>
               <legend className="mb-1.5 block text-sm font-medium text-gray-700">Categorias</legend>
               <div className="flex flex-wrap gap-x-6">
                 {categories.map((category) => (
@@ -187,7 +187,7 @@ export const ProductFormModal = ({
                 ))}
               </div>
               {errors.categoryIds && (
-                <p role="alert" className="mt-1.5 text-xs text-error-500">
+                <p id="product-categories-error" role="alert" className="mt-1.5 text-xs text-error-500">
                   {errors.categoryIds}
                 </p>
               )}

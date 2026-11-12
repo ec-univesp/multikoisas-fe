@@ -109,19 +109,29 @@ export class CategoryLinkError extends Error {
 const sameCategoryIn = (categories: readonly Category[], category: Category) =>
   categories.some((candidate) => candidate.id === category.id);
 
+const linkedCategoriesInApi = async (product: Product, knownCategories: readonly Category[]) => {
+  const categoryById = new Map(knownCategories.map((category) => [category.id, category]));
+  const links = await fetchCategoryLinks(product.id);
+  return links.flatMap((link) => categoryById.get(link.categoriaId) ?? []);
+};
+
+// New links go first, so a failure halfway never leaves the product without category.
 const syncCategoryLinks = async (product: Product, desiredCategories: readonly Category[]): Promise<Product> => {
   let linkedCategories = [...product.categories];
   try {
-    for (const category of product.categories.filter((current) => !sameCategoryIn(desiredCategories, current))) {
-      await unlinkCategory(product.id, category.id);
-      linkedCategories = linkedCategories.filter((linked) => linked.id !== category.id);
-    }
     for (const category of desiredCategories.filter((desired) => !sameCategoryIn(product.categories, desired))) {
       await linkCategory(product.id, category.id);
       linkedCategories.push(category);
     }
+    for (const category of product.categories.filter((current) => !sameCategoryIn(desiredCategories, current))) {
+      await unlinkCategory(product.id, category.id);
+      linkedCategories = linkedCategories.filter((linked) => linked.id !== category.id);
+    }
   } catch {
-    throw new CategoryLinkError({ ...product, categories: linkedCategories });
+    const categoriesInApi = await linkedCategoriesInApi(product, [...product.categories, ...desiredCategories]).catch(
+      () => linkedCategories,
+    );
+    throw new CategoryLinkError({ ...product, categories: categoriesInApi });
   }
   return { ...product, categories: linkedCategories };
 };
