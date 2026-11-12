@@ -20,7 +20,12 @@ const buildProduct = (overrides: Partial<Product>): Product => ({
 });
 
 const products = [
-  buildProduct({ id: 1, slug: 'garrafa-1', name: 'Garrafa Térmica', categories: [{ id: 1, name: 'Utensílios de Cozinha' }] }),
+  buildProduct({
+    id: 1,
+    slug: 'garrafa-1',
+    name: 'Garrafa Térmica',
+    categories: [{ id: 1, name: 'Utensílios de Cozinha' }],
+  }),
   buildProduct({ id: 2, slug: 'balde-2', name: 'Balde 12L', categories: [{ id: 1, name: 'Banheiros' }] }),
   buildProduct({ id: 3, slug: 'panela-3', name: 'Panela', categories: [{ id: 1, name: 'Utensílios de Cozinha' }] }),
 ];

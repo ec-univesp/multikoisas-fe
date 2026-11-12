@@ -34,8 +34,12 @@ describe('filterProducts', () => {
         { id: 2, name: 'limpeza' },
       ],
     });
-    expect(filterProducts([multiCategoryProduct], { category: 'cozinha', searchTerm: '' })).toEqual([multiCategoryProduct]);
-    expect(filterProducts([multiCategoryProduct], { category: 'limpeza', searchTerm: '' })).toEqual([multiCategoryProduct]);
+    expect(filterProducts([multiCategoryProduct], { category: 'cozinha', searchTerm: '' })).toEqual([
+      multiCategoryProduct,
+    ]);
+    expect(filterProducts([multiCategoryProduct], { category: 'limpeza', searchTerm: '' })).toEqual([
+      multiCategoryProduct,
+    ]);
   });
 
   it('filters by category', () => {
