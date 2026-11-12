@@ -16,8 +16,7 @@ describe('fetchProducts', () => {
       id: 1,
       slug: 'garrafa-termica-1l-1',
       name: 'Garrafa Térmica 1L',
-      category: 'Utensílios de Cozinha',
-      categoryId: 2,
+      categories: [{ id: 2, name: 'Utensílios de Cozinha' }],
       shortDescription: 'Mantém a temperatura.',
       longDescription: 'Mantém a temperatura.\r\n\r\nAmpola de vidro.',
       images: [
@@ -88,10 +87,13 @@ describe('fetchProducts', () => {
     expect(products.every((product) => product.images.length === 0)).toBe(true);
   });
 
-  it('labels a product with no linked category', async () => {
-    const [, balde] = await fetchProducts();
-    expect(balde.category).toBe('Sem categoria');
-    expect(balde.categoryId).toBeNull();
+  it('gives a product every linked category in link order and none to a product without links', async () => {
+    const [, balde, caixa] = await fetchProducts();
+    expect(balde.categories).toEqual([]);
+    expect(caixa.categories).toEqual([
+      { id: 2, name: 'Utensílios de Cozinha' },
+      { id: 3, name: 'Banheiros' },
+    ]);
   });
 
   it('reads only through the local api in the browser, never the real api', async () => {
@@ -142,6 +144,6 @@ describe('empty lists from the api', () => {
     );
     const products = await fetchProducts();
     expect(products).toHaveLength(3);
-    expect(products.every((product) => product.storeLinks.length === 0 && product.categoryId === null)).toBe(true);
+    expect(products.every((product) => product.storeLinks.length === 0 && product.categories.length === 0)).toBe(true);
   });
 });

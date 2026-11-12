@@ -7,8 +7,7 @@ const product: Product = {
   id: 1,
   slug: 'garrafa-termica-1l',
   name: 'Garrafa Térmica 1L',
-  category: 'cozinha',
-  categoryId: null,
+  categories: [{ id: 1, name: 'cozinha' }],
   shortDescription: 'Mantém a temperatura por até 12 horas.',
   longDescription:
     'Garrafa térmica de 1 litro com ampola de vidro, ideal para café e chá. Alça para transporte e tampa que serve de xícara.',
@@ -20,6 +19,24 @@ const product: Product = {
 };
 
 describe('ProductDetail', () => {
+  it('shows a badge per category and the uncategorized label when there is none', () => {
+    const { rerender } = render(
+      <ProductDetail
+        product={{
+          ...product,
+          categories: [
+            { id: 1, name: 'cozinha' },
+            { id: 2, name: 'banheiro' },
+          ],
+        }}
+      />,
+    );
+    expect(screen.getByText('cozinha')).toHaveClass('bg-store-yellow');
+    expect(screen.getByText('banheiro')).toHaveClass('bg-store-yellow');
+    rerender(<ProductDetail product={{ ...product, categories: [] }} />);
+    expect(screen.getByText('Sem categoria')).toHaveClass('bg-store-yellow');
+  });
+
   it('shows the product name as the main heading', () => {
     render(<ProductDetail product={product} />);
     expect(screen.getByRole('heading', { level: 1, name: product.name })).toBeInTheDocument();
@@ -54,7 +71,7 @@ describe('ProductDetail', () => {
   it('dresses its own controls in the store palette', () => {
     render(<ProductDetail product={product} />);
     expect(screen.getByRole('link', { name: /voltar para a vitrine/i })).toHaveClass('text-store-navy');
-    expect(screen.getByText(product.category)).toHaveClass('bg-store-yellow', 'text-store-navy-950');
+    expect(screen.getByText('cozinha')).toHaveClass('bg-store-yellow', 'text-store-navy-950');
     expect(screen.getByRole('button', { name: 'Ver foto 1 de 2' })).toHaveClass('ring-store-navy');
   });
 

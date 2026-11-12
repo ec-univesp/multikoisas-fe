@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ProductImage } from './ProductImage';
-import { PRODUCT_IMAGE_PLACEHOLDER, STORE_PRESENTATION } from './types';
+import { categoryNamesOf, PRODUCT_IMAGE_PLACEHOLDER, STORE_PRESENTATION } from './types';
 import type { Product } from './types';
 
 type ProductCardProps = {
@@ -35,9 +35,11 @@ export const ProductCard = ({
           className="object-contain p-2"
         />
       </Link>
-      <span className="mt-3 line-clamp-1 text-xs font-semibold tracking-wider text-store-navy uppercase">
-        {product.category}
-      </span>
+      <div className="mt-3 flex flex-wrap gap-x-2 text-xs font-semibold tracking-wider text-store-navy uppercase">
+        {categoryNamesOf(product).map((categoryName) => (
+          <span key={categoryName}>{categoryName}</span>
+        ))}
+      </div>
       <h3 className="mt-1 line-clamp-2 leading-tight font-semibold text-gray-800">
         <Link href={detailPath} className="hover:text-store-navy">
           {product.name}

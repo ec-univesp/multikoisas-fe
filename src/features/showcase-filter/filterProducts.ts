@@ -17,7 +17,7 @@ export const filterProducts = (
 ): readonly Product[] => {
   const normalizedSearchTerm = normalizeForSearch(searchTerm.trim());
   return products.filter((product) => {
-    if (category !== null && product.category !== category) return false;
+    if (category !== null && !product.categories.some(({ name }) => name === category)) return false;
     if (normalizedSearchTerm === '') return true;
     return normalizeForSearch(product.name).includes(normalizedSearchTerm);
   });

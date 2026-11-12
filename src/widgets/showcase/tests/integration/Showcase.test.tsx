@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it, vi } from 'vitest';
 import { ShowcaseSearchProvider } from '@/features/showcase-filter';
@@ -44,11 +45,23 @@ describe('Showcase', () => {
     expect(screen.getByRole('heading', { name: 'Balde 12L' })).toBeInTheDocument();
   });
 
-  it('offers a chip per real product category', async () => {
+  it('offers a chip per category used by a product', async () => {
     await renderShowcase();
     expect(screen.getByRole('button', { name: 'Todas as categorias' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Banheiros' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Utensílios de Cozinha' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Sem categoria' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Sem categoria' })).not.toBeInTheDocument();
+  });
+
+  it('lists a product with two categories under both chips', async () => {
+    const user = userEvent.setup();
+    await renderShowcase();
+    await user.click(screen.getByRole('button', { name: 'Banheiros' }));
+    expect(screen.getByRole('heading', { name: 'Caixa' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Garrafa Térmica 1L' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Utensílios de Cozinha' }));
+    expect(screen.getByRole('heading', { name: 'Caixa' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Garrafa Térmica 1L' })).toBeInTheDocument();
   });
 
   it('turns only real store links into buy buttons', async () => {
