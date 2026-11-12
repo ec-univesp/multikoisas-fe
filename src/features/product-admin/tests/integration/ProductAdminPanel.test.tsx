@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { delay, http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -26,8 +26,7 @@ const buildProduct = (overrides: Partial<Product>): Product => ({
   id: 1,
   slug: 'garrafa-termica-1l-1',
   name: 'Garrafa Térmica 1L',
-  category: 'Utensílios de Cozinha',
-  categoryId: 2,
+  categories: [{ id: 2, name: 'Utensílios de Cozinha' }],
   shortDescription: 'Mantém a temperatura por 12 horas.',
   longDescription: 'Mantém a temperatura por 12 horas.\nAmpola de vidro.',
   images: [],
@@ -69,10 +68,10 @@ const optionsOf = (select: HTMLElement) =>
 
 const fillProductForm = async (
   user: ReturnType<typeof userEvent.setup>,
-  fields: { name: string; categoryId: string; description: string },
+  fields: { name: string; categories: string[]; description: string },
 ) => {
   await user.type(screen.getByLabelText('Nome do produto'), fields.name);
-  await user.selectOptions(screen.getByLabelText('Categoria'), fields.categoryId);
+  for (const categoryName of fields.categories) await user.click(screen.getByRole('checkbox', { name: categoryName }));
   await user.type(screen.getByLabelText('Descrição'), fields.description);
 };
 
@@ -82,25 +81,41 @@ describe('ProductAdminPanel', () => {
     expect(screen.getByAltText('Garrafa Térmica 1L')).toHaveAttribute('src', expect.stringContaining('placeholder'));
   });
 
-  it('creates the product in the api, links its category and lists it', async () => {
+  it('creates the product in the api, links every chosen category and lists it', async () => {
     const user = userEvent.setup();
     renderPanel();
 
     await user.click(screen.getByRole('button', { name: 'Novo produto' }));
     await fillProductForm(user, {
       name: 'Balde Multiuso 12L',
-      categoryId: '3',
+      categories: ['Banheiros', 'Utensílios de Cozinha'],
       description: 'Balde resistente.',
     });
     await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
 
     expect(await screen.findByText('Balde Multiuso 12L')).toBeInTheDocument();
+    expect(screen.getByText('Utensílios de Cozinha, Banheiros')).toBeInTheDocument();
     expect(apiDatabase.products).toContainEqual({
       id: 100,
       nome: 'Balde Multiuso 12L',
       descricaoProduto: 'Balde resistente.',
     });
-    expect(linksOf(100)).toEqual([{ produtoId: 100, categoriaId: 3 }]);
+    expect(linksOf(100)).toEqual([
+      { produtoId: 100, categoriaId: 2 },
+      { produtoId: 100, categoriaId: 3 },
+    ]);
+  });
+
+  it('offers a large checkbox per category', async () => {
+    const user = userEvent.setup();
+    renderPanel();
+
+    await user.click(screen.getByRole('button', { name: 'Novo produto' }));
+
+    const categoryGroup = screen.getByRole('group', { name: 'Categorias' });
+    expect(within(categoryGroup).getAllByRole('checkbox')).toHaveLength(2);
+    expect(within(categoryGroup).getByText('Banheiros')).toHaveClass('text-base');
+    expect(within(categoryGroup).getByText('Banheiros').closest('label')).toHaveClass('min-h-11');
   });
 
   it('loads the latest product from the api before editing it', async () => {
@@ -173,7 +188,7 @@ describe('ProductAdminPanel', () => {
     renderPanel([]);
 
     await user.click(screen.getByRole('button', { name: 'Novo produto' }));
-    await fillProductForm(user, { name: 'Vassoura', categoryId: '2', description: 'Macia.' });
+    await fillProductForm(user, { name: 'Vassoura', categories: ['Utensílios de Cozinha'], description: 'Macia.' });
     await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
 
     expect(await screen.findByAltText('Vassoura')).toHaveAttribute('src', expect.stringContaining('placeholder'));
@@ -182,7 +197,7 @@ describe('ProductAdminPanel', () => {
   it('drops a product that was deleted elsewhere when opening it for edit', async () => {
     apiDatabase.products = apiDatabase.products.filter((product) => product.id !== 5);
     const user = userEvent.setup();
-    renderPanel([buildProduct({}), buildProduct({ id: 5, slug: 'balde-12l-5', name: 'Balde 12L', categoryId: null })]);
+    renderPanel([buildProduct({}), buildProduct({ id: 5, slug: 'balde-12l-5', name: 'Balde 12L', categories: [] })]);
 
     await user.click(screen.getByRole('button', { name: 'Editar Balde 12L' }));
 
@@ -218,34 +233,98 @@ describe('ProductAdminPanel', () => {
     ]);
   });
 
-  it('moves the product to the new category when it changes', async () => {
+  it('unlinks the removed category and links the added one with one request each', async () => {
     const user = userEvent.setup();
     renderPanel();
 
     await user.click(screen.getByRole('button', { name: 'Editar Garrafa Térmica 1L' }));
-    await user.selectOptions(await screen.findByLabelText('Categoria'), '3');
+    await user.click(await screen.findByRole('checkbox', { name: 'Utensílios de Cozinha' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Banheiros' }));
     await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
 
     expect(await screen.findByText('Banheiros')).toBeInTheDocument();
     expect(linksOf(1)).toEqual([{ produtoId: 1, categoriaId: 3 }]);
     expect(apiRequests.slice(-3)).toEqual([
-      'GET /api/categoriaproduto?produtoId=1',
-      'DELETE /api/categoriaproduto',
+      'PUT /api/produto/1',
       'POST /api/categoriaproduto',
+      'DELETE /api/categoriaproduto',
     ]);
   });
 
-  it('keeps only the chosen category when the product had several', async () => {
+  it('keeps the old category when linking the new one fails, so the product never ends up without category', async () => {
+    respondWith('post', '*/categoriaproduto', 500);
+    const user = userEvent.setup();
+    renderPanel();
+
+    await user.click(screen.getByRole('button', { name: 'Editar Garrafa Térmica 1L' }));
+    await user.click(await screen.findByRole('checkbox', { name: 'Utensílios de Cozinha' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Banheiros' }));
+    await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+    expect(
+      await screen.findByText(
+        'Produto salvo, mas nem todas as categorias foram salvas. Edite o produto para escolher de novo.',
+      ),
+    ).toBeInTheDocument();
+    expect(linksOf(1)).toEqual([{ produtoId: 1, categoriaId: 2 }]);
+    expect(apiRequests).not.toContain('DELETE /api/categoriaproduto');
+    expect(screen.getByText('Utensílios de Cozinha', { selector: 'td' })).toBeInTheDocument();
+  });
+
+  it('loads every category of a product and unlinks only the unchecked one', async () => {
     const user = userEvent.setup();
     renderPanel([buildProduct({ id: 7, slug: 'caixa-7', name: 'Caixa' })]);
 
     await user.click(screen.getByRole('button', { name: 'Editar Caixa' }));
-    await user.selectOptions(await screen.findByLabelText('Categoria'), '3');
+    expect(await screen.findByRole('checkbox', { name: 'Banheiros' })).toBeChecked();
+    await user.click(screen.getByRole('checkbox', { name: 'Utensílios de Cozinha' }));
     await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
 
     expect(await screen.findByText('Banheiros')).toBeInTheDocument();
     expect(linksOf(7)).toEqual([{ produtoId: 7, categoriaId: 3 }]);
     expect(apiRequests).not.toContain('POST /api/categoriaproduto');
+  });
+
+  it('asks for at least one category when every box is unchecked', async () => {
+    const user = userEvent.setup();
+    renderPanel();
+
+    await user.click(screen.getByRole('button', { name: 'Editar Garrafa Térmica 1L' }));
+    await user.click(await screen.findByRole('checkbox', { name: 'Utensílios de Cozinha' }));
+    await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+    expect(screen.getByText('Escolha pelo menos uma categoria do produto.')).toHaveAttribute('role', 'alert');
+    expect(screen.getByRole('group', { name: 'Categorias' })).toHaveAccessibleDescription(
+      'Escolha pelo menos uma categoria do produto.',
+    );
+    expect(apiRequests).not.toContain('PUT /api/produto/1');
+  });
+
+  it('lists a created product with the categories that were linked when another link fails', async () => {
+    server.use(
+      http.post<never, { produtoId: number; categoriaId: number }>('*/categoriaproduto', async ({ request }) => {
+        const { categoriaId } = await request.clone().json();
+        return categoriaId === 3 ? new HttpResponse(null, { status: 500 }) : undefined;
+      }),
+    );
+    const user = userEvent.setup();
+    renderPanel([]);
+
+    await user.click(screen.getByRole('button', { name: 'Novo produto' }));
+    await fillProductForm(user, {
+      name: 'Vassoura',
+      categories: ['Utensílios de Cozinha', 'Banheiros'],
+      description: 'Macia.',
+    });
+    await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+    expect(
+      await screen.findByText(
+        'Produto salvo, mas nem todas as categorias foram salvas. Edite o produto para escolher de novo.',
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Utensílios de Cozinha', { selector: 'td' })).toBeInTheDocument();
+    expect(linksOf(100)).toEqual([{ produtoId: 100, categoriaId: 2 }]);
   });
 
   it('lists a created product without category when linking the category fails', async () => {
@@ -254,11 +333,13 @@ describe('ProductAdminPanel', () => {
     renderPanel([]);
 
     await user.click(screen.getByRole('button', { name: 'Novo produto' }));
-    await fillProductForm(user, { name: 'Vassoura', categoryId: '2', description: 'Macia.' });
+    await fillProductForm(user, { name: 'Vassoura', categories: ['Utensílios de Cozinha'], description: 'Macia.' });
     await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
 
     expect(
-      await screen.findByText('Produto salvo, mas sem categoria. Edite o produto para escolher de novo.'),
+      await screen.findByText(
+        'Produto salvo, mas nem todas as categorias foram salvas. Edite o produto para escolher de novo.',
+      ),
     ).toBeInTheDocument();
     expect(screen.getByText('Vassoura', { selector: 'a' })).toBeInTheDocument();
     expect(screen.getByText('Sem categoria')).toBeInTheDocument();
@@ -283,7 +364,7 @@ describe('ProductAdminPanel', () => {
     renderPanel();
 
     await user.click(screen.getByRole('button', { name: 'Novo produto' }));
-    await fillProductForm(user, { name: 'Vassoura', categoryId: '2', description: 'Macia.' });
+    await fillProductForm(user, { name: 'Vassoura', categories: ['Utensílios de Cozinha'], description: 'Macia.' });
     await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
 
     expect(await screen.findByRole('button', { name: 'Salvando...' })).toBeDisabled();
@@ -307,7 +388,7 @@ describe('ProductAdminPanel', () => {
     renderPanel();
 
     await user.click(screen.getByRole('button', { name: 'Novo produto' }));
-    await fillProductForm(user, { name: 'Vassoura', categoryId: '2', description: 'Macia.' });
+    await fillProductForm(user, { name: 'Vassoura', categories: ['Utensílios de Cozinha'], description: 'Macia.' });
     await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
 
     expect(await screen.findByText('Não foi possível salvar o produto. Tente de novo.')).toBeInTheDocument();
@@ -323,7 +404,7 @@ describe('ProductAdminPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
 
     expect(screen.getByText('Informe o nome do produto.')).toBeInTheDocument();
-    expect(screen.getByText('Escolha a categoria do produto.')).toHaveAttribute('role', 'alert');
+    expect(screen.getByText('Escolha pelo menos uma categoria do produto.')).toHaveAttribute('role', 'alert');
     expect(screen.getByText('Informe a descrição do produto.')).toBeInTheDocument();
     expect(apiRequests).toEqual([]);
   });
@@ -359,7 +440,7 @@ describe('ProductAdminPanel', () => {
 
   it('explains that the api only deletes a product with category and store link', async () => {
     const user = userEvent.setup();
-    renderPanel([buildProduct({ id: 5, slug: 'balde-5', name: 'Balde 12L', categoryId: null })]);
+    renderPanel([buildProduct({ id: 5, slug: 'balde-5', name: 'Balde 12L', categories: [] })]);
 
     await user.click(screen.getByRole('button', { name: 'Apagar Balde 12L' }));
     await user.click(screen.getByRole('button', { name: 'Apagar' }));
@@ -392,7 +473,7 @@ describe('ProductAdminPanel', () => {
       renderPanel([]);
 
       await user.click(screen.getByRole('button', { name: 'Novo produto' }));
-      await fillProductForm(user, { name: 'Vassoura', categoryId: '2', description: 'Macia.' });
+      await fillProductForm(user, { name: 'Vassoura', categories: ['Utensílios de Cozinha'], description: 'Macia.' });
       expect(screen.getByText('JPG, PNG ou WebP, até 5 MB cada.')).toBeInTheDocument();
       await user.upload(screen.getByLabelText('Fotos'), [photo('frente.png'), photo('lado.webp', 'image/webp')]);
       expect(screen.getByAltText('Foto 1')).toHaveAttribute('src', expect.stringMatching(/^blob:/));
@@ -416,7 +497,7 @@ describe('ProductAdminPanel', () => {
       renderPanel([]);
 
       await user.click(screen.getByRole('button', { name: 'Novo produto' }));
-      await fillProductForm(user, { name: 'Vassoura', categoryId: '2', description: 'Macia.' });
+      await fillProductForm(user, { name: 'Vassoura', categories: ['Utensílios de Cozinha'], description: 'Macia.' });
       await user.upload(screen.getByLabelText('Fotos'), [photo('frente.png'), photo('lado.png')]);
       const droppedPreview = screen.getByAltText('Foto 1').getAttribute('src');
       await user.click(screen.getByRole('button', { name: 'Remover foto 1' }));
@@ -451,7 +532,7 @@ describe('ProductAdminPanel', () => {
       renderPanel([]);
 
       await user.click(screen.getByRole('button', { name: 'Novo produto' }));
-      await fillProductForm(user, { name: 'Vassoura', categoryId: '2', description: 'Macia.' });
+      await fillProductForm(user, { name: 'Vassoura', categories: ['Utensílios de Cozinha'], description: 'Macia.' });
       await user.upload(screen.getByLabelText('Fotos'), photo('frente.png'));
       await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
 
@@ -593,7 +674,7 @@ describe('ProductAdminPanel', () => {
       renderPanel([]);
 
       await user.click(screen.getByRole('button', { name: 'Novo produto' }));
-      await fillProductForm(user, { name: 'Vassoura', categoryId: '2', description: 'Macia.' });
+      await fillProductForm(user, { name: 'Vassoura', categories: ['Utensílios de Cozinha'], description: 'Macia.' });
       await user.upload(screen.getByLabelText('Fotos'), [
         photo('nota.pdf', 'application/pdf'),
         photo('grande.png', 'image/png', 5_242_881),
@@ -647,7 +728,7 @@ describe('ProductAdminPanel', () => {
       renderPanel([]);
 
       await user.click(screen.getByRole('button', { name: 'Novo produto' }));
-      await fillProductForm(user, { name: 'Vassoura', categoryId: '2', description: 'Macia.' });
+      await fillProductForm(user, { name: 'Vassoura', categories: ['Utensílios de Cozinha'], description: 'Macia.' });
       await user.upload(screen.getByLabelText('Fotos'), [photo('frente.png'), photo('lado.png')]);
       await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
 
@@ -692,7 +773,7 @@ describe('ProductAdminPanel', () => {
       renderPanel([]);
 
       await user.click(screen.getByRole('button', { name: 'Novo produto' }));
-      await fillProductForm(user, { name: 'Vassoura', categoryId: '2', description: 'Macia.' });
+      await fillProductForm(user, { name: 'Vassoura', categories: ['Utensílios de Cozinha'], description: 'Macia.' });
       await user.click(screen.getByRole('button', { name: 'Adicionar loja' }));
       await user.selectOptions(screen.getByLabelText('Loja 1'), '2');
       await user.type(screen.getByLabelText('Link da loja 1'), ' https://shopee.com.br/vassoura ');
@@ -766,7 +847,7 @@ describe('ProductAdminPanel', () => {
       renderPanel([]);
 
       await user.click(screen.getByRole('button', { name: 'Novo produto' }));
-      await fillProductForm(user, { name: 'Vassoura', categoryId: '2', description: 'Macia.' });
+      await fillProductForm(user, { name: 'Vassoura', categories: ['Utensílios de Cozinha'], description: 'Macia.' });
       await user.click(screen.getByRole('button', { name: 'Adicionar loja' }));
       if (store) await user.selectOptions(screen.getByLabelText('Loja 1'), store);
       await user.type(screen.getByLabelText('Link da loja 1'), link);
@@ -781,7 +862,7 @@ describe('ProductAdminPanel', () => {
       renderPanel([]);
 
       await user.click(screen.getByRole('button', { name: 'Novo produto' }));
-      await fillProductForm(user, { name: 'Vassoura', categoryId: '2', description: 'Macia.' });
+      await fillProductForm(user, { name: 'Vassoura', categories: ['Utensílios de Cozinha'], description: 'Macia.' });
       for (const row of [1, 2]) {
         await user.click(screen.getByRole('button', { name: 'Adicionar loja' }));
         await user.selectOptions(screen.getByLabelText(`Loja ${row}`), '2');
@@ -799,7 +880,7 @@ describe('ProductAdminPanel', () => {
       renderPanel([]);
 
       await user.click(screen.getByRole('button', { name: 'Novo produto' }));
-      await fillProductForm(user, { name: 'Vassoura', categoryId: '2', description: 'Macia.' });
+      await fillProductForm(user, { name: 'Vassoura', categories: ['Utensílios de Cozinha'], description: 'Macia.' });
       await user.click(screen.getByRole('button', { name: 'Adicionar loja' }));
       await user.selectOptions(screen.getByLabelText('Loja 1'), '2');
       await user.type(screen.getByLabelText('Link da loja 1'), 'https://shopee.com.br/vassoura');
@@ -886,14 +967,14 @@ describe('ProductAdminPanel', () => {
       renderPanel([]);
 
       await user.click(screen.getByRole('button', { name: 'Novo produto' }));
-      await fillProductForm(user, { name: 'Vassoura', categoryId: '2', description: 'Macia.' });
+      await fillProductForm(user, { name: 'Vassoura', categories: ['Utensílios de Cozinha'], description: 'Macia.' });
       await user.click(screen.getByRole('button', { name: 'Adicionar loja' }));
       await user.selectOptions(screen.getByLabelText('Loja 1'), '2');
       await user.type(screen.getByLabelText('Link da loja 1'), 'https://shopee.com.br/vassoura');
       await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
 
-      expect(await screen.findByText(/Produto salvo, mas sem categoria\./)).toHaveTextContent(
-        'Produto salvo, mas sem categoria. Edite o produto para escolher de novo. Produto salvo, mas os links de compra não foram atualizados. Edite o produto para tentar de novo.',
+      expect(await screen.findByText(/Produto salvo, mas nem todas as categorias foram salvas\./)).toHaveTextContent(
+        'Produto salvo, mas nem todas as categorias foram salvas. Edite o produto para escolher de novo. Produto salvo, mas os links de compra não foram atualizados. Edite o produto para tentar de novo.',
       );
     });
 
@@ -902,7 +983,7 @@ describe('ProductAdminPanel', () => {
       renderPanel([]);
 
       await user.click(screen.getByRole('button', { name: 'Novo produto' }));
-      await fillProductForm(user, { name: 'Vassoura', categoryId: '2', description: 'Macia.' });
+      await fillProductForm(user, { name: 'Vassoura', categories: ['Utensílios de Cozinha'], description: 'Macia.' });
       await user.click(screen.getByRole('button', { name: 'Adicionar loja' }));
       await user.selectOptions(screen.getByLabelText('Loja 1'), '2');
       await user.type(screen.getByLabelText('Link da loja 1'), 'https://shopee.com.br/ok');
@@ -922,7 +1003,7 @@ describe('ProductAdminPanel', () => {
       renderPanel([]);
 
       await user.click(screen.getByRole('button', { name: 'Novo produto' }));
-      await fillProductForm(user, { name: 'Vassoura', categoryId: '2', description: 'Macia.' });
+      await fillProductForm(user, { name: 'Vassoura', categories: ['Utensílios de Cozinha'], description: 'Macia.' });
       await user.click(screen.getByRole('button', { name: 'Adicionar loja' }));
       await user.selectOptions(screen.getByLabelText('Loja 1'), '2');
       await user.type(screen.getByLabelText('Link da loja 1'), 'https://shopee.com.br/vassoura');

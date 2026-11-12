@@ -2,7 +2,7 @@ export type PurchaseLinkDraft = { key: number; salesChannelId: string; url: stri
 
 export type ProductFormValues = {
   name: string;
-  categoryId: string;
+  categoryIds: string[];
   description: string;
   purchaseLinks: PurchaseLinkDraft[];
 };

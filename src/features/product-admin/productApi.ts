@@ -2,6 +2,7 @@ import {
   fetchProductImageRecords,
   toImageRecord,
   toImageUrlsInIdOrder,
+  toLinkedCategories,
   toProduct,
   toStoreLinks,
   type ApiPurchaseLink,
@@ -82,7 +83,7 @@ export const loadProductForEdit = async (
   const productId = product.id;
   const [apiProduct] = await getFromApi<ApiProduct>(`/produto?id=${productId}`);
   if (!apiProduct) return null;
-  const [[firstLink], photos, purchaseLinks] = await Promise.all([
+  const [categoryLinks, photos, purchaseLinks] = await Promise.all([
     fetchCategoryLinks(productId),
     fetchProductImageRecords(productId).catch(() => null),
     fetchPurchaseLinks(productId),
@@ -90,7 +91,7 @@ export const loadProductForEdit = async (
   return {
     product: toProduct(
       apiProduct,
-      categories.find((category) => category.id === firstLink?.categoriaId),
+      toLinkedCategories(categoryLinks, categories),
       photos ? toImageUrlsInIdOrder(photos) : product.images,
       salesChannels.length > 0 ? toStoreLinksOf(productId, purchaseLinks, salesChannels) : product.storeLinks,
     ),
@@ -101,31 +102,46 @@ export const loadProductForEdit = async (
 
 export class CategoryLinkError extends Error {
   constructor(readonly product: Product) {
-    super(`Product ${product.id} saved without a category`);
+    super(`Category links of product ${product.id} were not all saved`);
   }
 }
 
-const keepOnlyCategory = async (produtoId: number, categoriaId: number) => {
-  const links = await fetchCategoryLinks(produtoId);
-  for (const link of links) {
-    if (link.categoriaId !== categoriaId) await unlinkCategory(produtoId, link.categoriaId);
-  }
-  if (!links.some((link) => link.categoriaId === categoriaId)) await linkCategory(produtoId, categoriaId);
+const sameCategoryIn = (categories: readonly Category[], category: Category) =>
+  categories.some((candidate) => candidate.id === category.id);
+
+const linkedCategoriesInApi = async (product: Product, knownCategories: readonly Category[]) => {
+  const categoryById = new Map(knownCategories.map((category) => [category.id, category]));
+  const links = await fetchCategoryLinks(product.id);
+  return links.flatMap((link) => categoryById.get(link.categoriaId) ?? []);
 };
 
-const findCategory = (categories: readonly Category[], values: ProductFormValues) =>
-  categories.find((category) => String(category.id) === values.categoryId);
+// New links go first, so a failure halfway never leaves the product without category.
+const syncCategoryLinks = async (product: Product, desiredCategories: readonly Category[]): Promise<Product> => {
+  let linkedCategories = [...product.categories];
+  try {
+    for (const category of desiredCategories.filter((desired) => !sameCategoryIn(product.categories, desired))) {
+      await linkCategory(product.id, category.id);
+      linkedCategories.push(category);
+    }
+    for (const category of product.categories.filter((current) => !sameCategoryIn(desiredCategories, current))) {
+      await unlinkCategory(product.id, category.id);
+      linkedCategories = linkedCategories.filter((linked) => linked.id !== category.id);
+    }
+  } catch {
+    const categoriesInApi = await linkedCategoriesInApi(product, [...product.categories, ...desiredCategories]).catch(
+      () => linkedCategories,
+    );
+    throw new CategoryLinkError({ ...product, categories: categoriesInApi });
+  }
+  return { ...product, categories: linkedCategories };
+};
+
+const findCategories = (categories: readonly Category[], values: ProductFormValues) =>
+  categories.filter((category) => values.categoryIds.includes(String(category.id)));
 
 export const createProduct = async (values: ProductFormValues, categories: readonly Category[]): Promise<Product> => {
   const apiProduct: ApiProduct = await (await callApi('POST', '/produto', toProductRequest(values))).json();
-  const category = findCategory(categories, values);
-  if (!category) return toProduct(apiProduct, undefined);
-  try {
-    await linkCategory(apiProduct.id, category.id);
-  } catch {
-    throw new CategoryLinkError(toProduct(apiProduct, undefined));
-  }
-  return toProduct(apiProduct, category);
+  return syncCategoryLinks(toProduct(apiProduct, []), findCategories(categories, values));
 };
 
 export const updateProduct = async (
@@ -136,15 +152,10 @@ export const updateProduct = async (
   const productRequest = toProductRequest(values);
   await callApi('PUT', `/produto/${product.id}`, productRequest);
   const apiProduct = { id: product.id, ...productRequest };
-  const category = findCategory(categories, values);
-  if (category && category.id !== product.categoryId) {
-    try {
-      await keepOnlyCategory(product.id, category.id);
-    } catch {
-      throw new CategoryLinkError(toProduct(apiProduct, undefined, product.images, product.storeLinks));
-    }
-  }
-  return toProduct(apiProduct, category, product.images, product.storeLinks);
+  return syncCategoryLinks(
+    toProduct(apiProduct, product.categories, product.images, product.storeLinks),
+    findCategories(categories, values),
+  );
 };
 
 // The API deletes categories, links and photos along, but answers 409 when the category or purchase link is missing.
