@@ -95,7 +95,9 @@ export const ProductAdminPanel = ({ initialProducts, categories, salesChannels }
         : await createProduct(values, categories);
     } catch (error) {
       if (!(error instanceof CategoryLinkError)) throw error;
-      setFeedbackMessage('Produto salvo, mas sem categoria. Edite o produto para escolher de novo.');
+      setFeedbackMessage(
+        'Produto salvo, mas nem todas as categorias foram salvas. Edite o produto para escolher de novo.',
+      );
       return error.product;
     }
   };

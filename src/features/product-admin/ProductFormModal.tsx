@@ -5,7 +5,7 @@ import { Modal } from '@/components/ui/modal';
 import Button from '@/components/ui/button/Button';
 import Label from '@/components/form/Label';
 import Input from '@/components/form/input/InputField';
-import Select from '@/components/form/Select';
+import Checkbox from '@/components/form/input/Checkbox';
 import TextArea from '@/components/form/input/TextArea';
 import type { Category, Product, ProductImageRecord } from '@/entities/product';
 import type { SalesChannel } from '@/entities/sales-channel';
@@ -27,7 +27,7 @@ const buildInitialFormValues = (
   purchaseLinks: readonly PurchaseLink[],
 ): ProductFormValues => ({
   name: product?.name ?? '',
-  categoryId: product?.categoryId === null || !product ? '' : String(product.categoryId),
+  categoryIds: product?.categories.map((category) => String(category.id)) ?? [],
   description: product?.longDescription ?? '',
   purchaseLinks: purchaseLinks.map((link, index) => ({
     key: index,
@@ -74,8 +74,16 @@ export const ProductFormModal = ({
     return () => revokeAll(previewUrls);
   }, []);
 
-  const updateField = (field: 'name' | 'categoryId' | 'description', value: string) =>
+  const updateField = (field: 'name' | 'description', value: string) =>
     setValues((previousValues) => ({ ...previousValues, [field]: value }));
+
+  const toggleCategory = (categoryId: string, isChecked: boolean) =>
+    setValues((previousValues) => ({
+      ...previousValues,
+      categoryIds: isChecked
+        ? [...previousValues.categoryIds, categoryId]
+        : previousValues.categoryIds.filter((selectedId) => selectedId !== categoryId),
+    }));
 
   const updatePurchaseLinks = (update: (purchaseLinks: PurchaseLinkDraft[]) => PurchaseLinkDraft[]) =>
     setValues((previousValues) => ({ ...previousValues, purchaseLinks: update(previousValues.purchaseLinks) }));
@@ -165,25 +173,25 @@ export const ProductFormModal = ({
               />
             </div>
 
-            <div>
-              <Label htmlFor="product-category">Categoria</Label>
-              <Select
-                id="product-category"
-                placeholder="Escolha uma categoria"
-                options={categories.map((category) => ({
-                  value: String(category.id),
-                  label: category.name,
-                }))}
-                defaultValue={values.categoryId}
-                onChange={(value) => updateField('categoryId', value)}
-                className="text-base"
-              />
-              {errors.categoryId && (
+            <fieldset>
+              <legend className="mb-1.5 block text-sm font-medium text-gray-700">Categorias</legend>
+              <div className="flex flex-wrap gap-x-6">
+                {categories.map((category) => (
+                  <Checkbox
+                    key={category.id}
+                    id={`product-category-${category.id}`}
+                    label={category.name}
+                    checked={values.categoryIds.includes(String(category.id))}
+                    onChange={(isChecked) => toggleCategory(String(category.id), isChecked)}
+                  />
+                ))}
+              </div>
+              {errors.categoryIds && (
                 <p role="alert" className="mt-1.5 text-xs text-error-500">
-                  {errors.categoryId}
+                  {errors.categoryIds}
                 </p>
               )}
-            </div>
+            </fieldset>
 
             <div>
               <Label htmlFor="product-description">Descrição</Label>

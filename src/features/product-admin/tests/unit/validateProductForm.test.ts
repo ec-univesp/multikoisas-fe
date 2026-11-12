@@ -4,7 +4,7 @@ import type { ProductFormValues } from '../../types';
 
 const validValues: ProductFormValues = {
   name: 'Garrafa Térmica 1L',
-  categoryId: '2',
+  categoryIds: ['2'],
   description: 'Mantém a temperatura por 12 horas.',
   purchaseLinks: [{ key: 1, salesChannelId: '2', url: 'https://shopee.com.br/garrafa' }],
 };
@@ -15,9 +15,9 @@ describe('validateProductForm', () => {
   });
 
   it('rejects blank fields', () => {
-    expect(validateProductForm({ name: '   ', categoryId: '', description: ' ', purchaseLinks: [] })).toEqual({
+    expect(validateProductForm({ name: '   ', categoryIds: [], description: ' ', purchaseLinks: [] })).toEqual({
       name: 'Informe o nome do produto.',
-      categoryId: 'Escolha a categoria do produto.',
+      categoryIds: 'Escolha pelo menos uma categoria do produto.',
       description: 'Informe a descrição do produto.',
     });
   });

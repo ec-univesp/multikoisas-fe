@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Badge from '@/components/ui/badge/Badge';
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import { PencilIcon, TrashBinIcon } from '@/icons';
-import { PRODUCT_IMAGE_PLACEHOLDER, ProductImage, STORE_PRESENTATION } from '@/entities/product';
+import { categoryNamesOf, PRODUCT_IMAGE_PLACEHOLDER, ProductImage, STORE_PRESENTATION } from '@/entities/product';
 import type { Product } from '@/entities/product';
 
 type ProductTableProps = {
@@ -67,7 +67,9 @@ export const ProductTable = ({ products, onEdit, onDelete }: ProductTableProps) 
                     </div>
                   </div>
                 </TableCell>
-                <TableCell className="px-5 py-4 text-start text-theme-sm text-gray-500">{product.category}</TableCell>
+                <TableCell className="px-5 py-4 text-start text-theme-sm text-gray-500">
+                  {categoryNamesOf(product).join(', ')}
+                </TableCell>
                 <TableCell className="px-5 py-4 text-start">
                   <div className="flex flex-wrap gap-1.5">
                     {product.storeLinks.map((storeLink) => (

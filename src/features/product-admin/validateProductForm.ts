@@ -31,7 +31,7 @@ export const validateProductForm = (values: ProductFormValues): ProductFormError
   const errors: ProductFormErrors = {};
 
   if (!isNonEmptyText(values.name)) errors.name = 'Informe o nome do produto.';
-  if (!isNonEmptyText(values.categoryId)) errors.categoryId = 'Escolha a categoria do produto.';
+  if (values.categoryIds.length === 0) errors.categoryIds = 'Escolha pelo menos uma categoria do produto.';
   if (!isNonEmptyText(values.description)) errors.description = 'Informe a descrição do produto.';
   const purchaseLinksError = validatePurchaseLinks(values.purchaseLinks);
   if (purchaseLinksError) errors.purchaseLinks = purchaseLinksError;
