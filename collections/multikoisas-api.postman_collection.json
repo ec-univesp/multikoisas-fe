@@ -1098,12 +1098,12 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/loja?nome=multikoisas",
+              "raw": "{{baseUrl}}/loja?nomeLoja=multikoisas",
               "host": ["{{baseUrl}}"],
               "path": ["loja"],
               "query": [
                 {
-                  "key": "nome",
+                  "key": "nomeLoja",
                   "value": "multikoisas"
                 }
               ]
@@ -1147,13 +1147,13 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/loja/:nomeLoja",
+              "raw": "{{baseUrl}}/loja/:id",
               "host": ["{{baseUrl}}"],
-              "path": ["loja", ":nomeLoja"],
+              "path": ["loja", ":id"],
               "variable": [
                 {
-                  "key": "nomeLoja",
-                  "value": "Loja de teste"
+                  "key": "id",
+                  "value": "1"
                 }
               ]
             },
@@ -1174,13 +1174,13 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/loja?nome=Loja de teste",
+              "raw": "{{baseUrl}}/loja/:id",
               "host": ["{{baseUrl}}"],
-              "path": ["loja"],
-              "query": [
+              "path": ["loja", ":id"],
+              "variable": [
                 {
-                  "key": "nome",
-                  "value": "Loja de teste"
+                  "key": "id",
+                  "value": "0"
                 }
               ]
             }
@@ -1273,19 +1273,19 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/imagemloja/:tipo?id=0",
+              "raw": "{{baseUrl}}/imagemloja/:id?tipo=LOGO",
               "host": ["{{baseUrl}}"],
-              "path": ["imagemloja", ":tipo"],
+              "path": ["imagemloja", ":id"],
               "query": [
                 {
-                  "key": "id",
-                  "value": "0"
+                  "key": "tipo",
+                  "value": "LOGO"
                 }
               ],
               "variable": [
                 {
-                  "key": "tipo",
-                  "value": "LOGO"
+                  "key": "id",
+                  "value": "0"
                 }
               ]
             }
