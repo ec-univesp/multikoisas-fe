@@ -7,6 +7,8 @@ export const STORE_SETTINGS: StoreSettings = {
   address: null,
   logoUrl: null,
   photoUrl: null,
+  showcaseColumns: 4,
+  accentColor: '#facc15',
 };
 
 // Shown while the address saved in the API loads or when the store has none.

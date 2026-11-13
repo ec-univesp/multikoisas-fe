@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import StorePage from '../../page';
 
 describe('StorePage', () => {
-  it('renders the site settings title with the store logo, store photo, store data and social networks sections, without the browser sample data reset', async () => {
+  it('renders the site settings title with the store logo, store photo, store data, showcase appearance and social networks sections, without the browser sample data reset', async () => {
     render(<StorePage />);
 
     expect(screen.getByRole('heading', { name: 'Configurações de site' })).toBeInTheDocument();
@@ -12,7 +12,14 @@ describe('StorePage', () => {
     expect(screen.getByLabelText('Nova foto')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Dados da loja' })).toBeInTheDocument();
     expect(await screen.findByRole('button', { name: 'Salvar dados' })).toBeEnabled();
-    expect(screen.getByRole('heading', { name: 'Redes sociais' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Salvar aparência' })).toBeEnabled();
+    expect(screen.getAllByRole('heading', { level: 3 }).map((heading) => heading.textContent)).toEqual([
+      'Logo da vitrine',
+      'Foto da loja',
+      'Dados da loja',
+      'Aparência da vitrine',
+      'Redes sociais',
+    ]);
     expect(await screen.findByText('Instagram')).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Dados de exemplo' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Restaurar dados iniciais' })).not.toBeInTheDocument();

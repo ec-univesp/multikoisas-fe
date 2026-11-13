@@ -389,6 +389,8 @@ const STORE = {
   nomeLoja: 'multikoisas',
   descricaoLoja: 'Tudo em um só lugar',
   endereco: 'Av. Prof. Luiz Inácio de Anhaia Melo, 2085 - Centreville, Santo André - SP',
+  corDestaque: null,
+  colunaCarrossel: 0,
 };
 
 describe('local api store', () => {
@@ -410,14 +412,33 @@ describe('local api store', () => {
       nomeLoja: 'multikoisas',
       descricaoLoja: 'Primeira',
       endereco: 'Rua A, 1',
+      corDestaque: null,
+      colunaCarrossel: 0,
     });
 
     const updated = await send('PUT', '/api/loja/5', { descricaoLoja: 'Segunda', endereco: 'Rua B, 2' });
     expect(updated.status).toBe(200);
     expect(database.stores).toEqual([
-      { id: 5, nomeLoja: 'multikoisas', descricaoLoja: 'Segunda', endereco: 'Rua B, 2' },
+      {
+        id: 5,
+        nomeLoja: 'multikoisas',
+        descricaoLoja: 'Segunda',
+        endereco: 'Rua B, 2',
+        corDestaque: null,
+        colunaCarrossel: 0,
+      },
     ]);
     expect(onChange).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps the accent color and the columns sent, and replaces them with empty values when a change leaves them out', async () => {
+    database.stores.push({ ...STORE });
+    const appearance = { corDestaque: '#22c55e', colunaCarrossel: 3 };
+    await send('PUT', '/api/loja/1', { descricaoLoja: 'Outra', endereco: 'Rua C, 3', ...appearance });
+    expect(database.stores[0]).toEqual(expect.objectContaining(appearance));
+
+    await send('PUT', '/api/loja/1', { descricaoLoja: 'Outra', endereco: 'Rua C, 3' });
+    expect(database.stores[0]).toEqual(expect.objectContaining({ corDestaque: null, colunaCarrossel: 0 }));
   });
 
   it('refuses a store without name, a name taken and a description change of a missing store', async () => {
