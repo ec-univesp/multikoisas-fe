@@ -47,6 +47,11 @@ describe('store settings api', () => {
     );
   });
 
+  it('reads the multikoisas row even when the api lists another store first', async () => {
+    apiDatabase.stores.unshift({ id: 2, nomeLoja: 'outra loja', descricaoLoja: 'Outra descrição', endereco: null });
+    expect((await fetchStoreSettings()).description).toBe('Tudo em um só lugar');
+  });
+
   it('reads no description nor images when the store row and the valid images are missing', async () => {
     apiDatabase.stores = [];
     expect(await fetchStoreSettings()).toEqual({
@@ -102,13 +107,18 @@ describe('store settings api', () => {
     expect(imageRequests).toEqual(['']);
   });
 
-  it('saves the description and the address of the store', async () => {
+  it('saves the description and the address of the store by its id', async () => {
+    const paths: string[] = [];
+    server.events.on('request:start', ({ request }) => {
+      if (request.method === 'PUT') paths.push(new URL(request.url).pathname);
+    });
     expect(await saveStoreSettings({ description: 'Nova descrição', address: 'Rua A, 1' })).toEqual(
       expect.objectContaining({ description: 'Nova descrição', address: 'Rua A, 1' }),
     );
     expect(apiDatabase.stores).toEqual([
       { id: 1, nomeLoja: 'multikoisas', descricaoLoja: 'Nova descrição', endereco: 'Rua A, 1' },
     ]);
+    expect(paths).toEqual(['/api/loja/1']);
   });
 
   it('sends both fields on every change, even when only the description changed', async () => {
@@ -130,14 +140,20 @@ describe('store settings api', () => {
 
   it('uploads a new image and deletes only the older displayable ones of the same type', async () => {
     apiDatabase.storeImages.push(OLD_LOGO, PHOTO);
+    const deletions: string[] = [];
+    server.events.on('request:start', ({ request }) => {
+      const url = new URL(request.url);
+      if (request.method === 'DELETE') deletions.push(url.pathname + url.search);
+    });
     const saved = await saveStoreImage('LOGO', NEW_FILE());
     expect(saved?.logoUrl).toBe(`${SUPABASE_IMAGES}/upload-100`);
     expect(storeImageIds()).toEqual([PLACEHOLDER_LOGO.id, PHOTO.id, 100]);
+    expect(deletions).toEqual(['/api/imagemloja/2?tipo=LOGO']);
   });
 
   it('shows the new image even when an older one cannot be deleted', async () => {
     apiDatabase.storeImages.push(OLD_LOGO);
-    server.use(http.delete('*/imagemloja/:type', failing));
+    server.use(http.delete('*/imagemloja/:id', failing));
     expect((await saveStoreImage('LOGO', NEW_FILE()))?.logoUrl).toBe(`${SUPABASE_IMAGES}/upload-100`);
     expect(storeImageIds()).toEqual([1, 2, 100]);
   });
@@ -169,13 +185,11 @@ describe('store settings api', () => {
 
   it('deletes what it can, shows the result and then fails when an image cannot be removed', async () => {
     apiDatabase.storeImages.push(OLD_LOGO, LOGO);
-    server.use(
-      http.delete('*/imagemloja/:type', ({ request }) => (request.url.endsWith('id=3') ? failing() : undefined)),
-    );
+    server.use(http.delete('*/imagemloja/:id', ({ params }) => (params.id === '3' ? failing() : undefined)));
     const notified: (string | null)[] = [];
     const stopListening = onStoreSettingsSaved((settings) => notified.push(settings.logoUrl));
 
-    await expect(removeStoreImage('LOGO')).rejects.toThrow('DELETE /imagemloja/LOGO?id=3 responded 500');
+    await expect(removeStoreImage('LOGO')).rejects.toThrow('DELETE /imagemloja/3?tipo=LOGO responded 500');
 
     stopListening();
     expect(storeImageIds()).toEqual([1, 3]);

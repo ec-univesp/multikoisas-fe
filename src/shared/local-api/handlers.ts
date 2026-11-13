@@ -430,7 +430,7 @@ export const createApiHandlers = (
     }),
 
     http.get(`${baseUrl}/loja`, ({ request }) => {
-      const name = queryOf(request).get('nome');
+      const name = queryOf(request).get('nomeLoja');
       return listResponse(database.stores.filter((store) => matchesText(name, store.nomeLoja)));
     }),
 
@@ -447,9 +447,9 @@ export const createApiHandlers = (
       return storageFull();
     }),
 
-    http.put<{ name: string }, StoreBody>(`${baseUrl}/loja/:name`, async ({ request, params }) => {
+    http.put<{ id: string }, StoreBody>(`${baseUrl}/loja/:id`, async ({ request, params }) => {
       const { descricaoLoja = '', endereco = '' } = await request.json();
-      const store = database.stores.find((candidate) => matchesText(params.name, candidate.nomeLoja));
+      const store = database.stores.find((candidate) => candidate.id === Number(params.id));
       if (!store) return springError(404, 'Not Found', request);
       const previousStore = { ...store };
       Object.assign(store, { descricaoLoja, endereco });
@@ -487,10 +487,11 @@ export const createApiHandlers = (
       return storageFull();
     }),
 
-    http.delete<{ type: string }>(`${baseUrl}/imagemloja/:type`, async ({ request, params }) => {
-      const id = Number(queryOf(request).get('id'));
+    http.delete<{ id: string }>(`${baseUrl}/imagemloja/:id`, async ({ request, params }) => {
+      const id = Number(params.id);
+      const type = queryOf(request).get('tipo');
       const remaining = database.storeImages.filter(
-        (storeImage) => !(storeImage.id === id && storeImage.tipo === params.type),
+        (storeImage) => !(storeImage.id === id && storeImage.tipo === type),
       );
       if (remaining.length === database.storeImages.length) return springError(404, 'Not Found', request);
       database.storeImages = remaining;

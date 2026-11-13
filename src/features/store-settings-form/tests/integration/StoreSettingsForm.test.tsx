@@ -33,7 +33,11 @@ describe('StoreSettingsForm saving', () => {
     expect(await screen.findByLabelText('Descrição da loja')).toBeInTheDocument();
   });
 
-  it('saves the changed settings', async () => {
+  it('saves the changed settings to the store row id', async () => {
+    const paths: string[] = [];
+    server.events.on('request:start', ({ request }) => {
+      if (request.method === 'PUT') paths.push(new URL(request.url).pathname);
+    });
     const user = userEvent.setup();
     render(<StoreSettingsForm />);
     await screen.findByLabelText('Descrição da loja');
@@ -46,6 +50,7 @@ describe('StoreSettingsForm saving', () => {
     expect(apiDatabase.stores).toEqual([
       { id: 1, nomeLoja: 'multikoisas', descricaoLoja: 'Utilidades para a casa', endereco: 'Rua das Flores, 10' },
     ]);
+    expect(paths).toEqual(['/api/loja/1']);
   });
 
   it('starts with the saved address', async () => {
@@ -79,7 +84,7 @@ describe('StoreSettingsForm saving', () => {
     let answerSave = () => {};
     server.use(
       http.put(
-        '*/loja/:name',
+        '*/loja/:id',
         () => new Promise<Response>((resolve) => (answerSave = () => resolve(HttpResponse.json({})))),
       ),
     );
@@ -95,7 +100,7 @@ describe('StoreSettingsForm saving', () => {
   });
 
   it('tells when the settings could not be saved', async () => {
-    server.use(http.put('*/loja/:name', () => new HttpResponse(null, { status: 500 })));
+    server.use(http.put('*/loja/:id', () => new HttpResponse(null, { status: 500 })));
     const user = userEvent.setup();
     render(<StoreSettingsForm />);
     await screen.findByLabelText('Descrição da loja');

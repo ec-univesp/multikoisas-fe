@@ -393,12 +393,12 @@ const STORE = {
 
 describe('local api store', () => {
   it('finds the store by name ignoring case and answers 404 when there is none', async () => {
-    database.stores.push({ ...STORE });
-    expect(await (await send('GET', '/api/loja?nome=MultiKoisas')).json()).toEqual([STORE]);
-    expect((await send('GET', '/api/loja?nome=outra')).status).toBe(404);
+    database.stores.push({ ...STORE, id: 2, nomeLoja: 'outra loja' }, { ...STORE });
+    expect(await (await send('GET', '/api/loja?nomeLoja=MultiKoisas')).json()).toEqual([STORE]);
+    expect((await send('GET', '/api/loja?nomeLoja=nenhuma')).status).toBe(404);
   });
 
-  it('creates the store and changes its description and address by name', async () => {
+  it('creates the store and changes its description and address by id', async () => {
     const created = await send('POST', '/api/loja', {
       nomeLoja: 'multikoisas',
       descricaoLoja: 'Primeira',
@@ -412,7 +412,7 @@ describe('local api store', () => {
       endereco: 'Rua A, 1',
     });
 
-    const updated = await send('PUT', '/api/loja/multikoisas', { descricaoLoja: 'Segunda', endereco: 'Rua B, 2' });
+    const updated = await send('PUT', '/api/loja/5', { descricaoLoja: 'Segunda', endereco: 'Rua B, 2' });
     expect(updated.status).toBe(200);
     expect(database.stores).toEqual([
       { id: 5, nomeLoja: 'multikoisas', descricaoLoja: 'Segunda', endereco: 'Rua B, 2' },
@@ -424,16 +424,14 @@ describe('local api store', () => {
     database.stores.push({ ...STORE });
     expect((await send('POST', '/api/loja', { nomeLoja: ' ' })).status).toBe(400);
     expect((await send('POST', '/api/loja', { nomeLoja: 'multikoisas' })).status).toBe(409);
-    expect((await send('PUT', '/api/loja/outra', { descricaoLoja: 'x' })).status).toBe(404);
+    expect((await send('PUT', '/api/loja/9', { descricaoLoja: 'x' })).status).toBe(404);
     expect(onChange).not.toHaveBeenCalled();
   });
 
   it('answers 507 and keeps the description and the address when the browser refuses to save them', async () => {
     database.stores.push({ ...STORE });
     onChange.mockReturnValue(false);
-    expect((await send('PUT', '/api/loja/multikoisas', { descricaoLoja: 'Outra', endereco: 'Rua C, 3' })).status).toBe(
-      507,
-    );
+    expect((await send('PUT', '/api/loja/1', { descricaoLoja: 'Outra', endereco: 'Rua C, 3' })).status).toBe(507);
     expect(database.stores).toEqual([STORE]);
   });
 });
@@ -493,12 +491,14 @@ describe('local api store images', () => {
     expect(await images.get(5)).toBeUndefined();
   });
 
-  it('deletes a store image of the type and answers 404 when it does not exist', async () => {
+  it('deletes only the store image of the id and answers 404 when the id is missing or of another type', async () => {
     await uploadStoreImage('LOGO', 'bytes');
-    expect((await send('DELETE', '/api/imagemloja/CAPA?id=5')).status).toBe(404);
-    expect((await send('DELETE', '/api/imagemloja/LOGO?id=5')).status).toBe(200);
-    expect(database.storeImages).toEqual([]);
+    await uploadStoreImage('LOGO', 'other');
+    expect((await send('DELETE', '/api/imagemloja/5?tipo=CAPA')).status).toBe(404);
+    expect((await send('DELETE', '/api/imagemloja/9?tipo=LOGO')).status).toBe(404);
+    expect((await send('DELETE', '/api/imagemloja/5?tipo=LOGO')).status).toBe(200);
+    expect(database.storeImages).toEqual([{ id: 6, imagemUrl: `${UPLOADED_IMAGES}6`, tipo: 'LOGO' }]);
     expect(await images.get(5)).toBeUndefined();
-    expect(onChange).toHaveBeenCalledTimes(2);
+    expect(onChange).toHaveBeenCalledTimes(3);
   });
 });
