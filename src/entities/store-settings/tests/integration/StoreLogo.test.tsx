@@ -33,4 +33,14 @@ describe('StoreLogo', () => {
     render(<StoreLogo compact />);
     expect(await screen.findByRole('img', { name: 'MultiKoisas' })).toHaveClass('max-w-11');
   });
+
+  it('takes a bigger, decorative image when asked', async () => {
+    apiDatabase.storeImages.push({ id: 2, imagemUrl: SAVED_LOGO, tipo: 'LOGO' });
+    const { container } = render(<StoreLogo imageHeightClassName="h-14" imageAlt="" />);
+    await waitForApiAnswers();
+    const logo = container.querySelector('img');
+    expect(logo).toHaveClass('h-14');
+    expect(logo).not.toHaveClass('h-11');
+    expect(logo).toHaveAttribute('alt', '');
+  });
 });
