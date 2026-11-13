@@ -1,6 +1,8 @@
 import { getFromApi } from '@/shared/api/getFromApi';
 import { toDisplayableImageUrl } from '@/shared/api/imageUrl';
-import type { StoreImageType, StoreSettings, StoreSettingsValues } from './types';
+import { isReadableAccentColor } from '@/shared/lib/accentColor';
+import { STORE_SETTINGS } from './storeSettings';
+import type { ShowcaseAppearance, ShowcaseColumns, StoreImageType, StoreSettings, StoreSettingsValues } from './types';
 
 type ApiStore = {
   id: number;
@@ -10,6 +12,7 @@ type ApiStore = {
   corDestaque?: string | null;
   colunaCarrossel?: number | null;
 };
+type ApiStoreFields = Required<Omit<ApiStore, 'id' | 'nomeLoja'>>;
 type ApiStoreImage = { id: number; imagemUrl: string; tipo: string };
 type StoreSettingsListener = (settings: StoreSettings) => void;
 
@@ -50,6 +53,8 @@ const displayableImages = (images: ApiStoreImage[]) =>
 const newestImageUrl = (images: ApiStoreImage[]) =>
   displayableImages(images).sort((first, second) => second.id - first.id)[0]?.imagemUrl ?? null;
 
+const isShowcaseColumns = (value: unknown): value is ShowcaseColumns => value === 2 || value === 3 || value === 4;
+
 const valueOf = <Value>(result: PromiseSettledResult<Value>) => (result.status === 'fulfilled' ? result.value : null);
 
 export const fetchStoreSettings = async (): Promise<StoreSettings> => {
@@ -64,6 +69,12 @@ export const fetchStoreSettings = async (): Promise<StoreSettings> => {
     address: store.value?.endereco?.trim() || null,
     logoUrl: newestImageUrl(imagesOf('LOGO')),
     photoUrl: newestImageUrl(imagesOf('CAPA')),
+    showcaseColumns: isShowcaseColumns(store.value?.colunaCarrossel)
+      ? store.value.colunaCarrossel
+      : STORE_SETTINGS.showcaseColumns,
+    accentColor: isReadableAccentColor(store.value?.corDestaque)
+      ? store.value.corDestaque.toLowerCase()
+      : STORE_SETTINGS.accentColor,
   };
 };
 
@@ -91,13 +102,26 @@ const deleteDisplayableImages = async (type: StoreImageType, images: ApiStoreIma
   return deletions.find((deletion) => deletion.status === 'rejected');
 };
 
-export const saveStoreSettings = async ({ description, address }: StoreSettingsValues) => {
+// PUT /loja/{id} replaces every field: the ones not being changed are resent as saved.
+const updateStore = async (changes: Partial<ApiStoreFields>) => {
   const store = await fetchStore();
-  const fields = { descricaoLoja: description, endereco: address };
+  const fields: ApiStoreFields = {
+    descricaoLoja: store?.descricaoLoja ?? null,
+    endereco: store?.endereco ?? null,
+    corDestaque: store?.corDestaque ?? null,
+    colunaCarrossel: store?.colunaCarrossel ?? 0,
+    ...changes,
+  };
   if (store) await sendToApi('PUT', `/loja/${store.id}`, fields);
   else await sendToApi('POST', '/loja', { nomeLoja: STORE_NAME, ...fields });
   return reloadStoreSettings();
 };
+
+export const saveStoreSettings = ({ description, address }: StoreSettingsValues) =>
+  updateStore({ descricaoLoja: description, endereco: address });
+
+export const saveShowcaseAppearance = ({ accentColor, showcaseColumns }: ShowcaseAppearance) =>
+  updateStore({ corDestaque: accentColor, colunaCarrossel: showcaseColumns });
 
 export const saveStoreImage = async (type: StoreImageType, file: File) => {
   const olderImages = await fetchStoreImages(type);

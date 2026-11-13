@@ -48,9 +48,30 @@ describe('StoreSettingsForm saving', () => {
 
     expect(await screen.findByRole('status')).toHaveTextContent('Dados salvos.');
     expect(apiDatabase.stores).toEqual([
-      { id: 1, nomeLoja: 'multikoisas', descricaoLoja: 'Utilidades para a casa', endereco: 'Rua das Flores, 10' },
+      {
+        id: 1,
+        nomeLoja: 'multikoisas',
+        descricaoLoja: 'Utilidades para a casa',
+        endereco: 'Rua das Flores, 10',
+        corDestaque: null,
+        colunaCarrossel: 0,
+      },
     ]);
     expect(paths).toEqual(['/api/loja/1']);
+  });
+
+  it('keeps the showcase accent color and columns when saving the store data', async () => {
+    Object.assign(apiDatabase.stores[0], { corDestaque: '#22c55e', colunaCarrossel: 3 });
+    const user = userEvent.setup();
+    render(<StoreSettingsForm />);
+    await screen.findByLabelText('Descrição da loja');
+    await replaceText('Descrição da loja', 'Nova');
+    await user.click(screen.getByRole('button', { name: 'Salvar dados' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Dados salvos.');
+    expect(apiDatabase.stores[0]).toEqual(
+      expect.objectContaining({ descricaoLoja: 'Nova', corDestaque: '#22c55e', colunaCarrossel: 3 }),
+    );
   });
 
   it('starts with the saved address', async () => {
