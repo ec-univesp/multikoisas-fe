@@ -21,14 +21,12 @@ const renderHeader = async () => {
 };
 
 describe('SiteHeader', () => {
-  it('marks the header busy and keeps the store strip line while the data loads', () => {
+  it('keeps the search while the data loads', () => {
     render(
       <ShowcaseSearchProvider>
         <SiteHeader />
       </ShowcaseSearchProvider>,
     );
-    expect(screen.getByRole('banner')).toHaveAttribute('aria-busy', 'true');
-    expect(screen.getByTestId('stores-phrase-placeholder')).toHaveClass('h-5');
     expect(screen.getByRole('searchbox', { name: 'Buscar produto no cabeçalho' })).toBeInTheDocument();
   });
 
@@ -38,10 +36,8 @@ describe('SiteHeader', () => {
       screen.getByText('Vitrine oficial MultiKoisas: escolha aqui e conclua a compra com segurança na loja parceira.'),
     ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /^multikoisas/i })).toHaveAttribute('href', '/');
-    expect(screen.getByText('Tudo em um só lugar')).toBeInTheDocument();
     expect(screen.getByText('Multi')).toHaveClass('text-white');
     expect(screen.getByText('Koisas')).toHaveClass('text-store-yellow');
-    expect(screen.getByText('Koisas').parentElement).not.toHaveTextContent('Tudo em um só lugar');
     expect(screen.getByRole('searchbox', { name: 'Buscar produto no cabeçalho' })).toHaveClass('text-base');
     expect(screen.getByRole('search', { name: 'Buscar produto no cabeçalho' })).toBeInTheDocument();
     const sectionLinks = within(screen.getByRole('navigation', { name: 'Seções do site' })).getAllByRole('link');
@@ -51,48 +47,10 @@ describe('SiteHeader', () => {
     ]);
   });
 
-  it('lines the tagline up with the brand mark text', async () => {
+  it('leaves the slogan caption and the stores sentence out of the header', async () => {
     await renderHeader();
-    expect(screen.getByText('Tudo em um só lugar')).toHaveClass('ml-13');
-  });
-
-  it('lines the tagline up with the left edge of the saved logo', async () => {
-    apiDatabase.storeImages.push({ id: 2, imagemUrl: SAVED_LOGO, tipo: 'LOGO' });
-    await renderHeader();
-    expect(await screen.findByRole('img', { name: 'MultiKoisas' })).toHaveAttribute('src', SAVED_LOGO);
-    expect(screen.getByText('Tudo em um só lugar')).not.toHaveClass('ml-13');
-  });
-
-  it('names only the stores that appear in the catalog links', async () => {
-    await renderHeader();
-    expect(screen.getByText('Compre na Shopee')).toBeInTheDocument();
-    expect(screen.queryByText(/mercado livre/i)).not.toBeInTheDocument();
-  });
-
-  it('lists every catalog store in one sentence', async () => {
-    server.use(
-      http.get('*/canalvenda', () =>
-        HttpResponse.json([
-          { id: 2, nome: 'Shopee' },
-          { id: 6, nome: 'Mercado Livre' },
-        ]),
-      ),
-      http.get('*/canalvendaproduto', () =>
-        HttpResponse.json([
-          { produtoId: 1, canalVendaId: 2, link: 'https://shopee.com.br/garrafa' },
-          { produtoId: 5, canalVendaId: 6, link: 'https://www.mercadolivre.com.br/balde' },
-        ]),
-      ),
-    );
-    await renderHeader();
-    expect(screen.getByText('Compre na Shopee ou no Mercado Livre')).toBeInTheDocument();
-  });
-
-  it('hides the store strip when the catalog cannot be read', async () => {
-    server.use(http.get('*/produto', () => new HttpResponse(null, { status: 500 })));
-    await renderHeader();
+    expect(screen.queryByText('Tudo em um só lugar')).not.toBeInTheDocument();
     expect(screen.queryByText(/^Compre /)).not.toBeInTheDocument();
-    expect(screen.getByRole('searchbox', { name: 'Buscar produto no cabeçalho' })).toBeInTheDocument();
   });
 
   it('leaves whatsapp out of the header, since it floats on the page', async () => {
@@ -110,9 +68,35 @@ describe('SiteHeader', () => {
     expect(screen.queryByRole('link', { name: /no Google/ })).not.toBeInTheDocument();
   });
 
-  it('shows the saved store logo', async () => {
+  it('shows the saved store logo bigger, next to the store name', async () => {
     apiDatabase.storeImages.push({ id: 2, imagemUrl: SAVED_LOGO, tipo: 'LOGO' });
-    await renderHeader();
-    expect(await screen.findByRole('img', { name: 'MultiKoisas' })).toHaveAttribute('src', SAVED_LOGO);
+    server.use(
+      http.get('*/loja', () =>
+        HttpResponse.json([{ id: 1, nomeLoja: 'Loja da Ana', descricaoLoja: null, endereco: null }]),
+      ),
+    );
+    const { container } = render(
+      <ShowcaseSearchProvider>
+        <SiteHeader />
+      </ShowcaseSearchProvider>,
+    );
+    const homeLink = await screen.findByRole('link', { name: 'Loja da Ana' });
+    expect(homeLink).toHaveAttribute('href', '/');
+    expect(screen.getByText('Loja da Ana')).toHaveClass('font-bold', 'text-store-yellow', 'uppercase');
+    const logo = container.querySelector(`img[src="${SAVED_LOGO}"]`);
+    expect(logo).toHaveClass('h-14');
+    expect(logo).toHaveAttribute('alt', '');
+    expect(screen.queryByText('Tudo em um só lugar')).not.toBeInTheDocument();
+  });
+
+  it('names the store MultiKoisas next to the logo when the store row is missing', async () => {
+    apiDatabase.storeImages.push({ id: 2, imagemUrl: SAVED_LOGO, tipo: 'LOGO' });
+    apiDatabase.stores = [];
+    render(
+      <ShowcaseSearchProvider>
+        <SiteHeader />
+      </ShowcaseSearchProvider>,
+    );
+    expect(await screen.findByRole('link', { name: 'MultiKoisas' })).toHaveAttribute('href', '/');
   });
 });
