@@ -2,10 +2,18 @@
 
 import { ProductCard } from '@/entities/product';
 import type { Product } from '@/entities/product';
+import { useStoreSettings, type ShowcaseColumns } from '@/entities/store-settings';
 import { useProductFilter } from './useProductFilter';
 import { useShowcaseSearch, ShowcaseSearchField } from './ShowcaseSearch';
 
 const PRIORITY_IMAGE_COUNT = 4;
+
+// Tailwind only generates classes written out in full.
+const GRID_COLUMNS_CLASS_NAMES: Record<ShowcaseColumns, string> = {
+  2: 'md:grid-cols-2 xl:grid-cols-2',
+  3: 'md:grid-cols-3 xl:grid-cols-3',
+  4: 'md:grid-cols-3 xl:grid-cols-4',
+};
 
 type ShowcaseFilterProps = {
   products: readonly Product[];
@@ -24,6 +32,7 @@ export const ShowcaseFilter = ({ products, categories }: ShowcaseFilterProps) =>
     products,
     useShowcaseSearch(),
   );
+  const { showcaseColumns } = useStoreSettings().settings;
 
   return (
     <div>
@@ -73,7 +82,7 @@ export const ShowcaseFilter = ({ products, categories }: ShowcaseFilterProps) =>
           )}
         </div>
       ) : (
-        <ul className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
+        <ul className={`mt-6 grid grid-cols-2 gap-3 ${GRID_COLUMNS_CLASS_NAMES[showcaseColumns]}`}>
           {visibleProducts.map((product, position) => (
             <li key={product.slug}>
               <ProductCard product={product} hasPriorityImage={position < PRIORITY_IMAGE_COUNT} />
