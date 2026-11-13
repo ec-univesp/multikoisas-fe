@@ -441,8 +441,13 @@ export const createApiHandlers = (
     }),
 
     http.post<never, StoreBody>(`${baseUrl}/loja`, async ({ request }) => {
-      const { nomeLoja, descricaoLoja = '', endereco = '', corDestaque = null, colunaCarrossel = 0 } =
-        await request.json();
+      const {
+        nomeLoja,
+        descricaoLoja = '',
+        endereco = '',
+        corDestaque = null,
+        colunaCarrossel = 0,
+      } = await request.json();
       if (!nomeLoja?.trim()) return springError(400, 'Bad Request', request);
       if (database.stores.some((store) => matchesText(nomeLoja, store.nomeLoja))) {
         return springError(409, 'Conflict', request);

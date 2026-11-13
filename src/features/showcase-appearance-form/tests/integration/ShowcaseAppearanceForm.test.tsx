@@ -51,7 +51,8 @@ describe('ShowcaseAppearanceForm saving', () => {
     server.use(
       http.put(
         '*/loja/:id',
-        () => new Promise<Response>((resolve) => (answerSave = () => resolve(HttpResponse.json(apiDatabase.stores[0])))),
+        () =>
+          new Promise<Response>((resolve) => (answerSave = () => resolve(HttpResponse.json(apiDatabase.stores[0])))),
       ),
     );
     const user = userEvent.setup();

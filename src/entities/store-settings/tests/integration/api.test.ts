@@ -109,9 +109,7 @@ describe('store settings api', () => {
 
   it('reads the accent color and the showcase columns saved in the store row', async () => {
     Object.assign(apiDatabase.stores[0], { corDestaque: '#22C55E', colunaCarrossel: 3 });
-    expect(await fetchStoreSettings()).toEqual(
-      expect.objectContaining({ accentColor: '#22c55e', showcaseColumns: 3 }),
-    );
+    expect(await fetchStoreSettings()).toEqual(expect.objectContaining({ accentColor: '#22c55e', showcaseColumns: 3 }));
   });
 
   it.each([
@@ -198,7 +196,12 @@ describe('store settings api', () => {
   it('saves the accent color and the columns, resending the saved description and address so they are not wiped', async () => {
     const bodies = putBodies();
     expect(await saveShowcaseAppearance({ accentColor: '#22c55e', showcaseColumns: 3 })).toEqual(
-      expect.objectContaining({ description: 'Tudo em um só lugar', address: ADDRESS, accentColor: '#22c55e', showcaseColumns: 3 }),
+      expect.objectContaining({
+        description: 'Tudo em um só lugar',
+        address: ADDRESS,
+        accentColor: '#22c55e',
+        showcaseColumns: 3,
+      }),
     );
     expect(bodies).toEqual([
       { descricaoLoja: 'Tudo em um só lugar', endereco: ADDRESS, corDestaque: '#22c55e', colunaCarrossel: 3 },

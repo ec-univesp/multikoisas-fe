@@ -419,7 +419,14 @@ describe('local api store', () => {
     const updated = await send('PUT', '/api/loja/5', { descricaoLoja: 'Segunda', endereco: 'Rua B, 2' });
     expect(updated.status).toBe(200);
     expect(database.stores).toEqual([
-      { id: 5, nomeLoja: 'multikoisas', descricaoLoja: 'Segunda', endereco: 'Rua B, 2', corDestaque: null, colunaCarrossel: 0 },
+      {
+        id: 5,
+        nomeLoja: 'multikoisas',
+        descricaoLoja: 'Segunda',
+        endereco: 'Rua B, 2',
+        corDestaque: null,
+        colunaCarrossel: 0,
+      },
     ]);
     expect(onChange).toHaveBeenCalledTimes(2);
   });
