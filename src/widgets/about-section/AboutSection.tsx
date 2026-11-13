@@ -37,7 +37,7 @@ const StorePicture = ({ logoUrl, photoUrl }: { logoUrl: string | null; photoUrl:
 
 export const AboutSection = () => {
   const storeSettingsState = useStoreSettings();
-  const { description, logoUrl, photoUrl } = storeSettingsState.settings;
+  const { name, description, logoUrl, photoUrl } = storeSettingsState.settings;
   const isStoreLoading = storeSettingsState.status === 'loading';
   const socialNetworksState = useSocialNetworks();
   const socialNetworks = socialNetworksState.status === 'ready' ? socialNetworksState.data : [];
@@ -53,12 +53,12 @@ export const AboutSection = () => {
       <div className="grid gap-6 rounded-xl bg-white p-5 shadow-theme-xs lg:grid-cols-2 lg:items-center lg:p-10">
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight text-store-navy sm:text-3xl">
-            MultiKoisas: utilidades para casa, cozinha, limpeza e organização
+            {name ?? 'MultiKoisas'}
           </h1>
           {isStoreLoading ? (
             <div aria-busy="true" className="mt-3 h-12 rounded bg-gray-100" />
           ) : (
-            <p className="mt-3 text-gray-700">{description ?? DEFAULT_DESCRIPTION}</p>
+            <p className="mt-3 whitespace-pre-line text-gray-700">{description ?? DEFAULT_DESCRIPTION}</p>
           )}
           <p className="mt-2 text-gray-600">
             Aqui na vitrine você encontra o produto certo e conclui a compra direto na loja parceira da sua preferência.

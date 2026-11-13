@@ -1,4 +1,5 @@
 export type StoreSettings = {
+  name: string | null;
   description: string | null;
   address: string | null;
   logoUrl: string | null;

@@ -29,6 +29,7 @@ describe('store settings api', () => {
       PHOTO,
     );
     expect(await fetchStoreSettings()).toEqual({
+      name: 'multikoisas',
       description: 'Tudo em um só lugar',
       address: ADDRESS,
       logoUrl: LOGO.imagemUrl,
@@ -55,11 +56,23 @@ describe('store settings api', () => {
   it('reads no description nor images when the store row and the valid images are missing', async () => {
     apiDatabase.stores = [];
     expect(await fetchStoreSettings()).toEqual({
+      name: null,
       description: null,
       address: null,
       logoUrl: null,
       photoUrl: null,
     });
+  });
+
+  it('reads a blank store name as missing and trims a filled one', async () => {
+    const storeNamed = (nomeLoja: string) =>
+      server.use(
+        http.get('*/loja', () => HttpResponse.json([{ id: 1, nomeLoja, descricaoLoja: null, endereco: null }])),
+      );
+    storeNamed('  ');
+    expect((await fetchStoreSettings()).name).toBeNull();
+    storeNamed('  Loja da Ana  ');
+    expect((await fetchStoreSettings()).name).toBe('Loja da Ana');
   });
 
   it('reads a blank description as missing', async () => {
@@ -85,6 +98,7 @@ describe('store settings api', () => {
   it('still reads the description when the images cannot be read', async () => {
     server.use(http.get('*/imagemloja', failing));
     expect(await fetchStoreSettings()).toEqual({
+      name: 'multikoisas',
       description: 'Tudo em um só lugar',
       address: ADDRESS,
       logoUrl: null,
@@ -99,6 +113,7 @@ describe('store settings api', () => {
       if (new URL(request.url).pathname.endsWith('/imagemloja')) imageRequests.push(new URL(request.url).search);
     });
     expect(await fetchStoreSettings()).toEqual({
+      name: 'multikoisas',
       description: 'Tudo em um só lugar',
       address: ADDRESS,
       logoUrl: LOGO.imagemUrl,
