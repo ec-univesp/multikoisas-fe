@@ -59,6 +59,7 @@ export const fetchStoreSettings = async (): Promise<StoreSettings> => {
   const storeImages = valueOf(images) ?? [];
   const imagesOf = (type: StoreImageType) => storeImages.filter((image) => image.tipo === type);
   return {
+    name: store.value?.nomeLoja?.trim() || null,
     description: store.value?.descricaoLoja?.trim() || null,
     address: store.value?.endereco?.trim() || null,
     logoUrl: newestImageUrl(imagesOf('LOGO')),
