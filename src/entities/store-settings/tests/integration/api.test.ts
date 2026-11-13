@@ -6,6 +6,7 @@ import {
   fetchStoreSettings,
   onStoreSettingsSaved,
   removeStoreImage,
+  saveShowcaseAppearance,
   saveStoreImage,
   saveStoreSettings,
 } from '../../api';
@@ -18,6 +19,14 @@ const ADDRESS = 'Av. Prof. Luiz Inácio de Anhaia Melo, 2085 - Centreville, Sant
 const NEW_FILE = () => new File(['png'], 'nova.png', { type: 'image/png' });
 const failing = () => new HttpResponse(null, { status: 500 });
 const storeImageIds = () => apiDatabase.storeImages.map((storeImage) => storeImage.id);
+const DEFAULT_APPEARANCE = { showcaseColumns: 4, accentColor: '#facc15' };
+const putBodies = () => {
+  const bodies: unknown[] = [];
+  server.events.on('request:start', async ({ request }) => {
+    if (request.method === 'PUT') bodies.push(await request.clone().json());
+  });
+  return bodies;
+};
 
 describe('store settings api', () => {
   it('reads the description, the address and the newest displayable logo and photo, ignoring the other urls', async () => {
@@ -34,6 +43,7 @@ describe('store settings api', () => {
       address: ADDRESS,
       logoUrl: LOGO.imagemUrl,
       photoUrl: PHOTO.imagemUrl,
+      ...DEFAULT_APPEARANCE,
     });
   });
 
@@ -49,7 +59,14 @@ describe('store settings api', () => {
   });
 
   it('reads the multikoisas row even when the api lists another store first', async () => {
-    apiDatabase.stores.unshift({ id: 2, nomeLoja: 'outra loja', descricaoLoja: 'Outra descrição', endereco: null });
+    apiDatabase.stores.unshift({
+      id: 2,
+      nomeLoja: 'outra loja',
+      descricaoLoja: 'Outra descrição',
+      endereco: null,
+      corDestaque: null,
+      colunaCarrossel: 0,
+    });
     expect((await fetchStoreSettings()).description).toBe('Tudo em um só lugar');
   });
 
@@ -61,6 +78,7 @@ describe('store settings api', () => {
       address: null,
       logoUrl: null,
       photoUrl: null,
+      ...DEFAULT_APPEARANCE,
     });
   });
 
@@ -89,6 +107,28 @@ describe('store settings api', () => {
     expect((await fetchStoreSettings()).address).toBe('Rua A, 1');
   });
 
+  it('reads the accent color and the showcase columns saved in the store row', async () => {
+    Object.assign(apiDatabase.stores[0], { corDestaque: '#22C55E', colunaCarrossel: 3 });
+    expect(await fetchStoreSettings()).toEqual(
+      expect.objectContaining({ accentColor: '#22c55e', showcaseColumns: 3 }),
+    );
+  });
+
+  it.each([
+    { corDestaque: null, colunaCarrossel: 0 },
+    { corDestaque: '', colunaCarrossel: null },
+    { corDestaque: 'amarelo', colunaCarrossel: 5 },
+    { corDestaque: '#fff', colunaCarrossel: 1 },
+    { corDestaque: '#1e3a8a', colunaCarrossel: 2.5 },
+  ])('falls back to the default accent color and columns when the store row keeps %o', async (appearance) => {
+    server.use(
+      http.get('*/loja', () =>
+        HttpResponse.json([{ id: 1, nomeLoja: 'multikoisas', descricaoLoja: null, endereco: null, ...appearance }]),
+      ),
+    );
+    expect(await fetchStoreSettings()).toEqual(expect.objectContaining(DEFAULT_APPEARANCE));
+  });
+
   it('fails when the store row cannot be read, so the panel never offers an empty description to save over the real one', async () => {
     apiDatabase.storeImages.push(LOGO);
     server.use(http.get('*/loja', failing));
@@ -103,6 +143,7 @@ describe('store settings api', () => {
       address: ADDRESS,
       logoUrl: null,
       photoUrl: null,
+      ...DEFAULT_APPEARANCE,
     });
   });
 
@@ -118,6 +159,7 @@ describe('store settings api', () => {
       address: ADDRESS,
       logoUrl: LOGO.imagemUrl,
       photoUrl: PHOTO.imagemUrl,
+      ...DEFAULT_APPEARANCE,
     });
     expect(imageRequests).toEqual(['']);
   });
@@ -131,18 +173,43 @@ describe('store settings api', () => {
       expect.objectContaining({ description: 'Nova descrição', address: 'Rua A, 1' }),
     );
     expect(apiDatabase.stores).toEqual([
-      { id: 1, nomeLoja: 'multikoisas', descricaoLoja: 'Nova descrição', endereco: 'Rua A, 1' },
+      {
+        id: 1,
+        nomeLoja: 'multikoisas',
+        descricaoLoja: 'Nova descrição',
+        endereco: 'Rua A, 1',
+        corDestaque: null,
+        colunaCarrossel: 0,
+      },
     ]);
     expect(paths).toEqual(['/api/loja/1']);
   });
 
-  it('sends both fields on every change, even when only the description changed', async () => {
-    const bodies: unknown[] = [];
-    server.events.on('request:start', async ({ request }) => {
-      if (request.method === 'PUT') bodies.push(await request.clone().json());
-    });
+  it('resends the saved accent color and columns when saving the description and the address, so they are not wiped', async () => {
+    Object.assign(apiDatabase.stores[0], { corDestaque: '#22c55e', colunaCarrossel: 3 });
+    const bodies = putBodies();
     await saveStoreSettings({ description: 'Nova descrição', address: ADDRESS });
-    expect(bodies).toEqual([{ descricaoLoja: 'Nova descrição', endereco: ADDRESS }]);
+    expect(bodies).toEqual([
+      { descricaoLoja: 'Nova descrição', endereco: ADDRESS, corDestaque: '#22c55e', colunaCarrossel: 3 },
+    ]);
+    expect(apiDatabase.stores[0]).toEqual(expect.objectContaining({ corDestaque: '#22c55e', colunaCarrossel: 3 }));
+  });
+
+  it('saves the accent color and the columns, resending the saved description and address so they are not wiped', async () => {
+    const bodies = putBodies();
+    expect(await saveShowcaseAppearance({ accentColor: '#22c55e', showcaseColumns: 3 })).toEqual(
+      expect.objectContaining({ description: 'Tudo em um só lugar', address: ADDRESS, accentColor: '#22c55e', showcaseColumns: 3 }),
+    );
+    expect(bodies).toEqual([
+      { descricaoLoja: 'Tudo em um só lugar', endereco: ADDRESS, corDestaque: '#22c55e', colunaCarrossel: 3 },
+    ]);
+  });
+
+  it('fails the appearance save when the api refuses it', async () => {
+    server.use(http.put('*/loja/:id', failing));
+    await expect(saveShowcaseAppearance({ accentColor: '#22c55e', showcaseColumns: 3 })).rejects.toThrow(
+      'PUT /loja/1 responded 500',
+    );
   });
 
   it('creates the store with its name, description and address when it does not exist yet', async () => {

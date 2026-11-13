@@ -57,6 +57,8 @@ const seed = (): ApiDatabase => ({
       nomeLoja: 'multikoisas',
       descricaoLoja: 'Tudo em um só lugar',
       endereco: 'Av. Prof. Luiz Inácio de Anhaia Melo, 2085 - Centreville, Santo André - SP',
+      corDestaque: null,
+      colunaCarrossel: 0,
     },
   ],
   // The placeholder row the real API returns.
