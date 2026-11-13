@@ -4,6 +4,7 @@ import { http, HttpResponse } from 'msw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { apiDatabase, SUPABASE_IMAGES } from '@/test/msw/apiDatabase';
 import { server } from '@/test/msw/server';
+import { StoreLogo } from '@/entities/store-settings';
 import { StoreImageField } from '../../StoreImageField';
 
 const SAVED_LOGO = `${SUPABASE_IMAGES}/logo.png`;
@@ -92,10 +93,29 @@ describe('StoreImageField saving', () => {
     expect(screen.getByRole('button', { name: 'Salvar logo' })).toBeEnabled();
   });
 
-  it('goes back to the default logo', async () => {
+  it('replaces the saved logo, leaving only the new one', async () => {
     saveLogo();
     const user = userEvent.setup();
     render(<StoreImageField type="LOGO" />);
+    await screen.findByRole('button', { name: 'Voltar para a logo padrão' });
+
+    await user.upload(screen.getByLabelText('Nova logo'), logo());
+    await user.click(screen.getByRole('button', { name: 'Salvar logo' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Logo salva.');
+    expect(apiDatabase.storeImages).toEqual([PLACEHOLDER_LOGO, { id: 100, imagemUrl: UPLOADED_IMAGE, tipo: 'LOGO' }]);
+  });
+
+  it('goes back to the default logo, also in the header', async () => {
+    saveLogo();
+    const user = userEvent.setup();
+    render(
+      <>
+        <StoreLogo />
+        <StoreImageField type="LOGO" />
+      </>,
+    );
+    expect(await screen.findByRole('img', { name: 'MultiKoisas' })).toHaveAttribute('src', SAVED_LOGO);
 
     await user.click(await screen.findByRole('button', { name: 'Voltar para a logo padrão' }));
 
@@ -104,11 +124,13 @@ describe('StoreImageField saving', () => {
     expect(screen.getByRole('img', { name: 'Logo atual' })).toHaveTextContent('MultiKoisas');
     expect(screen.queryByRole('button', { name: 'Voltar para a logo padrão' })).not.toBeInTheDocument();
     expect(apiDatabase.storeImages).toEqual([PLACEHOLDER_LOGO]);
+    expect(screen.queryByRole('img', { name: 'MultiKoisas' })).not.toBeInTheDocument();
+    expect(screen.getAllByText('Koisas').length).toBeGreaterThan(0);
   });
 
   it('tells when it could not go back to the default logo', async () => {
     saveLogo();
-    server.use(http.delete('*/imagemloja/:type', () => new HttpResponse(null, { status: 507 })));
+    server.use(http.delete('*/imagemloja/:id', () => new HttpResponse(null, { status: 507 })));
     const user = userEvent.setup();
     render(<StoreImageField type="LOGO" />);
 
@@ -126,7 +148,7 @@ describe('StoreImageField saving', () => {
 
   it('keeps the success message when the new image is saved but an older one cannot be deleted', async () => {
     saveLogo();
-    server.use(http.delete('*/imagemloja/:type', () => new HttpResponse(null, { status: 500 })));
+    server.use(http.delete('*/imagemloja/:id', () => new HttpResponse(null, { status: 500 })));
     const user = userEvent.setup();
     render(<StoreImageField type="LOGO" />);
 
@@ -158,7 +180,7 @@ describe('StoreImageField saving', () => {
     apiDatabase.storeImages.push({ id: 6, imagemUrl: `${SUPABASE_IMAGES}/fachada.jpg`, tipo: 'CAPA' });
     server.use(
       http.post('*/imagemloja', () => new HttpResponse(null, { status: 500 })),
-      http.delete('*/imagemloja/:type', () => new HttpResponse(null, { status: 500 })),
+      http.delete('*/imagemloja/:id', () => new HttpResponse(null, { status: 500 })),
     );
     const user = userEvent.setup();
     render(<StoreImageField type="CAPA" />);
