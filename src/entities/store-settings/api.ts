@@ -2,7 +2,14 @@ import { getFromApi } from '@/shared/api/getFromApi';
 import { toDisplayableImageUrl } from '@/shared/api/imageUrl';
 import type { StoreImageType, StoreSettings, StoreSettingsValues } from './types';
 
-type ApiStore = { id: number; nomeLoja: string; descricaoLoja: string | null; endereco: string | null };
+type ApiStore = {
+  id: number;
+  nomeLoja: string;
+  descricaoLoja: string | null;
+  endereco: string | null;
+  corDestaque?: string | null;
+  colunaCarrossel?: number | null;
+};
 type ApiStoreImage = { id: number; imagemUrl: string; tipo: string };
 type StoreSettingsListener = (settings: StoreSettings) => void;
 
@@ -27,7 +34,7 @@ const sendToApi = async (method: string, path: string, body?: unknown) => {
 };
 
 const fetchStore = async (): Promise<ApiStore | null> =>
-  (await getFromApi<ApiStore>(`/loja?nome=${STORE_NAME}`))[0] ?? null;
+  (await getFromApi<ApiStore>(`/loja?nomeLoja=${STORE_NAME}`))[0] ?? null;
 
 const fetchStoreImages = (type: StoreImageType) => getFromApi<ApiStoreImage>(`/imagemloja?tipo=${type}`);
 
@@ -78,7 +85,7 @@ const reloadStoreSettings = async () => {
 
 const deleteDisplayableImages = async (type: StoreImageType, images: ApiStoreImage[]) => {
   const deletions = await Promise.allSettled(
-    displayableImages(images).map((image) => sendToApi('DELETE', `/imagemloja/${type}?id=${image.id}`)),
+    displayableImages(images).map((image) => sendToApi('DELETE', `/imagemloja/${image.id}?tipo=${type}`)),
   );
   return deletions.find((deletion) => deletion.status === 'rejected');
 };
@@ -86,7 +93,7 @@ const deleteDisplayableImages = async (type: StoreImageType, images: ApiStoreIma
 export const saveStoreSettings = async ({ description, address }: StoreSettingsValues) => {
   const store = await fetchStore();
   const fields = { descricaoLoja: description, endereco: address };
-  if (store) await sendToApi('PUT', `/loja/${encodeURIComponent(store.nomeLoja)}`, fields);
+  if (store) await sendToApi('PUT', `/loja/${store.id}`, fields);
   else await sendToApi('POST', '/loja', { nomeLoja: STORE_NAME, ...fields });
   return reloadStoreSettings();
 };
