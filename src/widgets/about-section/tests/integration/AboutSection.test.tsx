@@ -34,13 +34,14 @@ describe('AboutSection', () => {
     await waitForLoaded();
   });
 
-  it('shows the default description and brand tile when the store settings cannot be read', async () => {
+  it('shows the default title, description and brand tile when the store settings cannot be read', async () => {
     server.use(
       http.get('*/loja', () => new HttpResponse(null, { status: 500 })),
       http.get('*/imagemloja', () => new HttpResponse(null, { status: 500 })),
     );
     await renderAbout();
     expect(await screen.findByText(FALLBACK_DESCRIPTION)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'MultiKoisas' })).toBeInTheDocument();
     expect(screen.getByRole('img', { name: 'MultiKoisas' })).toHaveClass('bg-store-navy');
   });
 
@@ -48,12 +49,33 @@ describe('AboutSection', () => {
     const { container } = await renderAbout();
     expect(container.querySelector('section#about')).toBeInTheDocument();
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
-    expect(
-      screen.getByRole('heading', {
-        level: 1,
-        name: 'MultiKoisas: utilidades para casa, cozinha, limpeza e organização',
-      }),
-    ).toBeInTheDocument();
+  });
+
+  it('titles the page with the store name the api answers', async () => {
+    server.use(
+      http.get('*/loja', () =>
+        HttpResponse.json([{ id: 1, nomeLoja: 'Loja da Ana', descricaoLoja: null, endereco: null }]),
+      ),
+    );
+    await renderAbout();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Loja da Ana' })).toBeInTheDocument();
+  });
+
+  it('keeps the default title while the store name is loading or missing', async () => {
+    apiDatabase.stores = [];
+    render(<AboutSection />);
+    expect(screen.getByRole('heading', { level: 1, name: 'MultiKoisas' })).toBeInTheDocument();
+    await waitForLoaded();
+    await waitForApiAnswers();
+    expect(screen.getByRole('heading', { level: 1, name: 'MultiKoisas' })).toBeInTheDocument();
+  });
+
+  it('keeps the line breaks the owner typed in the store description', async () => {
+    apiDatabase.stores[0].descricaoLoja = 'Tudo em um só lugar!\n-Hidráulica\n-Elétrica';
+    await renderAbout();
+    const description = await screen.findByText(/Tudo em um só lugar!/);
+    expect(description.textContent).toBe('Tudo em um só lugar!\n-Hidráulica\n-Elétrica');
+    expect(description).toHaveClass('whitespace-pre-line');
   });
 
   it('links the real store social networks in a new tab', async () => {
