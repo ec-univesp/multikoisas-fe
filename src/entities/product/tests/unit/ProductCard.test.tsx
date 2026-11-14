@@ -13,8 +13,8 @@ const product: Product = {
   longDescription: 'longa',
   images: ['/products/garrafa.webp'],
   storeLinks: [
-    { store: 'shopee', url: 'https://shopee.com.br/garrafa' },
-    { store: 'mercado-livre', url: 'https://www.mercadolivre.com.br/garrafa' },
+    { store: 'shopee', name: 'Shopee', url: 'https://shopee.com.br/garrafa' },
+    { store: 'mercado-livre', name: 'Mercado Livre', url: 'https://www.mercadolivre.com.br/garrafa' },
   ],
 };
 
@@ -72,6 +72,29 @@ describe('ProductCard', () => {
     expect(shopee.parentElement?.className).toContain('sm:grid-cols-2');
   });
 
+  it('opens any other sales channel as a navy button under its own name, and Amazon in its colors', () => {
+    render(
+      <ProductCard
+        product={{
+          ...product,
+          storeLinks: [
+            { store: null, name: 'Instagram', url: 'https://www.instagram.com/p/garrafa' },
+            { store: 'amazon', name: 'AMAZON', url: 'https://www.amazon.com.br/garrafa' },
+          ],
+        }}
+      />,
+    );
+    const instagram = screen.getByRole('link', { name: 'Comprar em Instagram: Garrafa Térmica 1L' });
+    expect(instagram).toHaveAttribute('href', 'https://www.instagram.com/p/garrafa');
+    expect(instagram).toHaveAttribute('target', '_blank');
+    expect(instagram).toHaveAttribute('rel', 'noopener noreferrer sponsored');
+    expect(instagram).toHaveTextContent('Instagram');
+    expect(instagram).toHaveClass('bg-store-navy', 'text-white');
+    const amazon = screen.getByRole('link', { name: 'Comprar na Amazon: Garrafa Térmica 1L' });
+    expect(amazon).toHaveTextContent('Amazon');
+    expect(amazon).toHaveClass('bg-[#FF9900]', 'text-[#131921]');
+  });
+
   it('keeps one button per store when two stores share the same link', () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
     render(
@@ -79,8 +102,8 @@ describe('ProductCard', () => {
         product={{
           ...product,
           storeLinks: [
-            { store: 'shopee', url: 'https://shopee.com.br/garrafa' },
-            { store: 'magalu', url: 'https://shopee.com.br/garrafa' },
+            { store: 'shopee', name: 'Shopee', url: 'https://shopee.com.br/garrafa' },
+            { store: 'magalu', name: 'Magalu', url: 'https://shopee.com.br/garrafa' },
           ],
         }}
       />,

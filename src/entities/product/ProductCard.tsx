@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ProductImage } from './ProductImage';
-import { categoryNamesOf, PRODUCT_IMAGE_PLACEHOLDER, STORE_PRESENTATION } from './types';
+import { categoryNamesOf, PRODUCT_IMAGE_PLACEHOLDER, storePresentationOf } from './types';
 import type { Product } from './types';
 
 type ProductCardProps = {
@@ -49,18 +49,21 @@ export const ProductCard = ({
       <div className="mt-auto flex flex-col gap-2 pt-4">
         {product.storeLinks.length > 0 && (
           <div className={storeButtonsLayout}>
-            {product.storeLinks.map((storeLink) => (
-              <a
-                key={`${storeLink.store}:${storeLink.url}`}
-                href={storeLink.url}
-                target="_blank"
-                rel="noopener noreferrer sponsored"
-                aria-label={`${STORE_PRESENTATION[storeLink.store].purchaseLabel}: ${product.name}`}
-                className={`flex h-11 items-center justify-center rounded-lg px-2 text-sm font-semibold ${STORE_PRESENTATION[storeLink.store].purchaseButtonClassName}`}
-              >
-                {STORE_PRESENTATION[storeLink.store].name}
-              </a>
-            ))}
+            {product.storeLinks.map((storeLink) => {
+              const presentation = storePresentationOf(storeLink);
+              return (
+                <a
+                  key={`${storeLink.name}:${storeLink.url}`}
+                  href={storeLink.url}
+                  target="_blank"
+                  rel="noopener noreferrer sponsored"
+                  aria-label={`${presentation.purchaseLabel}: ${product.name}`}
+                  className={`flex h-11 items-center justify-center rounded-lg px-2 text-sm font-semibold ${presentation.purchaseButtonClassName}`}
+                >
+                  {presentation.name}
+                </a>
+              );
+            })}
           </div>
         )}
         <Link

@@ -2,7 +2,6 @@ import Button from '@/components/ui/button/Button';
 import Input from '@/components/form/input/InputField';
 import Label from '@/components/form/Label';
 import Select from '@/components/form/Select';
-import { isStoreChannelName } from '@/entities/product';
 import type { SalesChannel } from '@/entities/sales-channel';
 import { PlusIcon, TrashBinIcon } from '@/icons';
 import type { PurchaseLinkDraft } from './types';
@@ -30,13 +29,7 @@ export const PurchaseLinksField = ({
   onChange,
   onRemove,
 }: PurchaseLinksFieldProps) => {
-  const optionsFor = (purchaseLink: PurchaseLinkDraft) =>
-    salesChannels
-      .filter(
-        (salesChannel) =>
-          isStoreChannelName(salesChannel.name) || String(salesChannel.id) === purchaseLink.salesChannelId,
-      )
-      .map((salesChannel) => ({ value: String(salesChannel.id), label: salesChannel.name }));
+  const options = salesChannels.map((salesChannel) => ({ value: String(salesChannel.id), label: salesChannel.name }));
 
   return (
     <fieldset>
@@ -54,7 +47,7 @@ export const PurchaseLinksField = ({
                 <Select
                   id={`purchase-link-store-${purchaseLink.key}`}
                   placeholder="Escolha a loja"
-                  options={optionsFor(purchaseLink)}
+                  options={options}
                   defaultValue={purchaseLink.salesChannelId}
                   onChange={(salesChannelId) => onChange(purchaseLink.key, { salesChannelId })}
                   disabled={disabled}

@@ -1,4 +1,4 @@
-export type StoreSlug = 'mercado-livre' | 'shopee' | 'aliexpress' | 'magalu';
+export type StoreSlug = 'mercado-livre' | 'shopee' | 'aliexpress' | 'magalu' | 'amazon';
 
 type StorePresentation = {
   name: string;
@@ -40,14 +40,34 @@ export const STORE_PRESENTATION: Record<StoreSlug, StorePresentation> = {
     brandColor: '#0068D1',
     brandTextColor: '#FFFFFF',
   },
+  amazon: {
+    name: 'Amazon',
+    purchaseLabel: 'Comprar na Amazon',
+    purchaseButtonClassName: 'bg-[#FF9900] text-[#131921] hover:bg-[#E68A00]',
+    brandColor: '#FF9900',
+    brandTextColor: '#131921',
+  },
 };
 
 export const PRODUCT_IMAGE_PLACEHOLDER = '/images/product/placeholder.svg';
 
+/** `store` is null for a sales channel that is not a known store (Instagram, TikTok); `name` is the channel name. */
 export type StoreLink = {
-  store: StoreSlug;
+  store: StoreSlug | null;
+  name: string;
   url: string;
 };
+
+export const storePresentationOf = (storeLink: StoreLink): StorePresentation =>
+  storeLink.store
+    ? STORE_PRESENTATION[storeLink.store]
+    : {
+        name: storeLink.name,
+        purchaseLabel: `Comprar em ${storeLink.name}`,
+        purchaseButtonClassName: 'bg-store-navy text-white hover:bg-store-navy-950',
+        brandColor: '#1E3A8A',
+        brandTextColor: '#FFFFFF',
+      };
 
 export type Category = {
   id: number;
