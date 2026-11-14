@@ -10,7 +10,7 @@ const buildProduct = (overrides: Partial<Product>): Product => ({
   shortDescription: 's',
   longDescription: 'l',
   images: ['/products/x.svg'],
-  storeLinks: [{ store: 'shopee', url: 'https://shopee.com.br/' }],
+  storeLinks: [{ store: 'shopee', name: 'Shopee', url: 'https://shopee.com.br/' }],
   ...overrides,
 });
 

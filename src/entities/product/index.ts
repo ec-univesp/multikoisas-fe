@@ -3,7 +3,6 @@ export {
   fetchCategories,
   fetchProductImageRecords,
   fetchProducts,
-  isStoreChannelName,
   toImageRecord,
   toImageUrlsInIdOrder,
   toLinkedCategories,
@@ -15,5 +14,5 @@ export { ProductCard } from './ProductCard';
 export { ProductImage } from './ProductImage';
 export { toStoresPhrase } from './toStoresPhrase';
 export { useCatalog } from './useCatalog';
-export { categoryNamesOf, PRODUCT_IMAGE_PLACEHOLDER, STORE_PRESENTATION } from './types';
+export { categoryNamesOf, PRODUCT_IMAGE_PLACEHOLDER, storePresentationOf } from './types';
 export type { Category, Product, StoreLink, StoreSlug } from './types';

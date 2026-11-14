@@ -49,9 +49,6 @@ export const toStoreSlug = (channelName: string): StoreSlug | null => {
   return isStoreSlug(store) ? store : null;
 };
 
-export const isStoreChannelName = (name: string): boolean => toStoreSlug(name) !== null;
-
-// ponytail: a channel without an entry in STORE_PRESENTATION (Instagram, TikTok) does not become a purchase button.
 export const toStoreLinks = (
   apiPurchaseLinks: readonly ApiPurchaseLink[],
   apiSalesChannels: readonly ApiSalesChannel[],
@@ -59,12 +56,20 @@ export const toStoreLinks = (
   apiPurchaseLinks
     .flatMap((apiPurchaseLink) => {
       const apiSalesChannel = apiSalesChannels.find((candidate) => candidate.id === apiPurchaseLink.canalVendaId);
-      const store = apiSalesChannel ? toStoreSlug(apiSalesChannel.nome) : null;
-      return store && apiPurchaseLink.link ? [{ store, url: apiPurchaseLink.link }] : [];
+      return apiSalesChannel && apiPurchaseLink.link
+        ? [
+            {
+              salesChannelId: apiSalesChannel.id,
+              storeLink: { store: toStoreSlug(apiSalesChannel.nome), name: apiSalesChannel.nome, url: apiPurchaseLink.link },
+            },
+          ]
+        : [];
     })
     .filter(
-      (storeLink, position, storeLinks) => storeLinks.findIndex(({ store }) => store === storeLink.store) === position,
-    );
+      (link, position, links) =>
+        links.findIndex(({ salesChannelId }) => salesChannelId === link.salesChannelId) === position,
+    )
+    .map(({ storeLink }) => storeLink);
 
 export const toLinkedCategories = (
   apiProductCategories: readonly ApiProductCategory[],

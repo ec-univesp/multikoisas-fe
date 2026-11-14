@@ -20,6 +20,7 @@ const salesChannels: SalesChannel[] = [
   { id: 8, name: 'MagaLu' },
   { id: 14, name: 'MAGAZINE LUIZA' },
   { id: 15, name: 'Mercado Livre' },
+  { id: 24, name: 'Amazon' },
 ];
 
 const buildProduct = (overrides: Partial<Product>): Product => ({
@@ -156,7 +157,7 @@ describe('ProductAdminPanel', () => {
 
   it('keeps the store links of a product after editing it', async () => {
     const user = userEvent.setup();
-    renderPanel([buildProduct({ storeLinks: [{ store: 'shopee', url: 'https://shopee.com.br/garrafa-termica' }] })]);
+    renderPanel([buildProduct({ storeLinks: [{ store: 'shopee', name: 'Shopee', url: 'https://shopee.com.br/garrafa-termica' }] })]);
 
     await user.click(screen.getByRole('button', { name: 'Editar Garrafa Térmica 1L' }));
     const nameInput = await screen.findByLabelText('Nome do produto');
@@ -894,25 +895,49 @@ describe('ProductAdminPanel', () => {
       ).toHaveAttribute('role', 'alert');
     });
 
-    it('offers only the stores that become a buy button, keeping a channel already saved on the product', async () => {
+    it('offers every sales channel the api lists, stores or not', async () => {
       const user = userEvent.setup();
       renderPanel();
 
       await user.click(screen.getByRole('button', { name: 'Editar Garrafa Térmica 1L' }));
-      expect(await screen.findByLabelText('Loja 2')).toHaveValue('3');
-      expect(optionsOf(screen.getByLabelText('Loja 2'))).toEqual([
-        'Shopee',
-        'Instagram',
-        'MagaLu',
-        'MAGAZINE LUIZA',
-        'Mercado Livre',
-      ]);
-      await user.click(screen.getByRole('button', { name: 'Adicionar loja' }));
+      await user.click(await screen.findByRole('button', { name: 'Adicionar loja' }));
       expect(optionsOf(screen.getByLabelText('Loja 3'))).toEqual([
         'Shopee',
+        'Instagram',
+        'Facebook',
         'MagaLu',
         'MAGAZINE LUIZA',
         'Mercado Livre',
+        'Amazon',
+      ]);
+    });
+
+    it('stops offering a sales channel the api no longer lists', async () => {
+      const user = userEvent.setup();
+      renderPanel([buildProduct({})], [
+        { id: 2, name: 'Shopee' },
+        { id: 3, name: 'Instagram' },
+      ]);
+
+      await user.click(screen.getByRole('button', { name: 'Novo produto' }));
+      await user.click(screen.getByRole('button', { name: 'Adicionar loja' }));
+      expect(optionsOf(screen.getByLabelText('Loja 1'))).toEqual(['Shopee', 'Instagram']);
+    });
+
+    it('saves a link to a sales channel that is not a known store', async () => {
+      const user = userEvent.setup();
+      renderPanel([]);
+
+      await user.click(screen.getByRole('button', { name: 'Novo produto' }));
+      await fillProductForm(user, { name: 'Vassoura', categories: ['Utensílios de Cozinha'], description: 'Macia.' });
+      await user.click(screen.getByRole('button', { name: 'Adicionar loja' }));
+      await user.selectOptions(screen.getByLabelText('Loja 1'), '3');
+      await user.type(screen.getByLabelText('Link da loja 1'), 'https://www.instagram.com/p/vassoura');
+      await user.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+      expect(await screen.findByText('Instagram')).toBeInTheDocument();
+      expect(purchaseLinksOf(100)).toEqual([
+        { produtoId: 100, canalVendaId: 3, link: 'https://www.instagram.com/p/vassoura' },
       ]);
     });
 
@@ -942,7 +967,7 @@ describe('ProductAdminPanel', () => {
     it('keeps the store links untouched when nothing changed, even without the store list', async () => {
       const user = userEvent.setup();
       renderPanel(
-        [buildProduct({ storeLinks: [{ store: 'shopee', url: 'https://shopee.com.br/garrafa-termica' }] })],
+        [buildProduct({ storeLinks: [{ store: 'shopee', name: 'Shopee', url: 'https://shopee.com.br/garrafa-termica' }] })],
         [],
       );
 

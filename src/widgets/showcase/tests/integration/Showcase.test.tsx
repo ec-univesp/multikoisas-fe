@@ -64,10 +64,10 @@ describe('Showcase', () => {
     expect(screen.getByRole('heading', { name: 'Garrafa Térmica 1L' })).toBeInTheDocument();
   });
 
-  it('turns only real store links into buy buttons', async () => {
+  it('turns the link of every sales channel into a buy button', async () => {
     await renderShowcase();
     expect(screen.getAllByRole('link', { name: /^Comprar na Shopee: / })).toHaveLength(2);
-    expect(screen.queryByRole('link', { name: /instagram/i })).not.toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: /^Comprar em Instagram: / })).toHaveLength(1);
     expect(screen.getAllByRole('link', { name: /^Opções de compra: / })).toHaveLength(3);
   });
 

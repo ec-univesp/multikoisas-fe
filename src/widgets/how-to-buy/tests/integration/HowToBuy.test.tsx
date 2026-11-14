@@ -38,7 +38,7 @@ describe('HowToBuy', () => {
 
   it('names the stores that appear in the catalog links', async () => {
     await renderHowToBuy();
-    expect(screen.getByText('Conclua a compra na Shopee pelo botão da loja que preferir.')).toBeInTheDocument();
+    expect(screen.getByText('Conclua a compra na Shopee ou em Instagram pelo botão da loja que preferir.')).toBeInTheDocument();
   });
 
   it('falls back to a store-neutral step when the catalog cannot be read', async () => {
