@@ -13,8 +13,8 @@ const product: Product = {
     'Garrafa térmica de 1 litro com ampola de vidro, ideal para café e chá. Alça para transporte e tampa que serve de xícara.',
   images: ['/products/garrafa-termica-1l.svg', '/products/garrafa-termica-1l-detalhe.svg'],
   storeLinks: [
-    { store: 'mercado-livre', url: 'https://www.mercadolivre.com.br/' },
-    { store: 'shopee', url: 'https://shopee.com.br/' },
+    { store: 'mercado-livre', name: 'Mercado Livre', url: 'https://www.mercadolivre.com.br/' },
+    { store: 'shopee', name: 'Shopee', url: 'https://shopee.com.br/' },
   ],
 };
 
@@ -66,6 +66,25 @@ describe('ProductDetail', () => {
     expect(shopeeLink).toHaveAttribute('target', '_blank');
     expect(shopeeLink).toHaveAttribute('rel', expect.stringContaining('noopener'));
     expect(shopeeLink).toHaveAttribute('rel', expect.stringContaining('sponsored'));
+  });
+
+  it('shows a buy link for any other sales channel and for Amazon in its colors', () => {
+    render(
+      <ProductDetail
+        product={{
+          ...product,
+          storeLinks: [
+            { store: null, name: 'Instagram', url: 'https://www.instagram.com/p/garrafa' },
+            { store: 'amazon', name: 'Amazon', url: 'https://www.amazon.com.br/garrafa' },
+          ],
+        }}
+      />,
+    );
+    const instagram = screen.getByRole('link', { name: 'Comprar em Instagram' });
+    expect(instagram).toHaveAttribute('href', 'https://www.instagram.com/p/garrafa');
+    expect(instagram).toHaveAttribute('rel', 'noopener noreferrer sponsored');
+    expect(instagram).toHaveClass('bg-store-navy', 'text-white');
+    expect(screen.getByRole('link', { name: 'Comprar na Amazon' })).toHaveClass('bg-[#FF9900]', 'text-[#131921]');
   });
 
   it('dresses its own controls in the store palette', () => {

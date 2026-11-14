@@ -24,20 +24,23 @@ describe('fetchProducts', () => {
         'https://avphmmvnlrbidhjrzozx.storage.supabase.co/storage/v1/object/public/imagem/garrafa-tampa.jpeg',
         `${SUPABASE_IMAGES}/garrafa-lado.webp`,
       ],
-      storeLinks: [{ store: 'shopee', url: 'https://shopee.com.br/garrafa-termica' }],
+      storeLinks: [
+        { store: 'shopee', name: 'Shopee', url: 'https://shopee.com.br/garrafa-termica' },
+        { store: null, name: 'Instagram', url: 'https://www.instagram.com/p/garrafa' },
+      ],
     });
   });
 
   it('gives each product only its own store links and none to a product without links', async () => {
     const [, balde, caixa] = await fetchProducts();
     expect(balde.storeLinks).toEqual([]);
-    expect(caixa.storeLinks).toEqual([{ store: 'shopee', url: 'https://shopee.com.br/caixa' }]);
+    expect(caixa.storeLinks).toEqual([{ store: 'shopee', name: 'Shopee', url: 'https://shopee.com.br/caixa' }]);
   });
 
   it('names the store from the sales channel, whatever its spelling in the api', async () => {
     server.use(http.get('*/canalvenda', () => HttpResponse.json([{ id: 2, nome: 'MagaLu' }])));
     const [garrafa] = await fetchProducts();
-    expect(garrafa.storeLinks).toEqual([{ store: 'magalu', url: 'https://shopee.com.br/garrafa-termica' }]);
+    expect(garrafa.storeLinks).toEqual([{ store: 'magalu', name: 'MagaLu', url: 'https://shopee.com.br/garrafa-termica' }]);
   });
 
   it.each([
@@ -45,13 +48,41 @@ describe('fetchProducts', () => {
     ['Magazine Luiza', 'magalu'],
     ['MERCADO LIVRE', 'mercado-livre'],
     ['MercadoLivre', 'mercado-livre'],
+    ['Amazon', 'amazon'],
   ])('names the store from the full channel name %s', async (channelName, store) => {
     server.use(http.get('*/canalvenda', () => HttpResponse.json([{ id: 2, nome: channelName }])));
     const [garrafa] = await fetchProducts();
-    expect(garrafa.storeLinks).toEqual([{ store, url: 'https://shopee.com.br/garrafa-termica' }]);
+    expect(garrafa.storeLinks).toEqual([{ store, name: channelName, url: 'https://shopee.com.br/garrafa-termica' }]);
   });
 
-  it('keeps only the first link of a store listed twice for the same product', async () => {
+  it('keeps the links of every sales channel, each under its own name', async () => {
+    server.use(
+      http.get('*/canalvenda', () =>
+        HttpResponse.json([
+          { id: 2, nome: 'Shopee' },
+          { id: 3, nome: 'Instagram' },
+          { id: 8, nome: 'MagaLu' },
+          { id: 21, nome: 'Magazine Luiza' },
+        ]),
+      ),
+      http.get('*/canalvendaproduto', () =>
+        HttpResponse.json([
+          { produtoId: 1, canalVendaId: 3, link: 'https://www.instagram.com/p/garrafa' },
+          { produtoId: 1, canalVendaId: 8, link: 'https://magazineluiza.com.br/garrafa' },
+          { produtoId: 1, canalVendaId: 21, link: 'https://magazineluiza.com.br/garrafa-2' },
+          { produtoId: 1, canalVendaId: 99, link: 'https://deleted.example/garrafa' },
+        ]),
+      ),
+    );
+    const [garrafa] = await fetchProducts();
+    expect(garrafa.storeLinks).toEqual([
+      { store: null, name: 'Instagram', url: 'https://www.instagram.com/p/garrafa' },
+      { store: 'magalu', name: 'MagaLu', url: 'https://magazineluiza.com.br/garrafa' },
+      { store: 'magalu', name: 'Magazine Luiza', url: 'https://magazineluiza.com.br/garrafa-2' },
+    ]);
+  });
+
+  it('keeps only the first link of a sales channel listed twice for the same product', async () => {
     server.use(
       http.get('*/canalvendaproduto', () =>
         HttpResponse.json([
@@ -61,7 +92,7 @@ describe('fetchProducts', () => {
       ),
     );
     const [garrafa] = await fetchProducts();
-    expect(garrafa.storeLinks).toEqual([{ store: 'shopee', url: 'https://shopee.com.br/garrafa-termica' }]);
+    expect(garrafa.storeLinks).toEqual([{ store: 'shopee', name: 'Shopee', url: 'https://shopee.com.br/garrafa-termica' }]);
   });
 
   it('keeps the storefront up without store links when the links fail', async () => {

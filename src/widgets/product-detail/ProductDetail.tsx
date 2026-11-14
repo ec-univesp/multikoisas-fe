@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { categoryNamesOf, STORE_PRESENTATION } from '@/entities/product';
+import { categoryNamesOf, storePresentationOf } from '@/entities/product';
 import type { Product } from '@/entities/product';
 import { ProductGallery } from './ProductGallery';
 
@@ -38,13 +38,13 @@ export const ProductDetail = ({ product }: { product: Product }) => {
             <div className="mt-3 flex flex-col gap-2">
               {product.storeLinks.map((storeLink) => (
                 <a
-                  key={storeLink.store}
+                  key={storeLink.name}
                   href={storeLink.url}
                   target="_blank"
                   rel="noopener noreferrer sponsored"
-                  className={`flex h-11 items-center justify-center rounded-lg px-4 text-sm font-semibold shadow-theme-xs ${STORE_PRESENTATION[storeLink.store].purchaseButtonClassName}`}
+                  className={`flex h-11 items-center justify-center rounded-lg px-4 text-sm font-semibold shadow-theme-xs ${storePresentationOf(storeLink).purchaseButtonClassName}`}
                 >
-                  {STORE_PRESENTATION[storeLink.store].purchaseLabel}
+                  {storePresentationOf(storeLink).purchaseLabel}
                 </a>
               ))}
             </div>
